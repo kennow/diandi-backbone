@@ -1,5 +1,8 @@
+const Q = require('q');
 const __UTIL__ = require('util');
 const __CRYPTO__ = require('crypto');
+const __WX_PAY_CONFIG__ = require('./wechat.pay.config');
+const __ERROR_CODE__ = require('../../utility/error.code');
 
 /**
  *
@@ -25,6 +28,12 @@ function convertToUrlParams(args) {
     });
     var string = '';
     for (var k in newArgs) {
+        if (k === 'sign') {
+            continue;
+        }
+        if (newArgs[k] === '') {
+            continue;
+        }
         string += '&' + k + '=' + newArgs[k];
     }
     string = string.substr(1);
@@ -42,9 +51,34 @@ function convertToUrlParams(args) {
 function makeSign(args, key) {
     var string = convertToUrlParams(args);
     string = string + '&key=' + key;
-
     var sign = __CRYPTO__.createHash('md5').update(string, 'utf8').digest('hex');
     return sign.toUpperCase();
+}
+
+/**
+ * 校验签名
+ * @param args
+ * @returns {*|promise}
+ */
+function checkSign(args) {
+    const deferred = Q.defer();
+
+    if (args.return_code !== 'SUCCESS') {
+        deferred.reject({
+            return_code: args.return_code,
+            return_msg: args.return_msg
+        });
+    }
+    else if (makeSign(args, __WX_PAY_CONFIG__.__KEY__) !== args.sign) {
+        deferred.reject({
+            return_code: __ERROR_CODE__.checkSignError,
+            return_msg: '预支付结果签名验证错误'
+        });
+    }
+    else {
+        deferred.resolve(args);
+    }
+    return deferred.promise;
 }
 
 /**
@@ -67,5 +101,6 @@ function convertToXml(args) {
 module.exports = {
     convertToUrlParams: convertToUrlParams,
     makeSign: makeSign,
+    checkSign: checkSign,
     convertToXml: convertToXml
 };

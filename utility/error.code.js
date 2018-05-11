@@ -26,5 +26,13 @@ module.exports = {
     /**
      * 出现未知错误
      */
-    unknownError: -600
+    unknownError: -600,
+    /**
+     * 预支付结果签名验证错误
+     */
+    checkSignError: -700,
+    /**
+     * 登录态失效
+     */
+    loginStatusError: -800
 };

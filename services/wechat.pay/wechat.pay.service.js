@@ -1,10 +1,9 @@
-const MOMENT = require('moment');
-const __HELPER__ = require('../../utility/helper');
-const __WX_PAY_CONFIG__ = require('./wechat.pay.config');
+const Q = require('q');
 const __WX_PAY_HELPER__ = require('./wechat.pay.helper');
 const __WX_PAY_API__ = require('./wechat.pay.api.url');
+const __WX_PAY_DATA__ = require('./wechat.pay.data.structure');
 const __HTTP_CLIENT__ = require('../http.client');
-const __LOGGER__ = require("../log4js.service").getLogger("wechat.pay.service.js");
+const __LOGGER__ = require('../log4js.service').getLogger('wechat.pay.service.js');
 
 /**
  * 统一下单
@@ -12,40 +11,35 @@ const __LOGGER__ = require("../log4js.service").getLogger("wechat.pay.service.js
  * @param request
  */
 function unifiedOrder(request) {
-    const params = {
-        body: request.body,
-        attach: request.attach,
-        out_trade_no: __WX_PAY_CONFIG__.__MCH_ID__ + MOMENT().format('YYYYMMDDHHmmss'),
-        total_fee: request.total_fee,
-        time_start: MOMENT().format('YYYYMMDDHHmmss'),
-        time_expire: MOMENT().add(5, 'minutes').format('YYYYMMDDHHmmss'),
-        goods_tag: request.goods_tag,
-        notify_url: request.notify_url,
-        trade_type: 'JSAPI',
-        openid: request.openid,
-        appid: __WX_PAY_CONFIG__.__APP_ID__,
-        mch_id: __WX_PAY_CONFIG__.__MCH_ID__,
-        spbill_create_ip: request.spbill_create_ip || __WX_PAY_CONFIG__.__SPBILL_CREATE_IP__,
-        nonce_str: __HELPER__.getNonceStr(32)
-    };
-    // 生成签名
-    params.sign = __WX_PAY_HELPER__.makeSign(params, __WX_PAY_CONFIG__.__KEY__);
+    const deferred = Q.defer();
+
     // 生成POST Data
-    const postData = __WX_PAY_HELPER__.convertToXml(params);
+    const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructUnifiedOrderParams(request));
     __LOGGER__.debug(postData);
+
     // 调用统一下单API
-    __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__UNIFIED_ORDER__, postData, function (result) {
-        //返回结果：<xml><return_code><![CDATA[SUCCESS]]></return_code>
-        //<return_msg><![CDATA[OK]]></return_msg>
-        //<appid><![CDATA[wx0a72bd7d41e0b066]]></appid>
-        //<mch_id><![CDATA[1329741401]]></mch_id>
-        //<nonce_str><![CDATA[JYlIYkHueaY8J7bv]]></nonce_str>
-        //<sign><![CDATA[70CDD14430F4594F706A37E27CA880E8]]></sign>
-        //<result_code><![CDATA[SUCCESS]]></result_code>
-        //<prepay_id><![CDATA[wx0609214663444085e077d4d73018088839]]></prepay_id>
-        //<trade_type><![CDATA[JSAPI]]></trade_type>
-        //</xml>
-    })
+    __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__UNIFIED_ORDER__, postData, function (rawData) {
+        __WX_PAY_DATA__
+            .parseReturnUnifiedOrder(rawData)       // 对返回结果进行解析【XML转JSON】
+            .then(__WX_PAY_HELPER__.checkSign)      // 验证结果的正确性
+            .then(function (result) {             // 确认无误后回传给 Controller
+                const wxPayResult = __WX_PAY_DATA__.constructWechatPayResult(result);
+                // 回传参数：outTradeNo | timeStamp | nonceStr | package | paySign
+                deferred.resolve({
+                    return_code: result.return_code,
+                    return_msg: result.return_msg,
+                    timeStamp: wxPayResult.timeStamp,
+                    nonceStr: wxPayResult.nonceStr,
+                    package: wxPayResult.package,
+                    paySign: wxPayResult.paySign
+                });
+            })
+            .catch(function (err) {
+                deferred.reject(err);
+            });
+    });
+
+    return deferred.promise;
 }
 
 /**
@@ -55,21 +49,18 @@ function unifiedOrder(request) {
  * @param request
  */
 function closeOrder(request) {
-    const params = {
-        out_trade_no: request.out_trade_no,
-        appid: __WX_PAY_CONFIG__.__APP_ID__,
-        mch_id: __WX_PAY_CONFIG__.__MCH_ID__,
-        nonce_str: __HELPER__.getNonceStr(32)
-    };
-    // 生成签名
-    params.sign = __WX_PAY_HELPER__.makeSign(params, __WX_PAY_CONFIG__.__KEY__);
+    const deferred = Q.defer();
+
     // 生成POST Data
-    const postData = __WX_PAY_HELPER__.convertToXml(params);
+    const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructCloseOrderParams(request));
     __LOGGER__.debug(postData);
+
     // 调用关闭订单API
     __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__CLOSE_ORDER__, postData, function (result) {
-
+        deferred.resolve(result);
     });
+
+    return deferred.promise;
 }
 
 /**
@@ -82,21 +73,28 @@ function closeOrder(request) {
  * @param request
  */
 function queryOrder(request) {
-    const params = {
-        out_trade_no: request.out_trade_no,
-        appid: __WX_PAY_CONFIG__.__APP_ID__,
-        mch_id: __WX_PAY_CONFIG__.__MCH_ID__,
-        nonce_str: __HELPER__.getNonceStr(32)
-    };
-    // 生成签名
-    params.sign = __WX_PAY_HELPER__.makeSign(params, __WX_PAY_CONFIG__.__KEY__);
+    const deferred = Q.defer();
+
     // 生成POST Data
-    const postData = __WX_PAY_HELPER__.convertToXml(params);
+    const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructQueryOrderParams(request));
     __LOGGER__.debug(postData);
     // 调用关闭订单API
-    __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__ORDER_QUERY__, postData, function (result) {
-
+    __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__ORDER_QUERY__, postData, function (rawData) {
+        __WX_PAY_DATA__
+            .parseReturnQueryOrder(rawData)       // 对返回结果进行解析【XML转JSON】
+            .then(function (result) {             // 确认无误后回传给 Controller
+                deferred.resolve(result);
+            })
+            .catch(function (err) {
+                deferred.reject(err);
+            });
     });
+
+    return deferred.promise;
+}
+
+function handlePayResultNotification(request) {
+    return __WX_PAY_HELPER__.checkSign(request.body.xml);
 }
 
 /**
@@ -110,22 +108,17 @@ function queryOrder(request) {
  * @param request
  */
 function downloadBill(request) {
-    const params = {
-        appid: __WX_PAY_CONFIG__.__APP_ID__,
-        bill_date: request.bill_date || MOMENT().subtract(2, 'days').format('YYYYMMDD'),            // 默认查询前一天
-        bill_type: request.bill_type || __WX_PAY_CONFIG__.__BILL_TYPE__.ALL,
-        mch_id: __WX_PAY_CONFIG__.__MCH_ID__,
-        nonce_str: __HELPER__.getNonceStr(32)
-    };
-    // 生成签名
-    params.sign = __WX_PAY_HELPER__.makeSign(params, __WX_PAY_CONFIG__.__KEY__);
+    const deferred = Q.defer();
+
     // 生成POST Data
-    const postData = __WX_PAY_HELPER__.convertToXml(params);
+    const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructDownloadBillParams(request));
     __LOGGER__.debug(postData);
     // 调用关闭订单API
     __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__DOWNLOAD_BILL__, postData, function (result) {
 
     });
+
+    return deferred.promise;
 }
 
 /**
@@ -137,48 +130,45 @@ function downloadBill(request) {
  * @param request
  */
 function downloadFundFlow(request) {
-    const params = {
-        appid: __WX_PAY_CONFIG__.__APP_ID__,
-        bill_date: request.bill_date || MOMENT().subtract(2, 'days').format('YYYYMMDD'),            // 默认查询前一天
-        account_type: request.account_type || 'Basic',
-        mch_id: __WX_PAY_CONFIG__.__MCH_ID__,
-        nonce_str: __HELPER__.getNonceStr(32)
-    };
-    // 生成签名
-    params.sign = __WX_PAY_HELPER__.makeSign(params, __WX_PAY_CONFIG__.__KEY__);
+    const deferred = Q.defer();
+
     // 生成POST Data
-    const postData = __WX_PAY_HELPER__.convertToXml(params);
+    const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructDownladFundFlowParams(request));
     __LOGGER__.debug(postData);
     // 调用关闭订单API
     __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__DOWNLOAD_FUND_FLOW__, postData, function (result) {
 
     });
+
+    return deferred.promise;
 }
 
 module.exports = {
     unifiedOrder: unifiedOrder,
     closeOrder: closeOrder,
-    queryOrder: queryOrder
+    queryOrder: queryOrder,
+    handlePayResultNotification: handlePayResultNotification
 };
 
-//unifiedOrder({
-//    body: 'body',
-//    attach: 'attach',
-//    total_fee: 1,
-//    goods_tag: 'nice',
-//    notify_url: 'http://www.baidu.com',
-//    spbill_create_ip: '192.168.0.2',
-//    openid: 'osCkO0a1sPv2YDNBIAw7wFXlTib4'
-//});
+// unifiedOrder({
+//     body: 'body',
+//     attach: 'attach',
+//     total_fee: 1,
+//     goods_tag: 'nice',
+//     notify_url: 'http://www.baidu.com',
+//     spbill_create_ip: '192.168.0.2',
+//     // openid: 'osCkO0a1sPv2YDNBIAw7wFXlTib4'    //  莆素
+//     openid: 'oX9I95Tz_AOX-oAdgAIYvE0lYDjc'
+// });
 
-//closeOrder({
+// closeOrder({
 //    out_trade_no: '132974140120180506095421'
-//});
+// });
 
-//queryOrder({
+// queryOrder({
 //    out_trade_no: '132974140120180506104719'
-//});
+// });
 
-//downloadBill({});
+// downloadBill({});
 
 //downloadFundFlow({});

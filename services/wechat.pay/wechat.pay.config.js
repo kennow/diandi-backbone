@@ -11,7 +11,12 @@ var config = {
     /**
      * APPID：绑定支付的APPID（必须配置，开户邮件中可查看）
      */
-    __APP_ID__: 'wx0a72bd7d41e0b066',
+    __APP_ID__: 'wxc91180e424549fbf',
+    /**
+     * APPSECRET：公众帐号secert（仅JSAPI支付的时候需要配置， 登录公众平台，进入开发者中心可设置）
+     * 获取地址：https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token=2005451881&lang=zh_CN
+     */
+    // __APP_SECRET__: 'e6a2dd10d7062b36bd8d73bd077b0edd',
     /**
      * MCHID：微信支付商户号（必须配置，开户邮件中可查看）
      */
@@ -22,11 +27,9 @@ var config = {
      */
     __KEY__: '1u7blt3a6qlwjf1xg2d9cnsiiiewr95g',
     /**
-     * APPSECRET：公众帐号secert（仅JSAPI支付的时候需要配置， 登录公众平台，进入开发者中心可设置）
-     * 获取地址：https://mp.weixin.qq.com/advanced/advanced?action=dev&t=advanced/dev&token=2005451881&lang=zh_CN
+     * 回传通知地址
      */
-    __APP_SECRET__: 'e6a2dd10d7062b36bd8d73bd077b0edd',
-    __NOTIFY_URL__: 'https://www.thinmelon.cc/business/notify.php',
+    __NOTIFY_URL__: 'https://www.thinmelon.cc:3000/shopping/wechat_pay/notification',
 
     //=======【证书路径设置】=====================================
 

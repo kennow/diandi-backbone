@@ -28,7 +28,7 @@ log4js.configure({
         },
         "rule-file": {
             "type": "dateFile",
-            "filename": PATH.join(PATH.resolve(__dirname, '..', '..'), "log", "huaqiao-backend-"),
+            "filename": PATH.join(PATH.resolve(__dirname, '..', '..'), "log", "diandi-backend-"),
             "encoding": "utf-8",
             "maxLogSize": 10000000,
             "numBackups": 3,
