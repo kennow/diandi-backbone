@@ -16,6 +16,7 @@ var api =
          */
         setUpConnection: function (parameters) {
             var deferred = Q.defer();
+
             // 从连接池获取连接
             this.pool.getConnection(function (err, connection) {
                 __LOGGER__.info('==> setUpConnection ==> callback | ' + err);
@@ -43,6 +44,7 @@ var api =
          */
         beginTransaction: function (request) {
             var deferred = Q.defer();
+
             // 启动事务
             request.connection.beginTransaction(function (err) {
                 __LOGGER__.info('==> beginTransaction ==> callback |  ' + err);
@@ -151,6 +153,41 @@ var api =
         },
 
         /**
+         *  抽象isRepeat的回调处理逻辑
+         * @param request
+         * @param deferred
+         * @param err
+         * @param result
+         */
+        isRepeatHandler: function (request, deferred, err, result) {
+            __LOGGER__.info('==> isRepeat ==> callback | ' + err);
+            if (err) {
+                deferred.reject({
+                    connection: request.connection,
+                    params: request.params,
+                    code: __ERROR__.failed,
+                    errMsg: err
+                });
+            } else {
+                __LOGGER__.debug(result);
+                if (result.length === 0 || result[0].number === 0) {
+                    deferred.resolve({
+                        connection: request.connection,
+                        params: request.params,
+                        result: result[0]
+                    });
+                } else {
+                    deferred.reject({
+                        connection: request.connection,
+                        params: request.params,
+                        code: __ERROR__.resubmitError,
+                        errMsg: '已存在，请确认是否重复提交.'
+                    });
+                }
+            }
+        },
+
+        /**
          * 检查目标项是否存在
          *  -   如果不存在，正常执行后续流程
          *  -   如果存在，reject
@@ -161,35 +198,30 @@ var api =
             var deferred = Q.defer();
 
             request.connection.query(request.params.isRepeatSQL, request.params.isRepeatParams, function (err, result) {
-                __LOGGER__.info('==> isRepeat ==> callback | ' + err);
-                if (err) {
-                    deferred.reject({
-                        connection: request.connection,
-                        params: request.params,
-                        code: __ERROR__.failed,
-                        errMsg: err
-                    });
-                } else {
-                    __LOGGER__.debug(result);
-                    if (result.length === 0 || result[0].number === 0) {
-                        deferred.resolve({
-                            connection: request.connection,
-                            params: request.params,
-                            result: result[0]
-                        });
-                    } else {
-                        deferred.reject({
-                            connection: request.connection,
-                            params: request.params,
-                            code: __ERROR__.resubmitError,
-                            errMsg: '已存在，请确认是否重复提交.'
-                        });
-                    }
-                }
+                api.isRepeatHandler(request, deferred, err, result);
             });
 
             return deferred.promise;
         },
+
+        /**
+         * 批量执行时调用
+         * @param request
+         * @returns {*|promise}
+         */
+        isRepeatPlus: function (request) {
+            var deferred = Q.defer();
+
+            request.connection.query(
+                request.params.isRepeatSQL,
+                request.params.isRepeatParams[request.params.oneStepIndex],
+                function (err, result) {
+                    api.isRepeatHandler(request, deferred, err, result);
+                });
+
+            return deferred.promise;
+        },
+
 
         /**
          * 插入
@@ -316,7 +348,7 @@ var api =
         },
 
         /**
-         * 修改请求参数
+         * 从上一次执行语句返回的结果中，找到对应属性，并修改请求参数
          * @param request
          * @returns {*|promise}
          */
@@ -325,8 +357,9 @@ var api =
             var params = request.params;
             //  检测属性是否存在
             if (params.hasOwnProperty(params.modifyParamsKey)
-                && params[params.modifyParamsKey][0].hasOwnProperty(params.modifyParamsAttribute)) {
-                params[params.modifyParamsKey][0][params.modifyParamsAttribute] = request.result.uid;
+                && params[params.modifyParamsKey][0].hasOwnProperty(params.modifyParamsAttribute)
+                && request.result.hasOwnProperty(params.resultKey)) {
+                params[params.modifyParamsKey][0][params.modifyParamsAttribute] = request.result[params.resultKey];
                 deferred.resolve({
                     connection: request.connection,
                     params: request.params
