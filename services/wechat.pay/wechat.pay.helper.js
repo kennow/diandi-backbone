@@ -1,6 +1,7 @@
 const Q = require('q');
 const __UTIL__ = require('util');
 const __CRYPTO__ = require('crypto');
+const __MOMENT__ = require('moment')();
 const __WX_PAY_CONFIG__ = require('./wechat.pay.config');
 const __ERROR_CODE__ = require('../../utility/error.code');
 
@@ -98,9 +99,26 @@ function convertToXml(args) {
     return postData;
 }
 
+/**
+ * 随机生成与支付订单相关的编号
+ * @returns {*}
+ */
+function generateRandomNO() {
+    const chars = '0123456789';
+    const count = chars.length;
+    var i, nonceStr = '';
+    for (i = 0; i < 8; i++) {
+        nonceStr += chars.substr(Math.floor(Math.random() * (count - 1) + 1), 1);
+    }
+    return __UTIL__.format('%s%s%s', __WX_PAY_CONFIG__.__MCH_ID__, __MOMENT__.format('YYYYMMDDHHmmss'), nonceStr);
+}
+
 module.exports = {
     convertToUrlParams: convertToUrlParams,
     makeSign: makeSign,
     checkSign: checkSign,
-    convertToXml: convertToXml
+    convertToXml: convertToXml,
+    generateRandomNO: generateRandomNO
 };
+
+generateRandomNO();

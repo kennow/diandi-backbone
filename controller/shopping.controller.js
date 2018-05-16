@@ -1,6 +1,27 @@
 const __UTIL__ = require('util');
 const __WX_PAY_SERVICE__ = require('../services/wechat.pay/wechat.pay.service');
-const __LOGGER__ = require('../services/log4js.service').getLogger('wechat.pay.controller.js');
+const __SHOPPING_DATABASE__ = require('../database/shopping.api');
+const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.controller.js');
+
+/**
+ *   获取商品列表
+ *
+ * @param request
+ * @param response
+ */
+function fetchProductList(request, response) {
+
+    __SHOPPING_DATABASE__
+        .fetchProductList(request)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
 
 /**
  * 提交统一订单
@@ -27,7 +48,7 @@ function submitUnifiedOrder(request, response) {
 
 /**
  * 收到微信支付的结果通知
-    *  { xml:
+ *  { xml:
     * { appid: 'wxc91180e424549fbf',
     *     bank_type: 'CMB_DEBIT',
     *     cash_fee: '1',
@@ -104,9 +125,13 @@ function queryOrder(request, response) {
 module.exports = {
     submitUnifiedOrder: submitUnifiedOrder,
     queryOrder: queryOrder,
-    receivePayResultNotification: receivePayResultNotification
+    receivePayResultNotification: receivePayResultNotification,
+    fetchProductList: fetchProductList
 };
 
+// fetchProductList({}, function (res) {
+//     // __LOGGER__.debug(res);
+// });
 // submitUnifiedOrder({
 //     body: {
 //         body: '测试',

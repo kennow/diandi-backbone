@@ -34,5 +34,9 @@ module.exports = {
     /**
      * 登录态失效
      */
-    loginStatusError: -800
+    loginStatusError: -800,
+    /**
+     * 库存不足
+     */
+    outOfStockError: -900
 };

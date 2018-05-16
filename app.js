@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
 var shoppingRouter = require('./routes/shopping.route');
+var userRouter = require('./routes/user.route');
 /**
  * The app object has methods for
  * Routing HTTP requests; see for example, app.METHOD and app.param.
@@ -100,6 +101,7 @@ app.use(express.static(path.join(__dirname, 'public')));
  * Middleware functions are executed sequentially, therefore the order of middleware inclusion is important.
  */
 app.use('/shopping', shoppingRouter);
+app.use('/user', userRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

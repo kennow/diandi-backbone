@@ -10,7 +10,7 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('credential.c
  */
 function login(request, response) {
     __CREDENTIAL_SERVICE__
-        .fetchUserOpenId(request.params.code)
+        .fetchUserOpenId(request.body.code)
         .then(__USER__.wechatMiniProgramLogin)
         .then(function (result) {
             __LOGGER__.debug(result);
@@ -25,11 +25,3 @@ function login(request, response) {
 module.exports = {
     login: login
 };
-
-// login({
-//     params: {
-//         code: '0710Sxug2GsMOB07uuug2yYuug20SxuS'
-//     }
-// }, function (result) {
-//
-// });
