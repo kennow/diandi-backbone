@@ -10,15 +10,30 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.con
  * @param response
  */
 function fetchProductList(request, response) {
-
     __SHOPPING_DATABASE__
         .fetchProductList(request)
         .then(function (result) {
-            __LOGGER__.debug(result);
             response(result);
         })
         .catch(function (exception) {
             __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ *   获取商品详情
+ *
+ * @param request
+ * @param response
+ */
+function fetchProductDetail(request, response) {
+    __SHOPPING_DATABASE__
+        .fetchProductDetail(request.params)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
             response(exception);
         });
 }
@@ -126,8 +141,19 @@ module.exports = {
     submitUnifiedOrder: submitUnifiedOrder,
     queryOrder: queryOrder,
     receivePayResultNotification: receivePayResultNotification,
-    fetchProductList: fetchProductList
+    fetchProductList: fetchProductList,
+    fetchProductDetail: fetchProductDetail
 };
+
+// fetchProductDetail(
+//     {
+//         params: {
+//             id: 'lJfQQu4AQGmxNCwfwrpzBnvxk9nRus2z'
+//         }
+//     }
+//     , function (res) {
+//         // __LOGGER__.debug(res);
+//     });
 
 // fetchProductList({}, function (res) {
 //     // __LOGGER__.debug(res);

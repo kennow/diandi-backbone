@@ -12,10 +12,25 @@ function render(request, response, next) {
     }
 }
 
+/**
+ *  商品列表
+ */
 router.get('/product/list', function (req, res, next) {
     __LOGGER__.info('========================== Product List ==========================');
     __LOGGER__.debug(req.params);
     __CONTROLLER_SHOPPING__.fetchProductList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *   商品详情
+ */
+router.get('/product/detail/:id', function (req, res, next) {
+    __LOGGER__.info('========================== Product Detail ==========================');
+    __LOGGER__.debug(req.params);
+    __CONTROLLER_SHOPPING__.fetchProductDetail(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });

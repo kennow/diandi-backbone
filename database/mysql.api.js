@@ -288,7 +288,7 @@ var api =
         },
 
         /**
-         *
+         * 基础查询
          * @param request
          * @returns {*|promise}
          */
@@ -299,6 +299,66 @@ var api =
                 __LOGGER__.info('==> basicQuery ==> callback |  ' + err);
                 api.commonHandler(deferred, request, err, result);
             });
+
+            return deferred.promise;
+        },
+
+        /**
+         * 批量查询
+         * @param request
+         */
+        batchQuery: function (request) {
+            var deferred = Q.defer();
+
+            request.connection.query(
+                request.params.batchQuerySQL[request.params.batchQueryIndex],
+                request.params.batchQueryParams[request.params.batchQueryIndex],
+                function (err, result) {
+                    __LOGGER__.info('==> batchQuery ==> callback |  ' + err);
+                    if (err) {
+                        deferred.reject(err);
+                    } else {
+                        deferred.resolve(result);
+                    }
+                });
+
+            return deferred.promise;
+        },
+
+        // 启动批量查询
+        inAll: function (request) {
+            var i, length, tasks = [], deferred = Q.defer();
+            //  将查询语句放入执行队列
+            //  由于Q.all异步启动所有任务，在放入队列前，要确认执行的语句及其参数
+            for (i = 0, length = request.params.batchQuerySQL.length; i < length; i++) {
+                tasks.push(api.batchQuery(request));
+                request.params.batchQueryIndex = request.params.batchQueryIndex + 1;
+            }
+
+            Q.all(tasks)
+            // 所有任务执行结束后，对返回结果进行修饰
+                .then(function (rawData) {
+                    var j, result = {};
+                    // 为按顺序返回的各个结果集添加标签
+                    __LOGGER__.debug(rawData);
+                    for (j = 0; j < rawData.length; j++) {
+                        result[request.params.batchQueryTag[j]] = rawData[j];
+                    }
+                    deferred.resolve({
+                        connection: request.connection,
+                        params: request.params,
+                        result: result
+                    });
+                })
+                .catch(function (exception) {
+                    __LOGGER__.error(exception);
+                    deferred.reject({
+                        connection: request.connection,
+                        params: request.params,
+                        code: __ERROR__.failed,
+                        errMsg: exception
+                    });
+                });
 
             return deferred.promise;
         },

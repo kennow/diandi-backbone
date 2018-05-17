@@ -6,117 +6,6 @@ const __STATEMENT__ = require('./shopping.sql.statement');
 const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.api.js');
 
 /**
- *      新增收件人
- * @param request
- * @returns {*|promise}
- */
-function addConsignee(request) {
-    const deferred = Q.defer();
-    const consignee_no = __HELPER__.getNonceStr(32);
-
-    __MYSQL_API__
-        .setUpConnection({
-            /**
-             *  1. 检测登录态
-             */
-            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
-            checkSessionParams: [
-                request.session
-            ],
-            /**
-             *  2. 找到对应的 user_id
-             */
-            singleLineQuerySQL: __STATEMENT__.__FETCH_USER_INFO__,
-            singleLineQueryParams: [
-                request.session
-            ],
-            /**
-             *  3. 调整参数
-             */
-            modifyParamsKey: 'basicInsertParams',
-            modifyParamsAttribute: 'user_id',
-            resultKey: 'uid',
-            /**
-             *  4. 新增收件人
-             */
-            basicInsertSQL: __STATEMENT__.__ADD_NEW_CONSIGNEE__,
-            basicInsertParams: [{
-                'consignee_no': consignee_no,
-                'user_id': 0,
-                'name': request.name,
-                'mobile': request.mobile,
-                'address': request.address,
-                'postcode': request.postcode,
-                'isDefault': request.isDefault
-            }]
-        })
-        .then(__MYSQL_API__.beginTransaction)
-        .then(__MYSQL_API__.checkSession)
-        .then(__MYSQL_API__.singleLineQuery)
-        .then(__MYSQL_API__.modifyRequestParams)
-        .then(__MYSQL_API__.basicInsert)
-        .then(__MYSQL_API__.commitTransaction)
-        .then(__MYSQL_API__.cleanup)
-        .then(function (result) {
-            deferred.resolve(result);
-        })
-        .catch(function (request) {
-            __MYSQL_API__.onRejectWithRollback(request, function (response) {
-                deferred.reject(response);
-            });
-        });
-
-    return deferred.promise;
-}
-
-/**
- *      设置缺省收件人
- * @param request
- * @returns {*|promise}
- */
-function setAsDefaultConsignee(request) {
-    const deferred = Q.defer();
-
-    __MYSQL_API__
-        .setUpConnection({
-            /**
-             *  1. 检测登录态
-             */
-            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
-            checkSessionParams: [
-                request.session
-            ],
-            /**
-             *  2. 新增收件人
-             */
-            oneStepIndex: 0,
-            oneStepSQLs: [
-                __STATEMENT__.__SET_ALL_CONSIGNEE__,
-                __STATEMENT__.__SET_SPECIFIC_CONSIGNEE__
-            ],
-            oneStepParams: [
-                [0, request.session],
-                [1, request.consignee_no]
-            ]
-        })
-        .then(__MYSQL_API__.beginTransaction)
-        .then(__MYSQL_API__.checkSession)
-        .then(__MYSQL_API__.executeInOrder)
-        .then(__MYSQL_API__.commitTransaction)
-        .then(__MYSQL_API__.cleanup)
-        .then(function (result) {
-            deferred.resolve(result);
-        })
-        .catch(function (request) {
-            __MYSQL_API__.onRejectWithRollback(request, function (response) {
-                deferred.reject(response);
-            });
-        });
-
-    return deferred.promise;
-}
-
-/**
  *      新增SKU属性值
  * @param request
  */
@@ -604,7 +493,46 @@ function fetchProductList(request) {
             deferred.resolve(result);
         })
         .catch(function (request) {
-            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ *   获取商品详情
+ *
+ * @param request
+ * @returns {*|promise}
+ */
+function fetchProductDetail(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            batchQueryIndex: 0,                             //  索引
+            batchQueryTag: [                                //  标签
+                'standards',
+                'skuList'
+            ],
+            batchQuerySQL: [                                //  执行语句
+                __STATEMENT__.__FETCH_PRODUCT_STANDARDS__,
+                __STATEMENT__.__FETCH_SKU_LIST__
+            ],
+            batchQueryParams: [                             //  对应参数
+                [request.id],
+                [request.id]
+            ]
+        })
+        .then(__MYSQL_API__.inAll)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
                 deferred.reject(response);
             });
         });
@@ -614,10 +542,13 @@ function fetchProductList(request) {
 
 module.exports = {
     fetchProductList: fetchProductList,
-    addStockAttribute: addStockAttribute,
-    addConsignee: addConsignee,
-    setAsDefaultConsignee: setAsDefaultConsignee
+    fetchProductDetail: fetchProductDetail,
+    addStockAttribute: addStockAttribute
 };
+
+// fetchProductDetail({
+//     product_id: 'lJfQQu4AQGmxNCwfwrpzBnvxk9nRus2z'
+// });
 
 // fetchProductList({}, function (result) {
 //     __LOGGER__.debug(result);
