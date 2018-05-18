@@ -1,3 +1,4 @@
+const Q = require('q');
 const __UTIL__ = require('util');
 const __WX_PAY_SERVICE__ = require('../services/wechat.pay/wechat.pay.service');
 const __SHOPPING_DATABASE__ = require('../database/shopping.api');
@@ -45,14 +46,29 @@ function fetchProductDetail(request, response) {
  */
 function submitUnifiedOrder(request, response) {
 
-    __WX_PAY_SERVICE__
-        .unifiedOrder({
-            body: request.body.body,
-            total_fee: request.body.total_fee,
-            openid: request.body.openid
+
+    const body = request.body.body;
+    const total_fee = request.body.total_fee;
+
+    __SHOPPING_DATABASE__
+        .fetchUserOpenId(request.body)
+        .then(function (request) {      //  作下调整
+            const deferred = Q.defer();
+            deferred.resolve({
+                body: body,
+                total_fee: total_fee,
+                openid: request.msg.openid
+            });
+            return deferred.promise;
         })
+        .then(__WX_PAY_SERVICE__.unifiedOrder)
         .then(function (result) {
             __LOGGER__.debug(result);
+            if (result.return_code === 'SUCCESS' &&
+                result.return_msg === 'OK'
+            ) {
+                //TODO::  存入数据库，保存预支付订单
+            }
             response(result);
         })
         .catch(function (exception) {
@@ -144,6 +160,16 @@ module.exports = {
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail
 };
+
+submitUnifiedOrder({
+    body: {
+        body: 'TEST     ------      ',
+        total_fee: 11,
+        session: 'v2oywgcg1AyBjVfQ3n0vgJyVD1npJZNP'
+    }
+}, function (res) {
+    __LOGGER__.debug(res);
+});
 
 // fetchProductDetail(
 //     {

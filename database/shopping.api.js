@@ -244,6 +244,47 @@ function joinToCart(request) {
 }
 
 /**
+ *    用3rd session 换取openid
+ *
+ * @param request
+ * @returns {*|promise}
+ */
+function fetchUserOpenId(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 找到对应的 open_id
+             */
+            singleLineQuerySQL: __STATEMENT__.__FETCH_USER_INFO__,
+            singleLineQueryParams: [
+                request.session
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.singleLineQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
  * 提交订单
  * @param request
  * @returns {*|promise}
@@ -283,13 +324,12 @@ function submitNewOrder(request) {
             attach: request.order.attach,                   //  用户留言
             prepayID: request.order.prepayID                //  微信支付prepay_id
         }],
-
-        checkStockSQL: __STATEMENT__.__CHECK_STOCK__,
-        checkStockParams: [],
-        checkStockAmount: [],
         /**
          *  5. 更新库存，并添加关联
          */
+        checkStockSQL: __STATEMENT__.__CHECK_STOCK__,
+        checkStockParams: [],
+        checkStockAmount: [],
         oneStepIndex: 0,
         oneStepSQLs: [],
         oneStepParams: [],
@@ -334,7 +374,8 @@ function submitNewOrder(request) {
 }
 
 /**
- * 关闭订单
+ *      关闭订单
+ *
  * @param request
  * @returns {*|promise}
  */
@@ -541,6 +582,7 @@ function fetchProductDetail(request) {
 }
 
 module.exports = {
+    fetchUserOpenId: fetchUserOpenId,
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail,
     addStockAttribute: addStockAttribute
