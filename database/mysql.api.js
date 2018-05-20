@@ -310,6 +310,8 @@ var api =
         batchQuery: function (request) {
             var deferred = Q.defer();
 
+            __LOGGER__.debug(request.params.batchQuerySQL[request.params.batchQueryIndex])
+            __LOGGER__.debug(request.params.batchQueryParams[request.params.batchQueryIndex])
             request.connection.query(
                 request.params.batchQuerySQL[request.params.batchQueryIndex],
                 request.params.batchQueryParams[request.params.batchQueryIndex],
@@ -336,11 +338,11 @@ var api =
             }
 
             Q.all(tasks)
-            // 所有任务执行结束后，对返回结果进行修饰
+                // 所有任务执行结束后，对返回结果进行修饰
                 .then(function (rawData) {
                     var j, result = {};
                     // 为按顺序返回的各个结果集添加标签
-                    __LOGGER__.debug(rawData);
+                    //__LOGGER__.debug(rawData);
                     for (j = 0; j < rawData.length; j++) {
                         result[request.params.batchQueryTag[j]] = rawData[j];
                     }
@@ -609,6 +611,9 @@ var api =
         stepX: function (request) {
             var deferred = Q.defer();
 
+            __LOGGER__.info(request.params.xStepIndex);
+            __LOGGER__.info(request.params.xStepSQLs[request.params.xStepIndex]);
+            __LOGGER__.info(request.params.xStepParams[request.params.xStepIndex]);
             request.connection.query(
                 request.params.xStepSQLs[request.params.xStepIndex],
                 request.params.xStepParams[request.params.xStepIndex],

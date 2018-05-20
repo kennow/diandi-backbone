@@ -79,4 +79,52 @@ router.get('/my/consignee/:session', function (req, res, next) {
     });
 });
 
+/**
+ *   我的购物车
+ */
+router.get('/my/cart/:session', function (req, res, next) {
+    __LOGGER__.info('========================== My Cart ==========================');
+    __LOGGER__.debug(req.params);
+    __USER__.fetchMyCart(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *  添加至购物车
+ */
+router.post('/cart/new', function (req, res, next) {
+    __LOGGER__.info('========================== Join To Cart ==========================');
+    __LOGGER__.debug(req.body);
+    __USER__.joinToCart(req, function (request) {
+        res.json(request, res, next);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *  更新我的购物车
+ */
+router.post('/cart/update', function (req, res, next) {
+    __LOGGER__.info('========================== Update My Cart ==========================');
+    __LOGGER__.debug(req.body);
+    __USER__.updateMyCart(req, function (request) {
+        res.json(request, res, next);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *  从购物车中移除商品
+ */
+router.post('/cart/remove', function (req, res, next) {
+    __LOGGER__.info('========================== Remove Item From Cart ==========================');
+    __LOGGER__.debug(req.body);
+    __USER__.removeMyCart(req, function (request) {
+        res.json(request, res, next);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
 module.exports = router;

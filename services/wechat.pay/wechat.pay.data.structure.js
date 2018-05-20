@@ -135,7 +135,7 @@ function constructUnifiedOrderParams(request) {
         body: request.body,                                         //  商品简单描述
         detail: request.detail || '',                               //  商品详细描述
         attach: request.attach || '',                               //  附加数据，在查询API和支付通知中原样返回
-        out_trade_no: __WX_PAY_CONFIG__.__MCH_ID__ + MOMENT().format('YYYYMMDDHHmmss'),     //  商户系统内部订单号
+        out_trade_no: request.out_trade_no,                         //  商户系统内部订单号
         fee_type: request.fee_type || 'CNY',                        //  符合ISO 4217标准的三位字母代码，默认人民币：CNY
         total_fee: request.total_fee,                               //  订单总金额
         spbill_create_ip: request.spbill_create_ip || __WX_PAY_CONFIG__.__SPBILL_CREATE_IP__,   //  APP和网页支付提交用户端ip

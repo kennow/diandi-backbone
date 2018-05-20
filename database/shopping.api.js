@@ -184,66 +184,6 @@ function createNewProduct(request) {
 }
 
 /**
- *   加入购物车
- *
- * @param request
- * @returns {*|promise}
- */
-function joinToCart(request) {
-    const deferred = Q.defer();
-
-    var params = {
-        /**
-         *  1. 检测登录态
-         */
-        checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
-        checkSessionParams: [
-            request.session
-        ],
-        /**
-         *  2. 加入购物车
-         */
-        xStepIndex: 0,
-        xStepCount: 0,
-        xStepSQLs: [],
-        xStepParams: []
-    };
-    params.xStepCount = request.cart.length;
-    for (var i = 0; i < params.xStepCount; i++) {
-        // SQL语句
-        params.xStepSQLs.push(__STATEMENT__.__CHECK_CART__);
-        params.xStepSQLs.push(__STATEMENT__.__JOIN_TO_CART__);
-        params.xStepSQLs.push(__STATEMENT__.__UPDATE_CART__);
-        // SQL语句的执行参数
-        params.xStepParams.push([request.cart[i].user_id, request.cart[i].stock_no]);
-        params.xStepParams.push({
-            user_id: request.cart[i].user_id,
-            stock_no: request.cart[i].stock_no,
-            amount: request.cart[i].amount
-        });
-        params.xStepParams.push([request.cart[i].amount, request.cart[i].user_id, request.cart[i].stock_no]);
-    }
-
-    __MYSQL_API__
-        .setUpConnection(params)
-        .then(__MYSQL_API__.beginTransaction)
-        .then(__MYSQL_API__.checkSession)
-        .then(__MYSQL_API__.executeStepX)
-        .then(__MYSQL_API__.commitTransaction)
-        .then(__MYSQL_API__.cleanup)
-        .then(function (result) {
-            deferred.resolve(result);
-        })
-        .catch(function (request) {
-            __MYSQL_API__.onRejectWithRollback(request, function (response) {
-                deferred.reject(response);
-            });
-        });
-
-    return deferred.promise;
-}
-
-/**
  *    用3rd session 换取openid
  *
  * @param request
@@ -293,39 +233,19 @@ function submitNewOrder(request) {
     const deferred = Q.defer();
     var params = {
         /**
-         *  1. 检测登录态
-         */
-        checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
-        checkSessionParams: [
-            request.session
-        ],
-        /**
-         *  2. 找到对应的 user_id
-         */
-        singleLineQuerySQL: __STATEMENT__.__FETCH_USER_INFO__,
-        singleLineQueryParams: [
-            request.session
-        ],
-        /**
-         *  3. 调整参数
-         */
-        modifyParamsKey: 'basicInsertParams',
-        modifyParamsAttribute: 'user_id',
-        resultKey: 'uid',
-        /**
-         *  4. 生成预支付订单
+         *  1. 生成预支付订单
          */
         basicInsertSQL: __STATEMENT__.__ADD_NEW_ORDER__,
         basicInsertParams: [{
             out_trade_no: request.order.out_trade_no,
-            user_id: 0,
+            user_id: request.order.user_id,
             consignee_no: request.order.consignee_no,       //  订单收件人ID
             totalFee: request.order.totalFee,               //  订单总金额
             attach: request.order.attach,                   //  用户留言
             prepayID: request.order.prepayID                //  微信支付prepay_id
         }],
         /**
-         *  5. 更新库存，并添加关联
+         *  2. 更新库存，并添加关联
          */
         checkStockSQL: __STATEMENT__.__CHECK_STOCK__,
         checkStockParams: [],
@@ -354,9 +274,6 @@ function submitNewOrder(request) {
     __MYSQL_API__
         .setUpConnection(params)
         .then(__MYSQL_API__.beginTransaction)
-        .then(__MYSQL_API__.checkSession)               //  检查用户登录状态
-        .then(__MYSQL_API__.singleLineQuery)
-        .then(__MYSQL_API__.modifyRequestParams)
         .then(__MYSQL_API__.basicInsert)                //  生成预支付订单
         .then(__MYSQL_API__.executeInOrderPlus)
         .then(__MYSQL_API__.commitTransaction)
@@ -410,24 +327,44 @@ function closeOrder(request) {
  * @returns {*|promise}
  * @constructor
  */
-function UpdateOrderAfterPay(request) {
+function updateOrderAfterPay(request) {
     const deferred = Q.defer();
 
     __MYSQL_API__
         .setUpConnection({
-            basicUpdateSQL: __STATEMENT__.__UPDATE_ORDER_AFTER_PAY__,
-            basicUpdateParams: [
-                request.bankType,
-                request.mchID,
-                request.tradeType,
-                request.transactionID,
-                request.payTime,
-                request.status,
-                request.out_trade_no
+            xStepIndex: 0,
+            xStepCount: 1,
+            xStepSQLs: [
+                __STATEMENT__.__CHECK_CONSISTENCY__,
+                __STATEMENT__.__UPDATE_ORDER_AFTER_PAY__,
+                __STATEMENT__.__UPDATE_ORDER_AFTER_PAY__
+            ],
+            xStepParams: [
+                [request.out_trade_no, request.total_fee],
+                [
+                    request.bank_type,
+                    request.mch_id,
+                    request.trade_type,
+                    request.transaction_id,
+                    request.time_end,
+                    __CONFIG__.__ENUM_ORDER_STATUS__.ABNORMAL,
+                    '异常：订单金额与实际支付金额不一致',
+                    request.out_trade_no
+                ],
+                [
+                    request.bank_type,
+                    request.mch_id,
+                    request.trade_type,
+                    request.transaction_id,
+                    request.time_end,
+                    __CONFIG__.__ENUM_ORDER_STATUS__.SUCCESS,
+                    '支付成功',
+                    request.out_trade_no
+                ]
             ]
         })
         .then(__MYSQL_API__.beginTransaction)
-        .then(__MYSQL_API__.basicUpdate)
+        .then(__MYSQL_API__.executeStepX)
         .then(__MYSQL_API__.commitTransaction)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
@@ -585,7 +522,9 @@ module.exports = {
     fetchUserOpenId: fetchUserOpenId,
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail,
-    addStockAttribute: addStockAttribute
+    addStockAttribute: addStockAttribute,
+    submitNewOrder: submitNewOrder,
+    updateOrderAfterPay: updateOrderAfterPay
 };
 
 // fetchProductDetail({
@@ -605,17 +544,15 @@ module.exports = {
 //     __LOGGER__.debug(result);
 // });
 
-// UpdateOrderAfterPay({
-//     bankType: 'CMBC_CREDIT',
-//     mchID: '1329741401',
-//     tradeType: 'JSAPI',
-//     transactionID: '4009922001201709121702151317',
-//     payTime: null,
-//     status: __CONFIG__.__ENUM_ORDER_STATUS__.SUCCESS,
-//     out_trade_no: 'zONc9tfoLodZ4zLKnp2cY4uotDFJXVdr'
-// }, function (result) {
-//     __LOGGER__.debug(result);
-// });
+//UpdateOrderAfterPay({
+//    bankType: 'CMBC_CREDIT',
+//    mchID: '1329741401',
+//    tradeType: 'JSAPI',
+//    transactionID: '4009922001201709121702151317',
+//    payTime: null,
+//    status: __CONFIG__.__ENUM_ORDER_STATUS__.SUCCESS,
+//    out_trade_no: 'zONc9tfoLodZ4zLKnp2cY4uotDFJXVdr'
+//});
 
 // const __WECHAT_PAY_HELPER__ = require('../services/wechat.pay/wechat.pay.helper');
 // submitNewRefund({
@@ -656,18 +593,18 @@ module.exports = {
 //     __LOGGER__.info(result);
 // });
 
-// joinToCart({
-//     session: 'vRv7IR9Yvfn0673YPnz8dVVS9icfe66A',
-//     cart: [
-//         {user_id: 1, stock_no: 'gUKvRPUIP8R5LmmFm67csknO35fz2Mhl', amount: 10},
-//         {user_id: 1, stock_no: 'JZtt2fIe5UcVTo3exOqddkuZDbMgQjks', amount: 1000},
-//         {user_id: 2, stock_no: 'NoD1fgBx5ncrtWnO9wIGLf5AsxRSjfVz', amount: 100000},
-//         {user_id: 1, stock_no: 'RVwHEVMTUBOt2xRpu8l8wNHMo9g8uhi5', amount: -1},
-//         {user_id: 1, stock_no: 'wnbIf9JrMH7q2bSVZLzxyP6l6NlsBbSe', amount: 10}
-//     ]
-// }, function (result) {
-//     __LOGGER__.info(result);
-// });
+//joinToCart({
+//    session: 'HJwC99VlJhgjN4yzLL3MuqhWIFlBlDwh',
+//    cart: [
+//        {stock_no: 'gUKvRPUIP8R5LmmFm67csknO35fz2Mhl', amount: 10},
+//        {stock_no: 'JZtt2fIe5UcVTo3exOqddkuZDbMgQjks', amount: 1000},
+//        {stock_no: 'NoD1fgBx5ncrtWnO9wIGLf5AsxRSjfVz', amount: 100000},
+//        { stock_no: 'RVwHEVMTUBOt2xRpu8l8wNHMo9g8uhi5', amount: 90},
+//        { stock_no: 'wnbIf9JrMH7q2bSVZLzxyP6l6NlsBbSe', amount: 10}
+//    ]
+//}, function (result) {
+//    __LOGGER__.info(result);
+//});
 
 // createNewProduct({
 //         session: 'vRv7IR9Yvfn0673YPnz8dVVS9icfe66A',

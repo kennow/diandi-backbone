@@ -165,6 +165,12 @@ function editConsignee(request) {
     return deferred.promise;
 }
 
+/**
+ *   移除收件人
+ *
+ * @param request
+ * @returns {*}
+ */
 function removeConsignee(request) {
     const deferred = Q.defer();
 
@@ -330,6 +336,172 @@ function fetchMyConsignee(request) {
     return deferred.promise;
 }
 
+/**
+ *      我的购物车
+ *
+ * @param request
+ * @returns {*}
+ */
+function fetchMyCart(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            batchQueryIndex: 0,                             //  索引
+            batchQueryTag: [                                //  标签
+                'cart',
+                'sku'
+            ],
+            batchQuerySQL: [                                //  执行语句
+                __STATEMENT__.__FETCH_MY_CART__,
+                __STATEMENT__.__FETCH_PRODUCT_SKU__
+            ],
+            batchQueryParams: [                             //  对应参数
+                [request.session],
+                [request.session]
+            ]
+        })
+        .then(__MYSQL_API__.inAll)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ *   加入购物车
+ *
+ * @param request
+ * @returns {*|promise}
+ */
+function addOrUpdate(request, sql) {
+    const deferred = Q.defer();
+
+    var params = {
+        /**
+         *  1. 检测登录态
+         */
+        checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+        checkSessionParams: [
+            request.session
+        ],
+        /**
+         *  2. 找到对应的 user_id
+         */
+        singleLineQuerySQL: __STATEMENT__.__FETCH_USER_INFO__,
+        singleLineQueryParams: [
+            request.session
+        ],
+        /**
+         *  3. 加入购物车
+         */
+        xStepIndex: 0,
+        xStepCount: 0,
+        xStepSQLs: [],
+        xStepParams: []
+    };
+    var cart = JSON.parse(request.cart);
+
+    __MYSQL_API__
+        .setUpConnection(params)
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.singleLineQuery)
+        .then(function (request) {
+            var deferred = Q.defer();
+
+            request.params.xStepCount = cart.length;
+            for (var i = 0; i < request.params.xStepCount; i++) {
+                // SQL语句
+                request.params.xStepSQLs.push(__STATEMENT__.__CHECK_CART__);
+                request.params.xStepSQLs.push(__STATEMENT__.__JOIN_TO_CART__);
+                request.params.xStepSQLs.push(sql);
+                // SQL语句的执行参数
+                request.params.xStepParams.push([request.result.uid, cart[i].stock_no]);
+                request.params.xStepParams.push({
+                    user_id: request.result.uid,
+                    stock_no: cart[i].stock_no,
+                    amount: cart[i].amount
+                });
+                request.params.xStepParams.push([cart[i].amount, request.result.uid, cart[i].stock_no]);
+            }
+            deferred.resolve(request);
+            return deferred.promise;
+        })
+        .then(__MYSQL_API__.executeStepX)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+function joinToCart(request) {
+    return addOrUpdate(request, __STATEMENT__.__ADD_CART__)
+}
+
+function updateMyCart(request) {
+    return addOrUpdate(request, __STATEMENT__.__UPDATE_CART__)
+}
+
+/**
+ *   从购物车中移除商品
+ *
+ * @param request
+ * @returns {*}
+ */
+function removeMyCart(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 移除商品
+             */
+            deleteSQL: __STATEMENT__.__REMOVE_MY_CART__,
+            deleteParams: [
+                request.stock_no,
+                request.session
+            ]
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicDelete)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     wechatMiniProgramLogin: wechatMiniProgramLogin,
     addConsignee: addConsignee,
@@ -337,10 +509,18 @@ module.exports = {
     removeConsignee: removeConsignee,
     setAsDefaultConsignee: setAsDefaultConsignee,
     fetchDefaultConsignee: fetchDefaultConsignee,
-    fetchMyConsignee: fetchMyConsignee
+    fetchMyConsignee: fetchMyConsignee,
+    fetchMyCart: fetchMyCart,
+    joinToCart: joinToCart,
+    updateMyCart: updateMyCart,
+    removeMyCart: removeMyCart
 };
 
 // wechatMiniProgramLogin({
 //     session_key: 'xyUjCiulVSjZJY0ozZ+76w==',
 //     openid: 'oX9I95Tz_AOX-oAdgAIYvE0lYDjc'
 // });
+
+//fetchMyCart({
+//    session: 'HJwC99VlJhgjN4yzLL3MuqhWIFlBlDwh'
+//});

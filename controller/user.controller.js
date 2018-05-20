@@ -106,12 +106,83 @@ function editConsignee(request, response) {
 
 /**
  *   删除收件人
+ *
  * @param request
  * @param response
  */
 function removeConsignee(request, response) {
     __USER__
         .removeConsignee(request)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            response(exception);
+        });
+}
+
+/**
+ *   我的购物车
+ *
+ * @param request
+ * @param response
+ */
+function fetchMyCart(request, response) {
+    __USER__
+        .fetchMyCart(request.params)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            response(exception);
+        });
+}
+
+/**
+ *    加入购物车
+ *
+ * @param request
+ * @param response
+ */
+function joinToCart(request, response) {
+    __USER__
+        .joinToCart(request.body)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ *    编辑我的购物车
+ *
+ * @param request
+ * @param response
+ */
+function updateMyCart(request, response) {
+    __USER__
+        .updateMyCart(request.body)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ *   从我的购物车中移除商品
+ *
+ * @param request
+ * @param response
+ */
+function removeMyCart(request, response) {
+    __USER__
+        .removeMyCart(request.body)
         .then(function (result) {
             response(result);
         })
@@ -128,8 +199,44 @@ module.exports = {
     removeConsignee: removeConsignee,
     setAsDefaultConsignee: setAsDefaultConsignee,
     fetchMyConsignee: fetchMyConsignee,
-    fetchDefaultConsignee: fetchDefaultConsignee
+    fetchDefaultConsignee: fetchDefaultConsignee,
+    fetchMyCart: fetchMyCart,
+    joinToCart: joinToCart,
+    updateMyCart: updateMyCart,
+    removeMyCart: removeMyCart
 };
+
+//updateMyCart({
+//    body: {
+//        session: '1xLTplWf3JUUpjMbg8rHR1d9eVIbrqNG',
+//        cart: JSON.stringify([
+//            {stock_no: 'gUKvRPUIP8R5LmmFm67csknO35fz2Mhl', amount: 10},
+//            {stock_no: 'JZtt2fIe5UcVTo3exOqddkuZDbMgQjks', amount: 1000},
+//            {stock_no: 'NoD1fgBx5ncrtWnO9wIGLf5AsxRSjfVz', amount: 100000},
+//            {stock_no: 'RVwHEVMTUBOt2xRpu8l8wNHMo9g8uhi5', amount: 90},
+//            {stock_no: 'wnbIf9JrMH7q2bSVZLzxyP6l6NlsBbSe', amount: 10}
+//        ])
+//    }
+//}, function (result) {
+//    __LOGGER__.info(result);
+//});
+
+//removeMyCart({
+//    body: {
+//        session: 'S5UNXKX4KPUlRkwqDZFKTZAygJUZXT9i',
+//        stock_no: 'NoD1fgBx5ncrtWnO9wIGLf5AsxRSjfVz'
+//    }
+//},function (res) {
+//    __LOGGER__.debug(res)
+//})
+
+//fetchMyCart({
+//    params: {
+//        session: 's5qti4ggBiZ9AOIt7qfVuUvJq5NAc6A9'
+//    }
+//}, function (res) {
+//    __LOGGER__.debug(res.msg)
+//});
 
 // editConsignee({
 //     params: {

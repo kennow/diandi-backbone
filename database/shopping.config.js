@@ -6,6 +6,7 @@
  *      - REVOKED—已撤销（刷卡支付）        4
  *      - USERPAYING--用户支付中             5
  *      - PAYERROR--支付失败(其他原因，如银行返回失败)         6
+ *      - ABNORMAL--状态异常
  */
 const __ENUM_ORDER_STATUS__ = {
     NOTPAY: 0,
@@ -14,7 +15,8 @@ const __ENUM_ORDER_STATUS__ = {
     CLOSE: 3,
     REVOKED: 4,
     USERPAYING: 5,
-    PAYERROR: 6
+    PAYERROR: 6,
+    ABNORMAL: 7
 };
 
 module.exports = {

@@ -22,17 +22,25 @@ function unifiedOrder(request) {
         __WX_PAY_DATA__
             .parseReturnUnifiedOrder(rawData)       // 对返回结果进行解析【XML转JSON】
             .then(__WX_PAY_HELPER__.checkSign)      // 验证结果的正确性
-            .then(function (result) {             // 确认无误后回传给 Controller
-                const wxPayResult = __WX_PAY_DATA__.constructWechatPayResult(result);
-                // 回传参数：outTradeNo | timeStamp | nonceStr | package | paySign
-                deferred.resolve({
-                    return_code: result.return_code,
-                    return_msg: result.return_msg,
-                    timeStamp: wxPayResult.timeStamp,
-                    nonceStr: wxPayResult.nonceStr,
-                    package: wxPayResult.package,
-                    paySign: wxPayResult.paySign
-                });
+            .then(function (result) {               // 确认无误后回传给 Controller
+                if (result.return_code === 'SUCCESS' &&
+                    result.return_msg === 'OK'
+                ) {
+                    const wxPayResult = __WX_PAY_DATA__.constructWechatPayResult(result);
+                    // 回传参数：outTradeNo | timeStamp | nonceStr | package | paySign
+                    deferred.resolve({
+                        return_code: result.return_code,
+                        return_msg: result.return_msg,
+                        timeStamp: wxPayResult.timeStamp,
+                        nonceStr: wxPayResult.nonceStr,
+                        prepay_id: result.prepay_id,
+                        package: wxPayResult.package,
+                        paySign: wxPayResult.paySign
+                    });
+                }
+                else {
+                    deferred.reject(result);
+                }
             })
             .catch(function (err) {
                 deferred.reject(err);
@@ -95,6 +103,10 @@ function queryOrder(request) {
 
 function handlePayResultNotification(request) {
     return __WX_PAY_HELPER__.checkSign(request.body.xml);
+
+    //const deferred = Q.defer();
+    //deferred.resolve(request.body.xml);
+    //return deferred.promise;
 }
 
 /**
