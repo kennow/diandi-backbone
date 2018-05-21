@@ -15,6 +15,9 @@ const __CHECK_SKU_VALUE__ = 'SELECT COUNT(*) AS number FROM tb_sku_value WHERE v
 const __ADD_NEW_SKU__ = 'INSERT INTO tb_sku SET ?';
 const __ADD_NEW_PRODUCT__ = 'INSERT INTO tb_product SET ?';
 const __ADD_REL_PRODUCT_ATTR_VALUE__ = 'INSERT INTO rel_product_attribute_value SET ?';
+const __FETCH_PRODUCT_LIST__ = 'SELECT * FROM tb_product';
+const __FETCH_PRODUCT_STANDARDS__ = 'SELECT b.*, c.vid, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.pid = ? AND a.aid = b.aid AND a.vid = c.vid';
+const __FETCH_SKU_LIST__ = 'SELECT stock_no, unit, stock, attributes FROM tb_sku WHERE product_id = ?';
 /**
  *  订单
  */
@@ -25,12 +28,14 @@ const __UPDATE_PRODUCT_SALES__ = '';
 const __CHECK_CONSISTENCY__ = 'SELECT COUNT(*) AS number FROM tb_order WHERE out_trade_no = ? and totalFee = ?';
 const __UPDATE_ORDER_AFTER_PAY__ = 'UPDATE tb_order SET bankType = ?, mchID = ?, tradeType = ?, transactionID = ?, payTime = ?, status = ?, remark = ? WHERE out_trade_no = ?';
 const __CHANGE_ORDER_STATUS__ = 'UPDATE tb_order SET status = ? WHERE out_trade_no = ? ';
-const __FETCH_PRODUCT_LIST__ = 'SELECT * FROM tb_product';
-const __FETCH_PRODUCT_STANDARDS__ = 'SELECT b.*, c.vid, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.pid = ? AND a.aid = b.aid AND a.vid = c.vid';
-const __FETCH_SKU_LIST__ = 'SELECT stock_no, unit, stock, attributes FROM tb_sku WHERE product_id = ?';
+const __ADD_REL_ORDER_SKU__ = 'INSERT INTO rel_order_sku SET ?';
+const __FETCH_ORDER_DETAIL__ = 'SELECT a.freight, a.attach, a.payTime, b.name, b.mobile, b.address, b.postcode FROM tb_order a, tb_consignee b WHERE a.out_trade_no = ? and a.consignee_no  = b.consignee_no';
+/**
+ *   退款
+ */
 const __ADD_NEW_REFUND__ = 'INSERT INTO tb_refund SET ?';
 const __CHANGE_REFUND_STATUS__ = 'UPDATE tb_refund SET completeTime = ?, status = ?, remark = ? WHERE out_refund_no = ?';
-const __ADD_REL_ORDER_SKU__ = 'INSERT INTO rel_order_sku SET ?';
+
 
 module.exports = {
     __CHECK_SESSION__: __CHECK_SESSION__,
@@ -53,5 +58,6 @@ module.exports = {
     __CHANGE_ORDER_STATUS__: __CHANGE_ORDER_STATUS__,
     __UPDATE_PRODUCT_SALES__: __UPDATE_PRODUCT_SALES__,
     __ADD_NEW_REFUND__: __ADD_NEW_REFUND__,
-    __CHANGE_REFUND_STATUS__: __CHANGE_REFUND_STATUS__
+    __CHANGE_REFUND_STATUS__: __CHANGE_REFUND_STATUS__,
+    __FETCH_ORDER_DETAIL__: __FETCH_ORDER_DETAIL__
 };

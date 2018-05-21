@@ -43,7 +43,7 @@ router.get('/order/:id', function (req, res, next) {
     __LOGGER__.info('========================== Query Order ==========================');
     __LOGGER__.debug(req.params);
     __CONTROLLER_SHOPPING__.queryOrder(req, function (request) {
-        render(request, res, next);
+        res.json(request, res, next);
         __LOGGER__.info('========================== END ==========================');
     });
 });

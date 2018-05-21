@@ -376,7 +376,7 @@ function fetchMyCart(request) {
 }
 
 /**
- *   加入购物车
+ *   添加 / 更新
  *
  * @param request
  * @returns {*|promise}
@@ -450,10 +450,20 @@ function addOrUpdate(request, sql) {
     return deferred.promise;
 }
 
+/**
+ *   放入购物车
+ * @param request
+ * @returns {*|promise}
+ */
 function joinToCart(request) {
     return addOrUpdate(request, __STATEMENT__.__ADD_CART__)
 }
 
+/**
+ *   更新购物车
+ * @param request
+ * @returns {*|promise}
+ */
 function updateMyCart(request) {
     return addOrUpdate(request, __STATEMENT__.__UPDATE_CART__)
 }
@@ -502,18 +512,73 @@ function removeMyCart(request) {
     return deferred.promise;
 }
 
+/**
+ *      我的订单
+ *
+ * @param request
+ * @returns {*}
+ */
+function fetchMyOrders(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 批量查询订单
+             */
+            batchQueryIndex: 0,                             //  索引
+            batchQueryTag: [                                //  标签
+                'order',
+                'sku'
+            ],
+            batchQuerySQL: [                                //  执行语句
+                __STATEMENT__.__FETCH_MY_ORDER__,
+                __STATEMENT__.__FETCH_ORDER_SKU__
+            ],
+            batchQueryParams: [                             //  对应参数
+                [request.session, request.startTime],
+                [request.session, request.startTime]
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.inAll)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
+    // 小程序登录
     wechatMiniProgramLogin: wechatMiniProgramLogin,
+    // 收件人
     addConsignee: addConsignee,
     editConsignee: editConsignee,
     removeConsignee: removeConsignee,
     setAsDefaultConsignee: setAsDefaultConsignee,
     fetchDefaultConsignee: fetchDefaultConsignee,
     fetchMyConsignee: fetchMyConsignee,
+    // 购物车
     fetchMyCart: fetchMyCart,
     joinToCart: joinToCart,
     updateMyCart: updateMyCart,
-    removeMyCart: removeMyCart
+    removeMyCart: removeMyCart,
+    // 订单
+    fetchMyOrders: fetchMyOrders
 };
 
 // wechatMiniProgramLogin({

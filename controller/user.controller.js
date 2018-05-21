@@ -191,6 +191,22 @@ function removeMyCart(request, response) {
         });
 }
 
+/**
+ *   获取我的订单
+ *
+ * @param request
+ * @param response
+ */
+function fetchMyOrders(request, response) {
+    __USER__
+        .fetchMyOrders(request.body)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            response(exception);
+        });
+}
 
 module.exports = {
     login: login,
@@ -203,8 +219,18 @@ module.exports = {
     fetchMyCart: fetchMyCart,
     joinToCart: joinToCart,
     updateMyCart: updateMyCart,
-    removeMyCart: removeMyCart
+    removeMyCart: removeMyCart,
+    fetchMyOrders: fetchMyOrders
 };
+
+// fetchMyOrders({
+//     body: {
+//         session: 'ABssCvvogZEQuWGDdfHOYIA8tQXKuDbA',
+//         startTime: '20180519'
+//     }
+// }, function (result) {
+//     __LOGGER__.info(result);
+// });
 
 //updateMyCart({
 //    body: {

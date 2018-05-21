@@ -167,6 +167,7 @@ function queryOrder(request, response) {
         .queryOrder({
             out_trade_no: request.params.id
         })
+        .then(__SHOPPING_DATABASE__.fetchOrderDetail)
         .then(function (result) {
             __LOGGER__.debug(result);
             response(result);
@@ -185,6 +186,13 @@ module.exports = {
     fetchProductDetail: fetchProductDetail
 };
 
+// queryOrder({
+//     params: {
+//         id: '13297414012018051917224152133861'
+//     }
+// }, function (res) {
+//     __LOGGER__.debug(res);
+// });
 
 //submitUnifiedOrder({
 //    body: {

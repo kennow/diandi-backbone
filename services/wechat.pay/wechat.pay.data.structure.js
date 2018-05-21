@@ -70,8 +70,24 @@ function parseReturnQueryOrder(rawData) {
         } else {
             if(result.xml.result_code[0] === 'SUCCESS'){
                 if(result.xml.trade_state[0] === 'SUCCESS'){
-                    // TODO: 在return_code 、result_code、trade_state都为SUCCESS的情况下
-                    // TODO: 增加更多回传字段
+                    deferred.resolve({
+                        return_code: result.xml.return_code[0],        // 通信标识，非交易标识
+                        return_msg: result.xml.return_msg[0],          // 返回信息，如非空，为错误原因
+                        result_code: result.xml.result_code[0],        // 业务结果
+                        openid:result.xml.openid[0],                    // 用户在商户appid下的唯一标识
+                        is_subscribe:result.xml.is_subscribe[0],        // 用户是否关注公众账号
+                        trade_type:result.xml.trade_type[0],            // 调用接口提交的交易类型
+                        bank_type:result.xml.bank_type[0],              // 银行类型，采用字符串类型的银行标识
+                        total_fee:result.xml.total_fee[0],              // 订单总金额，单位为分
+                        fee_type:result.xml.fee_type[0],                // 货币类型
+                        transaction_id:result.xml.transaction_id[0],    // 微信支付订单号
+                        out_trade_no: result.xml.out_trade_no[0],       // 商户系统内部订单号
+                        attach:result.xml.attach[0],                    // 附加数据，原样返回
+                        time_end:result.xml.time_end[0],                // 订单支付时间
+                        cash_fee:result.xml.cash_fee[0],                // 业务结果
+                        trade_state: result.xml.trade_state[0],         // 现金支付金额订单现金支付金额
+                        trade_state_desc: result.xml.trade_state_desc[0]    // 对当前查询订单状态的描述和下一步操作的指引
+                    });
                 }else{
                     // 如果trade_state不为 SUCCESS，则只返回out_trade_no（必传）和attach（选传）
                     deferred.resolve({

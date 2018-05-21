@@ -127,4 +127,17 @@ router.post('/cart/remove', function (req, res, next) {
     });
 });
 
+/**
+ *  查询我的订单
+ */
+router.post('/my/order', function (req, res, next) {
+    __LOGGER__.info('========================== My Order ==========================');
+    __LOGGER__.debug(req.body);
+    __USER__.fetchMyOrders(req, function (request) {
+        res.json(request, res, next);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+
 module.exports = router;

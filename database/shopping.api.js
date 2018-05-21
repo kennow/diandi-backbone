@@ -518,13 +518,38 @@ function fetchProductDetail(request) {
     return deferred.promise;
 }
 
+function fetchOrderDetail(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            basicQuerySQL: __STATEMENT__.__FETCH_ORDER_DETAIL__,
+            basicQueryParams: [
+                request.out_trade_no
+            ]
+        })
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     fetchUserOpenId: fetchUserOpenId,
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail,
     addStockAttribute: addStockAttribute,
     submitNewOrder: submitNewOrder,
-    updateOrderAfterPay: updateOrderAfterPay
+    updateOrderAfterPay: updateOrderAfterPay,
+    fetchOrderDetail: fetchOrderDetail
 };
 
 // fetchProductDetail({

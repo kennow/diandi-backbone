@@ -69,8 +69,8 @@ function doHttpsPost(url, data, callback) {
             'Content-Length': Buffer.byteLength(postData)
         }
     };
-    __LOGGER__.info('=====  doHttpPost2 ==> URL: ' + url);
-    __LOGGER__.info('=====  doHttpPost2 ==> options: ' + JSON.stringify(options));
+    __LOGGER__.info('=====  doHttpsPost ==> URL: ' + url);
+    __LOGGER__.info('=====  doHttpsPost ==> options: ' + JSON.stringify(options));
     const req = __HTTPS__.request(options, function (res) {
         var data = '';
         res.on('data', function (chunk) {
