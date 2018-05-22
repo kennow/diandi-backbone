@@ -72,4 +72,16 @@ router.all('/wechat_pay/notification', function (req, res, next) {
     });
 });
 
+/**
+ *  退款结果通知
+ */
+router.all('/wechat_pay/refund/notification', function (req, res, next) {
+    __LOGGER__.info('===================== Refund Notification =====================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_SHOPPING__.receiveRefundResultNotification(req, function (request) {
+        res.send(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
 module.exports = router;

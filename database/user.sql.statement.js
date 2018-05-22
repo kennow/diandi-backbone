@@ -42,6 +42,11 @@ const __FETCH_ORDER_SKU__ = 'SELECT a.*, b.name, c.value ' +
     'a.pid in (SELECT DISTINCT c.product_id ' +
     'FROM tb_order a, rel_order_sku b, tb_sku c, tb_product d, tb_user e ' +
     'WHERE e.3rd_session = ? AND e.uid = a.user_id AND a.createTime < ? AND a.out_trade_no = b.out_trade_no AND b.stock_no= c.stock_no AND c.product_id = d.pid)';
+/**
+ *  退款
+ */
+const __SUBMIT_REFUND__ = 'INSERT INTO tb_refund SET ?';
+const __ADD_REL_REFUND_SKU__ = 'INSERT INTO rel_refund_sku SET ?';
 
 module.exports = {
     __CHECK_SESSION__: __CHECK_SESSION__,
@@ -64,5 +69,7 @@ module.exports = {
     __FETCH_MY_CART__: __FETCH_MY_CART__,
     __FETCH_PRODUCT_SKU__: __FETCH_PRODUCT_SKU__,
     __FETCH_MY_ORDER__: __FETCH_MY_ORDER__,
-    __FETCH_ORDER_SKU__: __FETCH_ORDER_SKU__
+    __FETCH_ORDER_SKU__: __FETCH_ORDER_SKU__,
+    __SUBMIT_REFUND__: __SUBMIT_REFUND__,
+    __ADD_REL_REFUND_SKU__: __ADD_REL_REFUND_SKU__
 };

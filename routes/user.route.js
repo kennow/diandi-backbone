@@ -139,5 +139,17 @@ router.post('/my/order', function (req, res, next) {
     });
 });
 
+/**
+ *  提交退款申请
+ */
+router.post('/my/refund', function (req, res, next) {
+    __LOGGER__.info('========================== Submit New Refund ==========================');
+    __LOGGER__.debug(req.body);
+    __USER__.submitRefund(req, function (request) {
+        res.json(request, res, next);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
 
 module.exports = router;

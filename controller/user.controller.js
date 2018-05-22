@@ -208,6 +208,23 @@ function fetchMyOrders(request, response) {
         });
 }
 
+/**
+ *   由用户提交退款申请
+ *
+ * @param request
+ * @param response
+ */
+function submitRefund(request, response) {
+    __USER__
+        .submitRefund(request.body)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            response(exception);
+        });
+}
+
 module.exports = {
     login: login,
     addConsignee: addConsignee,
@@ -220,8 +237,25 @@ module.exports = {
     joinToCart: joinToCart,
     updateMyCart: updateMyCart,
     removeMyCart: removeMyCart,
-    fetchMyOrders: fetchMyOrders
+    fetchMyOrders: fetchMyOrders,
+    submitRefund: submitRefund
 };
+
+// submitRefund({
+//     body: {
+//         session: 'diUpgQNQc0HEjUfcG6WHzGmq1YKb3oFN',
+//         out_trade_no: '13297414012018052214015068882433',
+//         refundFee: 1,
+//         totalFee: 1,
+//         status: 0,
+//         reason: '库存不足',
+//         skuList: [
+//             'gUKvRPUIP8R5LmmFm67csknO35fz2Mhl'
+//         ]
+//     }
+// }, function (result) {
+//     __LOGGER__.info(result);
+// });
 
 // fetchMyOrders({
 //     body: {

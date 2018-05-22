@@ -68,27 +68,27 @@ function parseReturnQueryOrder(rawData) {
                 return_msg: result.xml.return_msg[0]
             });
         } else {
-            if(result.xml.result_code[0] === 'SUCCESS'){
-                if(result.xml.trade_state[0] === 'SUCCESS'){
+            if (result.xml.result_code[0] === 'SUCCESS') {
+                if (result.xml.trade_state[0] === 'SUCCESS') {
                     deferred.resolve({
                         return_code: result.xml.return_code[0],        // 通信标识，非交易标识
                         return_msg: result.xml.return_msg[0],          // 返回信息，如非空，为错误原因
                         result_code: result.xml.result_code[0],        // 业务结果
-                        openid:result.xml.openid[0],                    // 用户在商户appid下的唯一标识
-                        is_subscribe:result.xml.is_subscribe[0],        // 用户是否关注公众账号
-                        trade_type:result.xml.trade_type[0],            // 调用接口提交的交易类型
-                        bank_type:result.xml.bank_type[0],              // 银行类型，采用字符串类型的银行标识
-                        total_fee:result.xml.total_fee[0],              // 订单总金额，单位为分
-                        fee_type:result.xml.fee_type[0],                // 货币类型
-                        transaction_id:result.xml.transaction_id[0],    // 微信支付订单号
+                        openid: result.xml.openid[0],                    // 用户在商户appid下的唯一标识
+                        is_subscribe: result.xml.is_subscribe[0],        // 用户是否关注公众账号
+                        trade_type: result.xml.trade_type[0],            // 调用接口提交的交易类型
+                        bank_type: result.xml.bank_type[0],              // 银行类型，采用字符串类型的银行标识
+                        total_fee: result.xml.total_fee[0],              // 订单总金额，单位为分
+                        fee_type: result.xml.fee_type[0],                // 货币类型
+                        transaction_id: result.xml.transaction_id[0],    // 微信支付订单号
                         out_trade_no: result.xml.out_trade_no[0],       // 商户系统内部订单号
-                        attach:result.xml.attach[0],                    // 附加数据，原样返回
-                        time_end:result.xml.time_end[0],                // 订单支付时间
-                        cash_fee:result.xml.cash_fee[0],                // 业务结果
+                        attach: result.xml.attach[0],                    // 附加数据，原样返回
+                        time_end: result.xml.time_end[0],                // 订单支付时间
+                        cash_fee: result.xml.cash_fee[0],                // 业务结果
                         trade_state: result.xml.trade_state[0],         // 现金支付金额订单现金支付金额
                         trade_state_desc: result.xml.trade_state_desc[0]    // 对当前查询订单状态的描述和下一步操作的指引
                     });
-                }else{
+                } else {
                     // 如果trade_state不为 SUCCESS，则只返回out_trade_no（必传）和attach（选传）
                     deferred.resolve({
                         return_code: result.xml.return_code[0],        // 通信标识，非交易标识
@@ -100,7 +100,7 @@ function parseReturnQueryOrder(rawData) {
                     });
                 }
             }
-            else{
+            else {
                 deferred.resolve({
                     return_code: result.xml.return_code[0],        // 通信标识，非交易标识
                     return_msg: result.xml.return_msg[0],          // 返回信息，如非空，为错误原因
@@ -114,6 +114,76 @@ function parseReturnQueryOrder(rawData) {
                 });
             }
         }
+    });
+
+    return deferred.promise;
+}
+
+/**
+ *      解析退款接口的返回结果
+ *
+ * @param rawData
+ * @returns {*|promise}
+ */
+function parseReturnRefund(rawData) {
+    const deferred = Q.defer();
+
+    __XML_PARSER__(rawData, function (err, result) {
+        if (result.xml.return_code[0] !== 'SUCCESS') {
+            deferred.reject({
+                return_code: result.xml.return_code[0],
+                return_msg: result.xml.return_msg[0]
+            });
+        } else {
+            if (result.xml.result_code[0] === 'SUCCESS') {
+                deferred.resolve({
+                    return_code: result.xml.return_code[0],
+                    return_msg: result.xml.return_msg[0],
+                    transaction_id: result.xml.transaction_id[0],
+                    out_trade_no: result.xml.out_trade_no[0],
+                    out_refund_no: result.xml.out_refund_no[0],
+                    refund_id: result.xml.refund_id[0],
+                    refund_channel: result.xml.refund_channel[0],
+                    refund_fee: result.xml.refund_fee[0],
+                    coupon_refund_fee: result.xml.coupon_refund_fee[0],
+                    total_fee: result.xml.total_fee[0],
+                    cash_fee: result.xml.cash_fee[0],
+                    coupon_refund_count: result.xml.coupon_refund_count[0],
+                    cash_refund_fee: result.xml.cash_refund_fee[0]
+                });
+            } else {
+                deferred.reject({
+                    return_code: result.xml.return_code[0],
+                    return_msg: result.xml.return_msg[0],
+                    err_code: result.xml.err_code[0],
+                    err_code_des: result.xml.err_code_des[0]
+                });
+            }
+        }
+    });
+
+    return deferred.promise;
+}
+
+function parseRefundNotification(rawData) {
+    const deferred = Q.defer();
+
+    __XML_PARSER__(rawData, function (err, result) {
+        deferred.resolve({
+            out_refund_no: result.root.out_refund_no[0],
+            out_trade_no: result.root.out_trade_no[0],
+            refund_account: result.root.refund_account[0],
+            refund_fee: result.root.refund_fee[0],
+            refund_id: result.root.refund_id[0],
+            refund_recv_accout: result.root.refund_recv_accout[0],
+            refund_request_source: result.root.refund_request_source[0],
+            refund_status: result.root.refund_status[0],
+            settlement_refund_fee: result.root.settlement_refund_fee[0],
+            settlement_total_fee: result.root.settlement_total_fee[0],
+            success_time: result.root.success_time[0],
+            total_fee: result.root.total_fee[0],
+            transaction_id: result.root.transaction_id[0]
+        });
     });
 
     return deferred.promise;
@@ -244,13 +314,37 @@ function constructDownladFundFlowParams(request) {
     return params;
 }
 
+function constructRefundParams(request) {
+    const params = {
+        appid: __WX_PAY_CONFIG__.__APP_ID__,                        //  微信分配的小程序ID
+        mch_id: __WX_PAY_CONFIG__.__MCH_ID__,                       //  微信支付分配的商户号
+        nonce_str: __HELPER__.getNonceStr(32),                      //  随机字符串
+        sign_type: request.sign_type || 'MD5',                      //  签名类型，默认为MD5，支持HMAC-SHA256和MD5
+        out_trade_no: request.out_trade_no,                         //  商户系统内部订单号
+        out_refund_no: request.out_refund_no,                       //  商户系统内部的退款单号
+        total_fee: request.total_fee,                               //  订单总金额   单位为分，只能为整数
+        refund_fee: request.refund_fee,                             //  退款总金额   单位为分，只能为整数
+        refund_fee_type: request.fee_type || 'CNY',                 //  货币类型，符合ISO 4217标准的三位字母代码，默认人民币：CNY
+        refund_desc: request.refund_desc || '',                     //  若商户传入，会在下发给用户的退款消息中体现退款原因
+        refund_account: request.refund_account || 'REFUND_SOURCE_UNSETTLED_FUNDS',       //  针对老资金流商户使用
+        notify_url: __WX_PAY_CONFIG__.__REFUND_NOTIFY_URL__         //  异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数
+    };
+    // 生成签名
+    params.sign = __WX_PAY_HELPER__.makeSign(params, __WX_PAY_CONFIG__.__KEY__);
+
+    return params;
+}
+
 module.exports = {
     parseReturnUnifiedOrder: parseReturnUnifiedOrder,
-    parseReturnQueryOrder:parseReturnQueryOrder,
+    parseReturnQueryOrder: parseReturnQueryOrder,
+    parseReturnRefund: parseReturnRefund,
+    parseRefundNotification: parseRefundNotification,
     constructUnifiedOrderParams: constructUnifiedOrderParams,
     constructWechatPayResult: constructWechatPayResult,
     constructCloseOrderParams: constructCloseOrderParams,
     constructQueryOrderParams: constructQueryOrderParams,
     constructDownloadBillParams: constructDownloadBillParams,
-    constructDownladFundFlowParams: constructDownladFundFlowParams
+    constructDownladFundFlowParams: constructDownladFundFlowParams,
+    constructRefundParams: constructRefundParams
 };

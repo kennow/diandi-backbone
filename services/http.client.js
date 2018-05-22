@@ -2,7 +2,7 @@ const __HTTP__ = require('http');
 const __HTTPS__ = require('https');
 const __URL_PARSER__ = require('url');
 const __QUERY_STRING__ = require('querystring');
-const __LOGGER__ = require("../services/log4js.service").getLogger("http.client.js");
+const __LOGGER__ = require('../services/log4js.service').getLogger('http.client.js');
 
 /**
  * GET 请求 -- HTTPS
@@ -48,14 +48,14 @@ function doHttpGet(url, callback) {
     });
 }
 
-
 /**
  * POST 请求 -- HTTPS
  * @param url
  * @param data
  * @param callback
+ * @param agentOptions
  */
-function doHttpsPost(url, data, callback) {
+function doHttpsPost(url, data, callback, agentOptions) {
     const tmp = __URL_PARSER__.parse(url);
     const postData = JSON.stringify(data);
     const isHttp = tmp.protocol === 'http:';
@@ -69,8 +69,12 @@ function doHttpsPost(url, data, callback) {
             'Content-Length': Buffer.byteLength(postData)
         }
     };
+    if (agentOptions) {
+        options.pfx = agentOptions.pfx;
+        options.passphrase = agentOptions.passphrase;
+    }
     __LOGGER__.info('=====  doHttpsPost ==> URL: ' + url);
-    __LOGGER__.info('=====  doHttpsPost ==> options: ' + JSON.stringify(options));
+    // __LOGGER__.info('=====  doHttpsPost ==> options: ' + JSON.stringify(options));
     const req = __HTTPS__.request(options, function (res) {
         var data = '';
         res.on('data', function (chunk) {
@@ -83,6 +87,7 @@ function doHttpsPost(url, data, callback) {
         });
     });
     req.on('error', function (e) {
+        __LOGGER__.error(e);
         __LOGGER__.error(e.message);
     });
     req.write(postData);

@@ -30,6 +30,7 @@ var config = {
      * 回传通知地址
      */
     __NOTIFY_URL__: 'https://www.thinmelon.cc:3000/shopping/wechat_pay/notification',
+    __REFUND_NOTIFY_URL__: 'https://www.thinmelon.cc:3000/shopping/wechat_pay/refund/notification',
 
     //=======【证书路径设置】=====================================
 

@@ -1,4 +1,5 @@
 const Q = require('q');
+const __MOMENT__ = require('moment')();
 const __HELPER__ = require('../utility/helper');
 const __MYSQL_API__ = require('./mysql.api');
 const __CONFIG__ = require('./shopping.config');
@@ -380,7 +381,14 @@ function updateOrderAfterPay(request) {
 }
 
 /**
- * 提交退款申请
+ * 检查用户发起的退款申请，无误后调用微信退款接口，并更新退款进度
+ * 字段：
+ *      refund_id
+ *      status
+ *      startTime
+ *      remark
+ * KEY:
+ *      out_refund_no
  * @param request
  * @returns {*|promise}
  */
@@ -389,20 +397,17 @@ function submitNewRefund(request) {
 
     __MYSQL_API__
         .setUpConnection({
-            basicInsertSQL: __STATEMENT__.__ADD_NEW_REFUND__,
-            basicInsertParams: {
-                out_refund_no: request.out_refund_no,
-                out_trade_no: request.out_trade_no,
-                transactionID: request.transactionID,
-                refundFee: request.refundFee,
-                status: request.status,
-                stock_no: request.stock_no,
-                reason: request.reason,
-                remark: request.remark
-            }
+            basicUpdateSQL: __STATEMENT__.__SUBMIT_NEW_REFUND__,
+            basicUpdateParams: [
+                request.refund_id,
+                __CONFIG__.__ENUM_REFUND_STATUS__.REFUNDING,
+                __MOMENT__.format('YYYYMMDDHHmmss'),
+                __MOMENT__.format('YYYY-MM-DD HH:mm:ss') + ' JSAPI 发起退款申请' ,
+                request.out_refund_no
+            ]
         })
         .then(__MYSQL_API__.beginTransaction)
-        .then(__MYSQL_API__.basicInsert)
+        .then(__MYSQL_API__.basicUpdate)
         .then(__MYSQL_API__.commitTransaction)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
@@ -518,6 +523,11 @@ function fetchProductDetail(request) {
     return deferred.promise;
 }
 
+/**
+ *   获取订单详情
+ * @param request
+ * @returns {*|promise}
+ */
 function fetchOrderDetail(request) {
     const deferred = Q.defer();
 
@@ -549,7 +559,8 @@ module.exports = {
     addStockAttribute: addStockAttribute,
     submitNewOrder: submitNewOrder,
     updateOrderAfterPay: updateOrderAfterPay,
-    fetchOrderDetail: fetchOrderDetail
+    fetchOrderDetail: fetchOrderDetail,
+    submitNewRefund: submitNewRefund
 };
 
 // fetchProductDetail({

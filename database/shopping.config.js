@@ -19,6 +19,20 @@ const __ENUM_ORDER_STATUS__ = {
     ABNORMAL: 7
 };
 
+/**
+ *  SUCCESS     -   退款成功
+ *  CHANGE      -   退款异常
+ *  CLOSED      -   退款关闭
+ */
+const __ENUM_REFUND_STATUS__ = {
+    SUBMIT: 0,
+    REFUNDING: 1,
+    SUCCESS: 2,
+    CHANGE: 3,
+    CLOSED: 4
+};
+
 module.exports = {
-    __ENUM_ORDER_STATUS__: __ENUM_ORDER_STATUS__
+    __ENUM_ORDER_STATUS__: __ENUM_ORDER_STATUS__,
+    __ENUM_REFUND_STATUS__: __ENUM_REFUND_STATUS__
 };

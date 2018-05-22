@@ -1,8 +1,12 @@
 const Q = require('q');
+const __FILE_SYSTEM__ = require('fs');
+const __PATH__ = require('path');
 const __WX_PAY_HELPER__ = require('./wechat.pay.helper');
 const __WX_PAY_API__ = require('./wechat.pay.api.url');
 const __WX_PAY_DATA__ = require('./wechat.pay.data.structure');
+const __WX_PAY_CONFIG__ = require('./wechat.pay.config');
 const __HTTP_CLIENT__ = require('../http.client');
+const __ERROR_CODE__ = require('../../utility/error.code');
 const __LOGGER__ = require('../log4js.service').getLogger('wechat.pay.service.js');
 
 /**
@@ -45,7 +49,7 @@ function unifiedOrder(request) {
             .catch(function (err) {
                 deferred.reject(err);
             });
-    });
+    }, null);
 
     return deferred.promise;
 }
@@ -66,7 +70,7 @@ function closeOrder(request) {
     // 调用关闭订单API
     __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__CLOSE_ORDER__, postData, function (result) {
         deferred.resolve(result);
-    });
+    }, null);
 
     return deferred.promise;
 }
@@ -96,17 +100,44 @@ function queryOrder(request) {
             .catch(function (err) {
                 deferred.reject(err);
             });
-    });
+    }, null);
 
     return deferred.promise;
 }
 
 function handlePayResultNotification(request) {
     return __WX_PAY_HELPER__.checkSign(request.body.xml);
+}
 
-    //const deferred = Q.defer();
-    //deferred.resolve(request.body.xml);
-    //return deferred.promise;
+/**
+ * 处理退款结果通知
+ * @param request
+ * @returns {*|promise}
+ */
+function handleRefundResultNotification(request) {
+    const deferred = Q.defer();
+
+    try {
+        if (request.body.xml.return_code === 'SUCCESS') {
+            // 解密
+            const info = __WX_PAY_HELPER__.decryptData(request.body.xml.req_info, 'AES-256-ECB', '');
+            // 解析成JSON对象
+            __WX_PAY_DATA__
+                .parseRefundNotification(info)
+                .then(function (result) {
+                    deferred.resolve(result);
+                });
+        } else {
+            deferred.reject(request.body.xml);
+        }
+    } catch (exception) {
+        deferred.reject({
+            return_code: __ERROR_CODE__.failed,
+            return_msg: exception
+        });
+    }
+
+    return deferred.promise;
 }
 
 /**
@@ -128,7 +159,7 @@ function downloadBill(request) {
     // 调用关闭订单API
     __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__DOWNLOAD_BILL__, postData, function (result) {
 
-    });
+    }, null);
 
     return deferred.promise;
 }
@@ -150,7 +181,70 @@ function downloadFundFlow(request) {
     // 调用关闭订单API
     __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__DOWNLOAD_FUND_FLOW__, postData, function (result) {
 
-    });
+    }, null);
+
+    return deferred.promise;
+}
+
+/**
+ *  申请退款
+ *  当交易发生之后一段时间内，由于买家或者卖家的原因需要退款时，卖家可以通过退款接口将支付款退还给买家
+ *  微信支付将在收到退款请求并且验证成功之后，按照退款规则将支付款按原路退到买家帐号上。
+ *  注意：
+ *  1、交易时间超过一年的订单无法提交退款
+ *  2、微信支付退款支持单笔交易分多次退款，多次退款需要提交原支付订单的商户订单号和设置不同的退款单号。
+ *      申请退款总金额不能超过订单金额。 一笔退款失败后重新提交，请不要更换退款单号，请使用原商户退款单号
+ *  3、请求频率限制：150qps，即每秒钟正常的申请退款请求次数不超过150次
+ *     错误或无效请求频率限制：6qps，即每秒钟异常或错误的退款申请请求不超过6次
+ *  4、每个支付订单的部分退款次数不能超过50次
+ *
+ <xml>
+ <return_code><![CDATA[SUCCESS]]></return_code>
+ <return_msg><![CDATA[OK]]></return_msg>
+ <appid><![CDATA[wxc91180e424549fbf]]></appid>
+ <mch_id><![CDATA[1329741401]]></mch_id>
+ <nonce_str><![CDATA[09NkUBiTskKRdUGy]]></nonce_str>
+ <sign><![CDATA[1F20227358E889CC8A32F60D884C0BB7]]></sign>
+ <result_code><![CDATA[SUCCESS]]></result_code>
+ <transaction_id><![CDATA[4200000123201805193299564105]]></transaction_id>
+ <out_trade_no><![CDATA[13297414012018051917224152133861]]></out_trade_no>
+ <out_refund_no><![CDATA[undefined]]></out_refund_no>
+ <refund_id><![CDATA[50000106982018052204736080847]]></refund_id>
+ <refund_channel><![CDATA[]]></refund_channel>
+ <refund_fee>1</refund_fee>
+ <coupon_refund_fee>0</coupon_refund_fee>
+ <total_fee>1</total_fee>
+ <cash_fee>1</cash_fee>
+ <coupon_refund_count>0</coupon_refund_count>
+ <cash_refund_fee>1</cash_refund_fee>
+ </xml>
+ * @param request
+ * @returns {*|promise}
+ */
+function Refund(request) {
+    const deferred = Q.defer();
+
+    // 生成POST Data
+    const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructRefundParams(request));
+    __LOGGER__.debug(postData);
+    const agentOptions = {
+        pfx: __FILE_SYSTEM__.readFileSync(__PATH__.join(__PATH__.resolve(__dirname, '..', '..'), 'credentials', 'wechat.pay', 'apiclient_cert.p12')),
+        passphrase: __WX_PAY_CONFIG__.__MCH_ID__
+    };
+    // 调用关闭订单API
+    __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__REFUND__, postData, function (rawData) {
+        __LOGGER__.debug(rawData);
+        __WX_PAY_DATA__
+            .parseReturnRefund(rawData)             // 对返回结果进行解析【XML转JSON】
+            .then(function (result) {              // 确认无误后回传给 Controller
+                __LOGGER__.debug(result);
+                deferred.resolve(result);
+            })
+            .catch(function (err) {
+                __LOGGER__.error(err);
+                deferred.reject(err);
+            });
+    }, agentOptions);
 
     return deferred.promise;
 }
@@ -159,8 +253,17 @@ module.exports = {
     unifiedOrder: unifiedOrder,
     closeOrder: closeOrder,
     queryOrder: queryOrder,
-    handlePayResultNotification: handlePayResultNotification
+    Refund: Refund,
+    handlePayResultNotification: handlePayResultNotification,
+    handleRefundResultNotification: handleRefundResultNotification
 };
+
+// submitRefund({
+//     out_trade_no: '13297414012018051917224152133861',
+//     // out_refund_no: '',
+//     total_fee: 1,
+//     refund_fee: 1
+// });
 
 // unifiedOrder({
 //     body: 'body',

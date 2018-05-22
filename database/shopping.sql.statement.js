@@ -33,7 +33,7 @@ const __FETCH_ORDER_DETAIL__ = 'SELECT a.freight, a.attach, a.payTime, b.name, b
 /**
  *   退款
  */
-const __ADD_NEW_REFUND__ = 'INSERT INTO tb_refund SET ?';
+const __SUBMIT_NEW_REFUND__ = 'UPDATE tb_refund SET refund_id = ?, status = ?, startTime = ?, remark = ? WHERE out_refund_no = ?';
 const __CHANGE_REFUND_STATUS__ = 'UPDATE tb_refund SET completeTime = ?, status = ?, remark = ? WHERE out_refund_no = ?';
 
 
@@ -57,7 +57,7 @@ module.exports = {
     __ADD_REL_ORDER_SKU__: __ADD_REL_ORDER_SKU__,
     __CHANGE_ORDER_STATUS__: __CHANGE_ORDER_STATUS__,
     __UPDATE_PRODUCT_SALES__: __UPDATE_PRODUCT_SALES__,
-    __ADD_NEW_REFUND__: __ADD_NEW_REFUND__,
+    __SUBMIT_NEW_REFUND__: __SUBMIT_NEW_REFUND__,
     __CHANGE_REFUND_STATUS__: __CHANGE_REFUND_STATUS__,
     __FETCH_ORDER_DETAIL__: __FETCH_ORDER_DETAIL__
 };

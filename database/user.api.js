@@ -1,7 +1,9 @@
 const Q = require('q');
 const __MYSQL_API__ = require('./mysql.api');
+const __WX_PAY_HELPER__ = require('../services/wechat.pay/wechat.pay.helper');
 const __STATEMENT__ = require('./user.sql.statement');
 const __HELPER__ = require('../utility/helper');
+const __CONFIG__ = require('./shopping.config');
 
 function wechatMiniProgramLogin(request) {
     const deferred = Q.defer();
@@ -456,7 +458,7 @@ function addOrUpdate(request, sql) {
  * @returns {*|promise}
  */
 function joinToCart(request) {
-    return addOrUpdate(request, __STATEMENT__.__ADD_CART__)
+    return addOrUpdate(request, __STATEMENT__.__ADD_CART__);
 }
 
 /**
@@ -465,7 +467,7 @@ function joinToCart(request) {
  * @returns {*|promise}
  */
 function updateMyCart(request) {
-    return addOrUpdate(request, __STATEMENT__.__UPDATE_CART__)
+    return addOrUpdate(request, __STATEMENT__.__UPDATE_CART__);
 }
 
 /**
@@ -562,6 +564,69 @@ function fetchMyOrders(request) {
     return deferred.promise;
 }
 
+/**
+ *   提交退款申请
+ *
+ * @param request
+ * @returns {*|promise}
+ */
+function submitRefund(request) {
+    const deferred = Q.defer();
+    const out_refund_no = __WX_PAY_HELPER__.generateRandomNO();
+    var params = {
+        /**
+         *  1. 检测登录态
+         */
+        checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+        checkSessionParams: [
+            request.session
+        ],
+        /**
+         *  2. 设置为缺省收件人
+         */
+        oneStepIndex: 0,
+        oneStepSQLs: [
+            __STATEMENT__.__SUBMIT_REFUND__
+        ],
+        oneStepParams: [
+            {
+                out_refund_no: out_refund_no,
+                out_trade_no: request.out_trade_no,
+                refundFee: request.refundFee,
+                totalFee: request.totalFee,
+                status: __CONFIG__.__ENUM_REFUND_STATUS__.SUBMIT,
+                reason: request.reason
+            }
+        ]
+    };
+
+    for (var i = 0; i < request.skuList.length; i++) {
+        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_REFUND_SKU__);
+        params.oneStepParams.push({
+            out_refund_no: out_refund_no,
+            stock_no: request.skuList[i]
+        });
+    }
+
+    __MYSQL_API__
+        .setUpConnection(params)
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.executeInOrder)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     // 小程序登录
     wechatMiniProgramLogin: wechatMiniProgramLogin,
@@ -578,7 +643,9 @@ module.exports = {
     updateMyCart: updateMyCart,
     removeMyCart: removeMyCart,
     // 订单
-    fetchMyOrders: fetchMyOrders
+    fetchMyOrders: fetchMyOrders,
+    // 发起退款申请
+    submitRefund: submitRefund
 };
 
 // wechatMiniProgramLogin({

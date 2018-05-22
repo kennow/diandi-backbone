@@ -147,7 +147,6 @@ function receivePayResultNotification(request, response) {
         .handlePayResultNotification(request)
         .then(__SHOPPING_DATABASE__.updateOrderAfterPay)
         .then(function (result) {
-            __LOGGER__.debug(result);
             response(__UTIL__.format('<xml><return_code>%s</return_code><return_msg>%s</return_msg></xml>', 'SUCCESS', 'OK'));
         })
         .catch(function (exception) {
@@ -162,7 +161,6 @@ function receivePayResultNotification(request, response) {
  * @param response
  */
 function queryOrder(request, response) {
-
     __WX_PAY_SERVICE__
         .queryOrder({
             out_trade_no: request.params.id
@@ -178,13 +176,105 @@ function queryOrder(request, response) {
         });
 }
 
+/**
+ *      直接发起退款
+ *
+ * 用户的退款申请先到后台，再由后台调用接口进行退款
+ *
+ * @param request
+ * @param response
+ */
+function Refund(request, response) {
+    __WX_PAY_SERVICE__
+        .Refund(request.body)
+        .then(__SHOPPING_DATABASE__.submitNewRefund)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ *      退款结果通知
+ *
+ * 当商户申请的退款有结果后，微信会把相关结果发送给商户，商户需要接收处理，并返回应答。
+ * 推荐的做法是
+ * 当收到通知进行处理时，首先检查对应业务数据的状态，判断该通知是否已经处理过，
+ * 如果没有处理过再进行处理，
+ * 如果处理过直接返回结果成功。
+ * 在对业务数据进行状态检查和处理之前，要采用数据锁进行并发控制，以避免函数重入造成的数据混乱。
+ * 特别说明：退款结果对重要的数据进行了加密，商户需要用商户秘钥进行解密后才能获得结果通知的内容
+ *
+ * 解密方式:
+ *  （1）对加密串A做base64解码，得到加密串B
+ *  （2）对商户key做md5，得到32位小写key* ( key设置路径：微信商户平台(pay.weixin.qq.com)-->账户设置-->API安全-->密钥设置 )
+ *  （3）用key*对加密串B做AES-256-ECB解密（PKCS7Padding）
+ * @param request
+ * @param response
+ */
+
+function receiveRefundResultNotification(request, response) {
+    /**
+     * 返回结果示例
+     *  { xml:
+     *      { return_code: 'SUCCESS',
+     *        appid: 'wxc91180e424549fbf',
+     *        mch_id: '1329741401',
+     *        nonce_str: '4a1c8ed01026cc6dad887c4297f0d1e1',
+     *        req_info: 'vgSb3f/TCDy6wyPK6XwpQkrw5pwLOg7+qpG......................'
+     *      }
+     *  }
+     */
+    __WX_PAY_SERVICE__
+        .handleRefundResultNotification(request)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(__UTIL__.format('<xml><return_code>%s</return_code><return_msg>%s</return_msg></xml>', 'SUCCESS', 'OK'));
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(__UTIL__.format('<xml><return_code>%s</return_code><return_msg>%s</return_msg></xml>', exception.return_code, exception.return_msg));
+        });
+}
+
 module.exports = {
     submitUnifiedOrder: submitUnifiedOrder,
     queryOrder: queryOrder,
     receivePayResultNotification: receivePayResultNotification,
     fetchProductList: fetchProductList,
-    fetchProductDetail: fetchProductDetail
+    fetchProductDetail: fetchProductDetail,
+    Refund: Refund,
+    receiveRefundResultNotification: receiveRefundResultNotification
 };
+
+receiveRefundResultNotification({
+    body: {
+        xml: {
+            return_code: 'SUCCESS',
+            appid: 'wxc91180e424549fbf',
+            mch_id: '1329741401',
+            nonce_str: 'ef619897834ff5d9c7e5a1cbcc5dd600',
+            req_info: 'vgSb3f/TCDy6wyPK6XwpQkrw5pwLOg7+qpGR5xsddVsdXHQi4esS3Hjt1S2ulD9m/E1PWf+iQ2Rv3uSvyJESaxBt54o4UhiOXKHyZf2IWUoILiAnD7b9+u7eXH7dFJXX4UKiYGA7jH0eqljaIlhKNLbbUbWug9Jx9mN30FquCs8r3nXuqGasoibkLhyLeX1QsOPJ2fwvsEatwGIau9VwIO3hSRzlSvq8eR/DMOBcjzKiTVGI/tK03qwgA2yPbELP1tSbMh3HEeXMi6Iv02hgXBh3oY3q+6ePCJxN5jMgmca6oqRllj312WOkepSuKVEQapxc86hR1ilbCmjXTcJFkC+VN7Ruxj6okuLzoU+kVdFH4SyuyOz5yEk1Y/rykK7xrpDAFcOMYFjgZexpFdYLVcT+dVsF5lHQRw/FZRPoPn1JI6ZcqLqFnsMzTb/PFtmgyyQR8W6SZIbwYzaJ5ZlBjLovxXAFDF+7lWR0EwslpLLuPDfS0NZmwqk87JZEyN2TccaKN8wAhUusS8Mb6MjzHtVe9CjSWPp4vLwcLpFMx82HN2wYuvKZiJrPjvqByovF0KaoHdiHKkzEUyFYbKOPTWUKtCkCI2Wc6N8EfVEvVvTVmzghYoItC21OFORdMxGvYErj4/GNjTtBXHk+Bp2G0wRMc1fw90zMpZ6iMmThPvN8iGxCwkRNAbaImLXboiTg8pTQRNdJMl64hfFrSyCacGySP5ipEkwubGY+jUF8HyvsGo3R+zzqleAHOJJi6rqBQDVI16V45RZyQOwz3+GienTvsWTAv/hhchW+CvsWdhx2Z7arCPWFyQMkPNytoBtZlm6fQJJMkS8ym4BzHxKXi7r+7dbRGx3VCoZvfxDvVAEmI55TSWdvDWj0ehJNzd2a2FcOpjirUNZNrq2j78pDkg7FSPtyskG/OYPZUQW8mjAGC5K6wJl+RgbaIzLCDr6B5vvV2QhHJUK9xEG39uFMH5LzqCArZhAZHXRzsbcGBAQwRBowOP037oYY0MUlA6t7fQONWyWBDLkFaxZgRBcXbtDUgN9331CPRBf2Kbehx64r6x4yqjjKS4cOb7c3MVkzWWuBDxv83r/sxwtju1Z1SA=='
+        }
+    }
+}, function (res) {
+
+});
+
+// Refund({
+//     body:{
+//         out_trade_no: '13297414012018052214015068882433',
+//         out_refund_no: '13297414012018052214115944426193',
+//         total_fee: 1,
+//         refund_fee: 1
+//     }
+// }, function (res) {
+//     __LOGGER__.debug(res);
+// });
 
 // queryOrder({
 //     params: {

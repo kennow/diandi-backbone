@@ -113,12 +113,48 @@ function generateRandomNO() {
     return __UTIL__.format('%s%s%s', __WX_PAY_CONFIG__.__MCH_ID__, __MOMENT__.format('YYYYMMDDHHmmss'), nonceStr);
 }
 
+/**
+ * 退款结果对重要的数据进行了加密，商户需要用商户秘钥进行解密后才能获得结果通知的内容
+ * @param encryptedData
+ * @param algorithm
+ * @param iv
+ * @returns {*}
+ */
+function decryptData(encryptedData, algorithm, iv) {
+    var key, decipher, decoded;
+
+    // 对商户key做md5，得到32位小写key*
+    key = __CRYPTO__.createHash('md5').update(__WX_PAY_CONFIG__.__KEY__).digest('hex');
+    // 对加密串做base64解码，得到新的加密串
+    encryptedData = new Buffer(encryptedData, 'base64');
+
+    try {
+        // 用key*对加密串B做AES-256-ECB解密（PKCS7Padding）
+        decipher = __CRYPTO__.createDecipheriv(algorithm, key, iv);
+        // 设置自动 padding 为 true，删除填充补位
+        decipher.setAutoPadding(true);
+        decoded = decipher.update(encryptedData, 'binary', 'utf8');
+        decoded += decipher.final('utf8');
+    } catch (err) {
+        throw new Error('Illegal Buffer');
+    }
+
+    return decoded;
+}
+
 module.exports = {
     convertToUrlParams: convertToUrlParams,
     makeSign: makeSign,
     checkSign: checkSign,
     convertToXml: convertToXml,
-    generateRandomNO: generateRandomNO
+    generateRandomNO: generateRandomNO,
+    decryptData: decryptData
 };
 
-generateRandomNO();
+// generateRandomNO();
+// var encryptedData = 'vgSb3f/TCDy6wyPK6XwpQkrw5pwLOg7+qpGR5xsddVsdXHQi4esS3Hjt1S2ulD9m/E1PWf+iQ2Rv3uSvyJESaxBt54o4UhiOXKHyZf2IWUoILiAnD7b9+u7eXH7dFJXX4UKiYGA7jH0eqljaIlhKNLbbUbWug9Jx9mN30FquCs8r3nXuqGasoibkLhyLeX1QsOPJ2fwvsEatwGIau9VwIO3hSRzlSvq8eR/DMOBcjzKiTVGI/tK03qwgA2yPbELP1tSbMh3HEeXMi6Iv02hgXBh3oY3q+6ePCJxN5jMgmca6oqRllj312WOkepSuKVEQapxc86hR1ilbCmjXTcJFkC+VN7Ruxj6okuLzoU+kVdFH4SyuyOz5yEk1Y/rykK7xrpDAFcOMYFjgZexpFdYLVcT+dVsF5lHQRw/FZRPoPn1JI6ZcqLqFnsMzTb/PFtmgyyQR8W6SZIbwYzaJ5ZlBjLovxXAFDF+7lWR0EwslpLLuPDfS0NZmwqk87JZEyN2TccaKN8wAhUusS8Mb6MjzHtVe9CjSWPp4vLwcLpFMx82HN2wYuvKZiJrPjvqByovF0KaoHdiHKkzEUyFYbKOPTWUKtCkCI2Wc6N8EfVEvVvTVmzghYoItC21OFORdMxGvYErj4/GNjTtBXHk+Bp2G0wRMc1fw90zMpZ6iMmThPvN8iGxCwkRNAbaImLXboiTg8pTQRNdJMl64hfFrSyCacGySP5ipEkwubGY+jUF8HyvsGo3R+zzqleAHOJJi6rqBQDVI16V45RZyQOwz3+GienTvsWTAv/hhchW+CvsWdhx2Z7arCPWFyQMkPNytoBtZlm6fQJJMkS8ym4BzHxKXi7r+7dbRGx3VCoZvfxDvVAEmI55TSWdvDWj0ehJNzd2a2FcOpjirUNZNrq2j78pDkg7FSPtyskG/OYPZUQW8mjAGC5K6wJl+RgbaIzLCDr6B5vvV2QhHJUK9xEG39uFMH5LzqCArZhAZHXRzsbcGBAQwRBowOP037oYY0MUlA6t7fQONWyWBDLkFaxZgRBcXbtDUgN9331CPRBf2Kbehx64r6x4yqjjKS4cOb7c3MVkzWWuBDxv83r/sxwtju1Z1SA==';
+// console.log(decryptData(
+//     encryptedData,
+//     'AES-256-ECB',
+//     ''
+// ));
