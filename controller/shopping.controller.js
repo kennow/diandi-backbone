@@ -231,6 +231,7 @@ function receiveRefundResultNotification(request, response) {
      */
     __WX_PAY_SERVICE__
         .handleRefundResultNotification(request)
+        .then(__SHOPPING_DATABASE__.changeRefundStatus)
         .then(function (result) {
             __LOGGER__.debug(result);
             response(__UTIL__.format('<xml><return_code>%s</return_code><return_msg>%s</return_msg></xml>', 'SUCCESS', 'OK'));
@@ -251,19 +252,19 @@ module.exports = {
     receiveRefundResultNotification: receiveRefundResultNotification
 };
 
-receiveRefundResultNotification({
-    body: {
-        xml: {
-            return_code: 'SUCCESS',
-            appid: 'wxc91180e424549fbf',
-            mch_id: '1329741401',
-            nonce_str: 'ef619897834ff5d9c7e5a1cbcc5dd600',
-            req_info: 'vgSb3f/TCDy6wyPK6XwpQkrw5pwLOg7+qpGR5xsddVsdXHQi4esS3Hjt1S2ulD9m/E1PWf+iQ2Rv3uSvyJESaxBt54o4UhiOXKHyZf2IWUoILiAnD7b9+u7eXH7dFJXX4UKiYGA7jH0eqljaIlhKNLbbUbWug9Jx9mN30FquCs8r3nXuqGasoibkLhyLeX1QsOPJ2fwvsEatwGIau9VwIO3hSRzlSvq8eR/DMOBcjzKiTVGI/tK03qwgA2yPbELP1tSbMh3HEeXMi6Iv02hgXBh3oY3q+6ePCJxN5jMgmca6oqRllj312WOkepSuKVEQapxc86hR1ilbCmjXTcJFkC+VN7Ruxj6okuLzoU+kVdFH4SyuyOz5yEk1Y/rykK7xrpDAFcOMYFjgZexpFdYLVcT+dVsF5lHQRw/FZRPoPn1JI6ZcqLqFnsMzTb/PFtmgyyQR8W6SZIbwYzaJ5ZlBjLovxXAFDF+7lWR0EwslpLLuPDfS0NZmwqk87JZEyN2TccaKN8wAhUusS8Mb6MjzHtVe9CjSWPp4vLwcLpFMx82HN2wYuvKZiJrPjvqByovF0KaoHdiHKkzEUyFYbKOPTWUKtCkCI2Wc6N8EfVEvVvTVmzghYoItC21OFORdMxGvYErj4/GNjTtBXHk+Bp2G0wRMc1fw90zMpZ6iMmThPvN8iGxCwkRNAbaImLXboiTg8pTQRNdJMl64hfFrSyCacGySP5ipEkwubGY+jUF8HyvsGo3R+zzqleAHOJJi6rqBQDVI16V45RZyQOwz3+GienTvsWTAv/hhchW+CvsWdhx2Z7arCPWFyQMkPNytoBtZlm6fQJJMkS8ym4BzHxKXi7r+7dbRGx3VCoZvfxDvVAEmI55TSWdvDWj0ehJNzd2a2FcOpjirUNZNrq2j78pDkg7FSPtyskG/OYPZUQW8mjAGC5K6wJl+RgbaIzLCDr6B5vvV2QhHJUK9xEG39uFMH5LzqCArZhAZHXRzsbcGBAQwRBowOP037oYY0MUlA6t7fQONWyWBDLkFaxZgRBcXbtDUgN9331CPRBf2Kbehx64r6x4yqjjKS4cOb7c3MVkzWWuBDxv83r/sxwtju1Z1SA=='
-        }
-    }
-}, function (res) {
-
-});
+//receiveRefundResultNotification({
+//    body: {
+//        xml: {
+//            return_code: 'SUCCESS',
+//            appid: 'wxc91180e424549fbf',
+//            mch_id: '1329741401',
+//            nonce_str: 'ef619897834ff5d9c7e5a1cbcc5dd600',
+//            req_info: 'vgSb3f/TCDy6wyPK6XwpQkrw5pwLOg7+qpGR5xsddVsdXHQi4esS3Hjt1S2ulD9m/E1PWf+iQ2Rv3uSvyJESaxBt54o4UhiOXKHyZf2IWUoILiAnD7b9+u7eXH7dFJXX4UKiYGA7jH0eqljaIlhKNLbbUbWug9Jx9mN30FquCs8r3nXuqGasoibkLhyLeX1QsOPJ2fwvsEatwGIau9VwIO3hSRzlSvq8eR/DMOBcjzKiTVGI/tK03qwgA2yPbELP1tSbMh3HEeXMi6Iv02hgXBh3oY3q+6ePCJxN5jMgmca6oqRllj312WOkepSuKVEQapxc86hR1ilbCmjXTcJFkC+VN7Ruxj6okuLzoU+kVdFH4SyuyOz5yEk1Y/rykK7xrpDAFcOMYFjgZexpFdYLVcT+dVsF5lHQRw/FZRPoPn1JI6ZcqLqFnsMzTb/PFtmgyyQR8W6SZIbwYzaJ5ZlBjLovxXAFDF+7lWR0EwslpLLuPDfS0NZmwqk87JZEyN2TccaKN8wAhUusS8Mb6MjzHtVe9CjSWPp4vLwcLpFMx82HN2wYuvKZiJrPjvqByovF0KaoHdiHKkzEUyFYbKOPTWUKtCkCI2Wc6N8EfVEvVvTVmzghYoItC21OFORdMxGvYErj4/GNjTtBXHk+Bp2G0wRMc1fw90zMpZ6iMmThPvN8iGxCwkRNAbaImLXboiTg8pTQRNdJMl64hfFrSyCacGySP5ipEkwubGY+jUF8HyvsGo3R+zzqleAHOJJi6rqBQDVI16V45RZyQOwz3+GienTvsWTAv/hhchW+CvsWdhx2Z7arCPWFyQMkPNytoBtZlm6fQJJMkS8ym4BzHxKXi7r+7dbRGx3VCoZvfxDvVAEmI55TSWdvDWj0ehJNzd2a2FcOpjirUNZNrq2j78pDkg7FSPtyskG/OYPZUQW8mjAGC5K6wJl+RgbaIzLCDr6B5vvV2QhHJUK9xEG39uFMH5LzqCArZhAZHXRzsbcGBAQwRBowOP037oYY0MUlA6t7fQONWyWBDLkFaxZgRBcXbtDUgN9331CPRBf2Kbehx64r6x4yqjjKS4cOb7c3MVkzWWuBDxv83r/sxwtju1Z1SA=='
+//        }
+//    }
+//}, function (res) {
+//
+//});
 
 // Refund({
 //     body:{

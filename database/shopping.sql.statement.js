@@ -27,14 +27,14 @@ const __UPDATE_STOCK__ = 'UPDATE tb_sku SET stock = stock - ? WHERE stock_no = ?
 const __UPDATE_PRODUCT_SALES__ = '';
 const __CHECK_CONSISTENCY__ = 'SELECT COUNT(*) AS number FROM tb_order WHERE out_trade_no = ? and totalFee = ?';
 const __UPDATE_ORDER_AFTER_PAY__ = 'UPDATE tb_order SET bankType = ?, mchID = ?, tradeType = ?, transactionID = ?, payTime = ?, status = ?, remark = ? WHERE out_trade_no = ?';
-const __CHANGE_ORDER_STATUS__ = 'UPDATE tb_order SET status = ? WHERE out_trade_no = ? ';
+const __CHANGE_ORDER_STATUS__ = 'UPDATE tb_order SET status = ?, remark = ? WHERE out_trade_no = ? ';
 const __ADD_REL_ORDER_SKU__ = 'INSERT INTO rel_order_sku SET ?';
 const __FETCH_ORDER_DETAIL__ = 'SELECT a.freight, a.attach, a.payTime, b.name, b.mobile, b.address, b.postcode FROM tb_order a, tb_consignee b WHERE a.out_trade_no = ? and a.consignee_no  = b.consignee_no';
 /**
  *   退款
  */
 const __SUBMIT_NEW_REFUND__ = 'UPDATE tb_refund SET refund_id = ?, status = ?, startTime = ?, remark = ? WHERE out_refund_no = ?';
-const __CHANGE_REFUND_STATUS__ = 'UPDATE tb_refund SET completeTime = ?, status = ?, remark = ? WHERE out_refund_no = ?';
+const __CHANGE_REFUND_STATUS__ = 'UPDATE tb_refund SET complete = ?, status = ?, remark = ? WHERE out_refund_no = ?';
 
 
 module.exports = {

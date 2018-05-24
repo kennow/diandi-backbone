@@ -241,21 +241,21 @@ module.exports = {
     submitRefund: submitRefund
 };
 
-// submitRefund({
-//     body: {
-//         session: 'diUpgQNQc0HEjUfcG6WHzGmq1YKb3oFN',
-//         out_trade_no: '13297414012018052214015068882433',
-//         refundFee: 1,
-//         totalFee: 1,
-//         status: 0,
-//         reason: '库存不足',
-//         skuList: [
-//             'gUKvRPUIP8R5LmmFm67csknO35fz2Mhl'
-//         ]
-//     }
-// }, function (result) {
-//     __LOGGER__.info(result);
-// });
+ //submitRefund({
+ //    body: {
+ //        session: 'diUpgQNQc0HEjUfcG6WHzGmq1YKb3oFN',
+ //        out_trade_no: '13297414012018052116242265289283',
+ //        refundFee: 1,
+ //        totalFee: 1,
+ //        status: 1,
+ //        reason: '库存不足',
+ //        skuList: [
+ //            'gUKvRPUIP8R5LmmFm67csknO35fz2Mhl'
+ //        ]
+ //    }
+ //}, function (result) {
+ //    __LOGGER__.info(result);
+ //});
 
 // fetchMyOrders({
 //     body: {

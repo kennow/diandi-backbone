@@ -8,6 +8,7 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.api
 
 /**
  *      新增SKU属性值
+ *
  * @param request
  */
 function addStockAttribute(request) {
@@ -303,7 +304,10 @@ function closeOrder(request) {
     __MYSQL_API__
         .setUpConnection({
             basicUpdateSQL: __STATEMENT__.__CHANGE_ORDER_STATUS__,
-            basicUpdateParams: [__CONFIG__.__ENUM_ORDER_STATUS__.CLOSE, request.out_trade_no]
+            basicUpdateParams: [
+                __CONFIG__.__ENUM_ORDER_STATUS__.CLOSE,
+                __MOMENT__.format('YYYY-MM-DD HH:mm:ss') + '关闭订单',
+                request.out_trade_no]
         })
         .then(__MYSQL_API__.beginTransaction)
         .then(__MYSQL_API__.basicUpdate)
@@ -402,7 +406,7 @@ function submitNewRefund(request) {
                 request.refund_id,
                 __CONFIG__.__ENUM_REFUND_STATUS__.REFUNDING,
                 __MOMENT__.format('YYYYMMDDHHmmss'),
-                __MOMENT__.format('YYYY-MM-DD HH:mm:ss') + ' JSAPI 发起退款申请' ,
+                __MOMENT__.format('YYYY-MM-DD HH:mm:ss') + ' JSAPI 发起退款申请',
                 request.out_refund_no
             ]
         })
@@ -424,24 +428,60 @@ function submitNewRefund(request) {
 
 /**
  *   申请退款成功后修改状态信息
+ *
  * @param request
  * @returns {*|promise}
  */
 function changeRefundStatus(request) {
     const deferred = Q.defer();
 
+    //  退款进度
+    var status;
+    switch (request.refund_status) {
+        case 'SUCCESS':
+            status = __CONFIG__.__ENUM_REFUND_STATUS__.SUCCESS;
+            break;
+        case 'CHANGE':
+            status = __CONFIG__.__ENUM_REFUND_STATUS__.CHANGE;
+            break;
+        case 'REFUNDCLOSE':
+            status = __CONFIG__.__ENUM_REFUND_STATUS__.CLOSED;
+            break;
+        default:
+            break;
+    }
+    // 进度说明
+    const remark = __MOMENT__.format('YYYY-MM-DD HH:mm:ss') +
+        ' refund_status: ' + request.refund_status + ' 退款入账方：' + request.refund_recv_accout;
+
+
     __MYSQL_API__
         .setUpConnection({
-            basicUpdateSQL: __STATEMENT__.__CHANGE_REFUND_STATUS__,
-            basicUpdateParams: [
-                request.completeTime,
-                request.status,
-                request.remark,
-                request.out_refund_no
+            /**
+             *  1. 更新退款进度
+             *  2. 更新订单状态
+             */
+            oneStepIndex: 0,
+            oneStepSQLs: [
+                __STATEMENT__.__CHANGE_REFUND_STATUS__,
+                __STATEMENT__.__CHANGE_ORDER_STATUS__
+            ],
+            oneStepParams: [
+                [
+                    __MOMENT__.format('YYYYMMDDHHmmss'),
+                    status,
+                    remark,
+                    request.out_refund_no
+                ],
+                [
+                    __CONFIG__.__ENUM_ORDER_STATUS__.REFUND,
+                    remark,
+                    request.out_trade_no
+                ]
             ]
         })
         .then(__MYSQL_API__.beginTransaction)
-        .then(__MYSQL_API__.basicUpdate)
+        .then(__MYSQL_API__.executeInOrder)
         .then(__MYSQL_API__.commitTransaction)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
@@ -560,9 +600,25 @@ module.exports = {
     submitNewOrder: submitNewOrder,
     updateOrderAfterPay: updateOrderAfterPay,
     fetchOrderDetail: fetchOrderDetail,
-    submitNewRefund: submitNewRefund
+    submitNewRefund: submitNewRefund,
+    changeRefundStatus: changeRefundStatus
 };
 
+//changeRefundStatus({
+//    out_refund_no: '13297414012018052214115944426193',
+//    out_trade_no: '13297414012018052214015068882433',
+//    refund_account: 'REFUND_SOURCE_RECHARGE_FUNDS',
+//    refund_fee: '1',
+//    refund_id: '50000106962018052204722170525',
+//    refund_recv_accout: '支付用户零钱',
+//    refund_request_source: 'API',
+//    refund_status: 'SUCCESS',
+//    settlement_refund_fee: '1',
+//    settlement_total_fee: '1',
+//    success_time: '2018-05-22 13:53:10',
+//    total_fee: '1',
+//    transaction_id: '4200000129201805220802079601'
+//});
 // fetchProductDetail({
 //     product_id: 'lJfQQu4AQGmxNCwfwrpzBnvxk9nRus2z'
 // });

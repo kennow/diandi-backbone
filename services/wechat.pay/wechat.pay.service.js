@@ -125,6 +125,7 @@ function handleRefundResultNotification(request) {
             __WX_PAY_DATA__
                 .parseRefundNotification(info)
                 .then(function (result) {
+                    __LOGGER__.debug(result);
                     deferred.resolve(result);
                 });
         } else {
