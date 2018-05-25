@@ -74,6 +74,7 @@ function submitUnifiedOrder(request, response) {
         .then(function (result) {
             __LOGGER__.debug(result);
             feedback = result;                      //  接口调用成功后，保存预返回的结果
+            feedback.out_trade_no = out_trade_no;   //  带上订单编号
 
             const deferred = Q.defer();             //  生成要保存至数据库的订单数据
             deferred.resolve({

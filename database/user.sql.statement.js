@@ -45,6 +45,7 @@ const __FETCH_ORDER_SKU__ = 'SELECT a.*, b.name, c.value ' +
 /**
  *  退款
  */
+const __CHECK_REFUND__ = 'SELECT COUNT(*) AS number FROM tb_refund WHERE out_trade_no = ? ';
 const __SUBMIT_REFUND__ = 'INSERT INTO tb_refund SET ?';
 const __ADD_REL_REFUND_SKU__ = 'INSERT INTO rel_refund_sku SET ?';
 
@@ -70,6 +71,7 @@ module.exports = {
     __FETCH_PRODUCT_SKU__: __FETCH_PRODUCT_SKU__,
     __FETCH_MY_ORDER__: __FETCH_MY_ORDER__,
     __FETCH_ORDER_SKU__: __FETCH_ORDER_SKU__,
+    __CHECK_REFUND__: __CHECK_REFUND__,
     __SUBMIT_REFUND__: __SUBMIT_REFUND__,
     __ADD_REL_REFUND_SKU__: __ADD_REL_REFUND_SKU__
 };

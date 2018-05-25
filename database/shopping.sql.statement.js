@@ -29,7 +29,8 @@ const __CHECK_CONSISTENCY__ = 'SELECT COUNT(*) AS number FROM tb_order WHERE out
 const __UPDATE_ORDER_AFTER_PAY__ = 'UPDATE tb_order SET bankType = ?, mchID = ?, tradeType = ?, transactionID = ?, payTime = ?, status = ?, remark = ? WHERE out_trade_no = ?';
 const __CHANGE_ORDER_STATUS__ = 'UPDATE tb_order SET status = ?, remark = ? WHERE out_trade_no = ? ';
 const __ADD_REL_ORDER_SKU__ = 'INSERT INTO rel_order_sku SET ?';
-const __FETCH_ORDER_DETAIL__ = 'SELECT a.freight, a.attach, a.payTime, b.name, b.mobile, b.address, b.postcode FROM tb_order a, tb_consignee b WHERE a.out_trade_no = ? and a.consignee_no  = b.consignee_no';
+const __FETCH_ORDER_DETAIL__ = 'SELECT a.totalFee, a.freight, a.attach, a.createTime, a.payTime, a.status, b.name, b.mobile, b.address, b.postcode ' +
+    'FROM tb_order a, tb_consignee b WHERE a.out_trade_no = ? and a.consignee_no  = b.consignee_no';
 /**
  *   退款
  */

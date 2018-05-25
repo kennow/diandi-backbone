@@ -1,9 +1,11 @@
 const Q = require('q');
 const __MYSQL_API__ = require('./mysql.api');
 const __WX_PAY_HELPER__ = require('../services/wechat.pay/wechat.pay.helper');
+const __SHOPPING_STATEMENT__ = require('./shopping.sql.statement');
 const __STATEMENT__ = require('./user.sql.statement');
 const __HELPER__ = require('../utility/helper');
 const __CONFIG__ = require('./shopping.config');
+const __MOMENT__ = require('moment')();
 
 function wechatMiniProgramLogin(request) {
     const deferred = Q.defer();
@@ -582,13 +584,27 @@ function submitRefund(request) {
             request.session
         ],
         /**
-         *  2. 设置为缺省收件人
+         *  2. 检查退款订单
+         *     同一订单不能重复提交退款申请
+         */
+        isRepeatSQL: __STATEMENT__.__CHECK_REFUND__,
+        isRepeatParams: [
+            request.out_trade_no
+        ],
+        /**
+         *  3. 提交退款申请，并记录退款订单的SKU
          */
         oneStepIndex: 0,
         oneStepSQLs: [
+            __SHOPPING_STATEMENT__.__CHANGE_ORDER_STATUS__,
             __STATEMENT__.__SUBMIT_REFUND__
         ],
         oneStepParams: [
+            [
+                __CONFIG__.__ENUM_ORDER_STATUS__.REFUND,
+                __MOMENT__.format('YYYY-MM-DD HH:mm:ss') + ' 用户申请退款',
+                request.out_trade_no
+            ],
             {
                 out_refund_no: out_refund_no,
                 out_trade_no: request.out_trade_no,
@@ -600,11 +616,13 @@ function submitRefund(request) {
         ]
     };
 
-    for (var i = 0; i < request.skuList.length; i++) {
+    const skuList = JSON.parse(request.skuList);
+
+    for (var i = 0; i < skuList.length; i++) {
         params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_REFUND_SKU__);
         params.oneStepParams.push({
             out_refund_no: out_refund_no,
-            stock_no: request.skuList[i]
+            stock_no: skuList[i]
         });
     }
 
@@ -612,10 +630,12 @@ function submitRefund(request) {
         .setUpConnection(params)
         .then(__MYSQL_API__.beginTransaction)
         .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.isRepeat)
         .then(__MYSQL_API__.executeInOrder)
         .then(__MYSQL_API__.commitTransaction)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
+            result.out_refund_no = out_refund_no;           //  带上退款单号
             deferred.resolve(result);
         })
         .catch(function (request) {
