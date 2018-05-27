@@ -7,6 +7,7 @@ var logger = require('morgan');
 
 var shoppingRouter = require('./routes/shopping.route');
 var userRouter = require('./routes/user.route');
+var aliyunOssRouter = require('./routes/aliyun.oss.route');
 /**
  * The app object has methods for
  * Routing HTTP requests; see for example, app.METHOD and app.param.
@@ -102,6 +103,7 @@ app.use(express.static(path.join(__dirname, 'public')));
  */
 app.use('/shopping', shoppingRouter);
 app.use('/user', userRouter);
+app.use('/oss', aliyunOssRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

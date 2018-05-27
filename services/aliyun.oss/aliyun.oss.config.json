@@ -1,0 +1,13 @@
+{
+
+  "Region": "oss-cn-hangzhou",
+  "AccessKeyId": "LTAIAam6h0DpIzqI",
+  "AccessKeySecret": "bR3W3hoNP5jhGkF1vxAEuF1MdKy1F6",
+  "Endpoint": "https://media.thinmelon.cc",
+  "Bucket": "chinai",
+  "STSAccessKeyId": "LTAILKrlLSQ0Zfss",
+  "STSAccessKeySecret": "op4oxHaxVIRb2L7nh3uPmuCvcTnhiV",
+  "STSRoleArn": "acs:ram::1698608069362176:role/aliyunosstokengeneratorrole",
+  "STSTokenExpireTime": "900",
+  "STSPolicyFile": "all_policy.txt"
+}
