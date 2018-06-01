@@ -7,7 +7,7 @@ function render(request, response, next) {
     if ('SUCCESS' === request.return_code) {
         response.json(request);
     } else {
-        var err = new Error(request.return_msg);
+        let err = new Error(request.return_msg);
         next(err);
     }
 }

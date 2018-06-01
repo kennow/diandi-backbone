@@ -1,12 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const co = require('co');
+const Q = require('q');
 const __LOGGER__ = require('../log4js.service').getLogger('aliyun.oss.service.js');
 const __OSS__ = require('ali-oss');
 const __STS__ = require('ali-oss').STS;
-const __UTIL__ = require('util');
-const __HTTP_CLIENT__ = require('../http.client');
-//const client = setUpClient();
 
 /**
  *  配置项
@@ -20,10 +18,10 @@ const __HTTP_CLIENT__ = require('../http.client');
  *  [secure] {Boolean} (secure: true) 使用 HTTPS , (secure: false) 则使用 HTTP, 细节请看。
  *  [timeout] {String|Number} 超时时间, 默认 60s。
  */
-function setUpClient() {
-    var conf = JSON.parse(fs.readFileSync(path.join(__dirname, 'aliyun.oss.config.json')));
-
-    return new __OSS__.Wrapper({
+function setUpClient(request) {
+    const deferred = Q.defer();
+    let conf = JSON.parse(fs.readFileSync(path.join(__dirname, 'aliyun.oss.config.json')));
+    let client = new __OSS__.Wrapper({
         /**
          * Region 表示 OSS 的数据中心所在的地域，物理位置。用户可以根据费用、请求来源等综合选择数据存储的 Region。
          */
@@ -43,87 +41,35 @@ function setUpClient() {
         endpoint: conf.Endpoint,
         cname: true
     });
-
-    //co(function* () {
-    //    client.useBucket('chinai');
-    //    var result = yield client.list({
-    //        'max-keys': 5
-    //    });
-    //    console.log(result);
-    //}).catch(function (err) {
-    //    console.log(err);
-    //});
-
-    //co(function* () {
-    //    client.useBucket('chinai');
-    //    var result = yield client.put('first-child', path.join(aliyunOssServiceRootPath, 'config.json'));
-    //    console.log(result);
-    //}).catch(function (err) {
-    //    console.log(err);
-    //});
-
-    //co(function* () {
-    //    client.useBucket('chinai');
-    //    var result = yield client.get('first-child', path.join(aliyunOssServiceRootPath, 'config.json.bak'));
-    //    console.log(result);
-    //}).catch(function (err) {
-    //    console.log(err);
-    //});
-
-    //co(function* () {
-    //    client.useBucket('chinai');
-    //    var result = yield client.delete('first-child');
-    //    console.log(result);
-    //}).catch(function (err) {
-    //    console.log(err);
-    //});
-
-    //co(function* () {
-    //    var result = yield client.getBucketACL('chinai');
-    //    console.log(result);
-    //}).catch(function (err) {
-    //    console.log(err);
-    //});
-
-    //client
-    //    .useBucket('chinai')
-    //    .put('newOne', path.join(aliyunOssServiceRootPath, 'config.json'))
-    //    .then(function (r1) {
-    //        __LOGGER__.info('=============  put success: ============');
-    //        __LOGGER__.debug(r1);
-    //        return client.get('newOne');
-    //    })
-    //    .then(function (r2) {
-    //        __LOGGER__.info('=============  get success: ============');
-    //        res.json(r2)
-    //    })
-    //    .catch(function (err) {
-    //        __LOGGER__.error('error: %j', err);
-    //    });
-
-    //client
-    //    .useBucket('chinai');
-    //
-    //var url = client.signatureUrl('newOne');
-    //console.log(url);
-    //
-    //url = client.signatureUrl('newOne', {expires: 3600});
-    //console.log(url);
-    //
-    //// signed URL for PUT
-    //url = client.signatureUrl('newOne', {method: 'PUT'});
-    //console.log(url);
-
-
-}
-
-function setUpClientUsingSTS() {
-    let conf = JSON.parse(fs.readFileSync(path.join(__dirname, 'aliyun.oss.config.json')));
-    let sts = new __STS__({
-        accessKeyId: conf.STSAccessKeyId,
-        accessKeySecret: conf.STSAccessKeySecret
+    deferred.resolve({
+        client: client,
+        options: request.options
     });
 
+    return deferred.promise;
+}
+
+/**
+ * OSS可以通过阿里云STS服务，临时进行授权访问。使用STS时请按以下步骤进行：
+ *  1.  在官网控制台创建子账号，参考OSS STS。
+ *  2.  在官网控制台创建STS角色并赋予子账号扮演角色的权限，参考OSS STS。
+ *  3.  使用子账号的AccessKeyId/AccessKeySecret向STS申请临时token。
+ *  4.  使用临时token中的认证信息创建OSS的Client。
+ *  5.  使用OSS的Client访问OSS服务。
+ * @param request
+ * @returns {*|C|promise}
+ */
+function fetchSTSToken(request) {
+    const deferred = Q.defer();
+
+    let conf = JSON.parse(fs.readFileSync(path.join(__dirname, 'aliyun.oss.config.json')));
+    let sts = new __STS__({
+        accessKeyId: conf.AccessKeyId,
+        accessKeySecret: conf.AccessKeySecret
+    });
+
+    // 在向STS申请临时token时，还可以指定自定义的STS Policy
+    // 这样申请的临时权限是所扮演角色的权限与Policy指定的权限的交集
     let policy;
     if (conf.STSPolicyFile) {
         policy = fs.readFileSync(path.join(__dirname, 'policy', conf.STSPolicyFile)).toString('utf-8');
@@ -131,7 +77,7 @@ function setUpClientUsingSTS() {
 
     co(function*() {
         let token = yield sts.assumeRole(conf.STSRoleArn, policy, conf.STSTokenExpireTime);
-        let store = new __OSS__.Wrapper({
+        let client = new __OSS__.Wrapper({
             accessKeyId: token.credentials.AccessKeyId,
             accessKeySecret: token.credentials.AccessKeySecret,
             stsToken: token.credentials.SecurityToken,
@@ -139,68 +85,189 @@ function setUpClientUsingSTS() {
             endpoint: conf.Endpoint,
             cname: true
         });
-        __LOGGER__.debug(store);
-
-        return store;
+        deferred.resolve({
+            client: client,
+            options: request.options
+        });
     }).catch(function (err) {
-        __LOGGER__.error(err);
+        deferred.reject(err.message);
     });
 
-
+    return deferred.promise;
 }
 
-function list(options) {
+/**
+ *      查看所有文件
+ *
+ * 通过list来列出当前Bucket下的所有文件。主要的参数如下：
+ *      -   prefix 指定只列出符合特定前缀的文件
+ *      -   marker 指定只列出文件名大于marker之后的文件
+ *      -   delimiter 用于获取文件的公共前缀
+ *      -   max-keys 用于指定最多返回的文件个数
+ * @param request
+ * @returns {*|{res, objects, prefixes, nextMarker, isTruncated}}
+ */
+function list(request) {
+    return request.client.list(request.options);
+}
 
-    client
-        .list(options)
-        .then(function (r1) {
-            __LOGGER__.debug(r1);
+/**
+ * 直接访问
+ *
+ * @param request
+ * @returns {*|C|promise}
+ */
+function directAccessObject(request) {
+    const deferred = Q.defer();
+    __LOGGER__.debug(request.client);
+    let requestUrl = request.client.signatureUrl(
+        request.options.resource,
+        {}
+    );
+    __LOGGER__.info(requestUrl);
+    deferred.resolve(requestUrl);
 
-            r1.prefixes.forEach(function (subDir) {
-                console.log('SubDir: %s', subDir);
-            });
+    return deferred.promise;
+}
+
+// setUpClient({
+//     options: {
+//         resource: 'tmp/IMG_20180507_0001.jpg'
+//     }
+// })
+//     .then(directAccessObject)
+//     .then(url => {
+//         'use strict';
+//         __LOGGER__.info(url);
+//     });
+
+/**
+ * 通过STS访问
+ *
+ * @param request
+ * @returns {*|C|promise}
+ */
+function stsAccessObject(request) {
+    const deferred = Q.defer();
+
+    let stsToken = request.client.options.stsToken;
+    let sign = request.client.signatureUrl(
+        request.options.resource,
+        {
+            'security-token': stsToken
+        }
+    );
+    deferred.resolve(sign);
+
+    return deferred.promise;
+}
+
+// fetchSTSToken({
+//     options: {
+//         resource: 'tmp/IMG_20180507_0001.jpg'
+//     }
+// })
+//     .then(stsAccessObject)
+//     .then(res => {
+//         __LOGGER__.debug(res);
+//     });
+
+/**
+ *      流式上传
+ *
+ * 通过putStream接口来上传一个Stream中的内容，stream参数可以是任何实现了Readable Stream的对象，包含文件流，网络流等。
+ * @param request
+ * @returns {Object|*}
+ */
+function putStream(request) {
+    const deferred = Q.defer();
+    request.options.retransmission++;
+    __LOGGER__.info('============== 第' + request.options.retransmission + '次传送 ==============');
+    let stream = fs.createReadStream(request.options.filePath);
+    request.client
+        .putStream(request.options.fileName, stream)
+        .then(res => {
+            deferred.resolve(res);
         })
-        .catch(function (err) {
-            __LOGGER__.error('error: %j', err);
+        .catch(exception => {
+            __LOGGER__.warn(exception.message);
+            deferred.reject(request);
         });
+    return deferred.promise;
 }
 
-function signedUrl() {
+/**
+ *      失败重传
+ *          -   默认重复 3 次
+ *
+ * @param request
+ * @returns {*}
+ */
+function retransmission(request) {
+    let promise = Q(request);
 
+    promise = promise.then(request.options.redoFn);
+    for (let i = 0; i < 3; i++) {
+        promise = promise.then(1, request.options.redoFn);
+    }
+
+    return promise;
+}
+
+/**
+ * 在需要上传的文件较大时，可以通过multipartUpload接口进行分片上传。
+ * 分片上传的好处是将一个大请求分成多个小请求来执行，这样当其中一些请求失败后，不需要重新上传整个文件，而只需要上传失败的分片就可以了。
+ * 一般对于大于100MB的文件，建议采用分片上传的方法
+ *
+ * name {String} object 名称
+ * file {String|File} file path or HTML5 Web File
+ * [options] {Object} 额外参数
+ *      [checkpoint] {Object} 断点记录点，可以进行断点续传, 如果设置这个参数，上传会从断点开始，如果没有设置，就会重新上传.
+ *      [partSize] {Number} 分片大小
+ *      [progress] {Function} thunk 或 generator形式, 回调函数包含三个参数
+ *          (percentage {Number} 进度百分比(0-1之间小数)
+ *          checkpoint {Object} 断点记录点
+ *          res {Object}) 单次part成功返回的response
+ *      [meta] {Object} 用户自定义header meta信息, header前缀 x-oss-meta-
+ *      [headers] {Object} extra headers, detail see RFC 2616
+ *          ‘Cache-Control’ 通用消息头被用于在http 请求和响应中通过指定指令来实现缓存机制, e.g.: Cache-Control: public, no-cache
+ *          ‘Content-Disposition’ 指示回复的内容该以何种形式展示，是以内联的形式（即网页或者页面的一部分），还是以附件的形式下载并保存到本地,
+ *              e.g.: Content-Disposition: somename
+ *          ‘Content-Encoding’ 用于对特定媒体类型的数据进行压缩, e.g.: Content-Encoding: gzip
+ *          ‘Expires’ 过期时间, e.g.: Expires: 3600000
+ * @param request
+ */
+function multipartUpload(request) {
+    const deferred = Q.defer();
+    request.options.retransmission++;
+    __LOGGER__.info('============== 第' + request.options.retransmission + '次传送 ==============');
+    request.client
+        .multipartUpload(request.options.fileName, request.options.filePath, {
+            checkpoint: request.options.checkpoint,         //  断点续传
+            progress: function*(percentage, checkpoint, res) {
+                __LOGGER__.info('Progress: ' + percentage);
+                request.options.checkpoint = checkpoint;
+                __LOGGER__.debug(checkpoint);
+            }
+        })
+        .then(res => {
+            deferred.resolve(res);
+        })
+        .catch(exception => {
+            __LOGGER__.warn(exception);
+            deferred.reject(request);
+        });
+
+    return deferred.promise;
 }
 
 module.exports = {
-    list: list
+    setUpClient: setUpClient,
+    list: list,
+    putStream: putStream,
+    retransmission: retransmission,
+    multipartUpload: multipartUpload,
+    fetchSTSToken: fetchSTSToken,
+    directAccessObject: directAccessObject,
+    stsAccessObject: stsAccessObject
 };
-
-//list({
-//    prefix: 'tmp/',
-//    delimiter: '/'
-//});
-
-let stsClient = setUpClientUsingSTS();
-
-/**
- * URL签名示例:
- * http://oss-example.oss-cn-hangzhou.aliyuncs.com/oss-api.pdf?OSSAccessKeyId=nz2pc56s936**9l&Expires=1141889120&Signature=vjbyPxybdZaNmGa%2ByT272YEAiv4%3D
- */
-
-//var url = __UTIL__.format(
-//    'https://%s?Format=%s&Version=%s&Signature=%s&SignatureMethod=%s&SignatureNonce=%s&SignatureVersion=%s&AccessKeyId=%s&Timestamp=%s',
-//    'media.thinmelon.cc/newOne',
-//    'xml',
-//    '2015-04-01',
-//    'Pc5WB8gokVn0xfeu%2FZV%2BiNM1dgI%3D',
-//    'HMAC-SHA1',
-//    '15215528852396',
-//    '1.0',
-//    'STS.NHuWn3g9nh2jbRysX44u4ixEY',
-//    '2012-06-01T12:00:00Z'
-//);
-
-//__LOGGER__.debug(url);
-
-//__HTTP_CLIENT__.doHttpsGet('https://chinai.oss-cn-hangzhou.aliyuncs.com/tmp/IMG_20180507_0001.jpg?OSSAccessKeyId=LTAIAam6h0DpIzqI&Expires=3054815530&Signature=RO4BF1kJ6apJrMI3UiYk0%2FIzhF8%3D', function (rawData) {
-//    //__LOGGER__.debug(rawData)
-//});
-

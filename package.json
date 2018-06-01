@@ -6,11 +6,11 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
-    "agentkeepalive": "^3.4.1",
     "ali-oss": "^5.2.0",
     "body-parser": "^1.18.2",
     "body-parser-xml": "^1.1.0",
     "co": "^4.6.0",
+    "connect-multiparty": "^2.1.0",
     "cookie-parser": "~1.4.3",
     "debug": "^3.1.0",
     "express": "~4.16.0",
@@ -22,7 +22,6 @@
     "mysql": "^2.15.0",
     "pug": "^2.0.3",
     "q": "^1.5.1",
-    "urllib": "^2.28.0",
     "xml2js": "^0.4.19"
   }
 }

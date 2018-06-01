@@ -4,7 +4,7 @@ const __HELPER__ = require('../utility/helper');
 const __MYSQL_API__ = require('./mysql.api');
 const __CONFIG__ = require('./shopping.config');
 const __STATEMENT__ = require('./shopping.sql.statement');
-const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.api.js');
+// const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.api.js');
 
 /**
  *      新增SKU属性值
@@ -12,7 +12,7 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.api
  * @param request
  */
 function addStockAttribute(request) {
-    var deferred = Q.defer();
+    const deferred = Q.defer();
 
     __MYSQL_API__
         .setUpConnection({
@@ -56,7 +56,7 @@ function addStockAttribute(request) {
  */
 function batchAddNewStockValue(request) {
     const deferred = Q.defer();
-    var params = {
+    let params = {
         /**
          *  1. 检测登录态
          */
@@ -77,7 +77,7 @@ function batchAddNewStockValue(request) {
     /**
      *  构建批量插入的参数
      */
-    for (var i = 0, length = request.values.length; i < length; i++) {
+    for (let i = 0, length = request.values.length; i < length; i++) {
         params.oneStepSQLs.push(__STATEMENT__.__ADD_NEW_SKU_VALUE__);
         params.isRepeatParams.push([request.values[i].value, request.values[i].aid]);
         params.oneStepParams.push(request.values[i]);
@@ -112,7 +112,7 @@ function batchAddNewStockValue(request) {
 function createNewProduct(request) {
     const deferred = Q.defer();
     const productId = __HELPER__.getNonceStr(32);
-    var params = {
+    let params = {
         /**
          *  1. 检测登录态
          */
@@ -140,8 +140,8 @@ function createNewProduct(request) {
     /**
      *  表 rel_product_attribute_value
      */
-    for (var i = 0; i < request.attributes.length; i++) {
-        for (var j = 0; j < request.attributes[i].values.length; j++) {
+    for (let i = 0; i < request.attributes.length; i++) {
+        for (let j = 0; j < request.attributes[i].values.length; j++) {
             params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_PRODUCT_ATTR_VALUE__);
             params.oneStepParams.push({
                 pid: productId,
@@ -154,7 +154,7 @@ function createNewProduct(request) {
     /**
      *  表 tb_sku
      */
-    for (var k = 0; k < request.skuList.length; k++) {
+    for (let k = 0; k < request.skuList.length; k++) {
         params.oneStepSQLs.push(__STATEMENT__.__ADD_NEW_SKU__);
         params.oneStepParams.push({
             stock_no: __HELPER__.getNonceStr(32),
@@ -233,7 +233,7 @@ function fetchUserOpenId(request) {
  */
 function submitNewOrder(request) {
     const deferred = Q.defer();
-    var params = {
+    let params = {
         /**
          *  1. 生成预支付订单
          */
@@ -258,7 +258,7 @@ function submitNewOrder(request) {
         oneStepPlusFn: __MYSQL_API__.checkStock
     };
 
-    for (var i = 0; i < request.order.skuList.length; i++) {
+    for (let i = 0; i < request.order.skuList.length; i++) {
         params.checkStockParams.push(request.order.skuList[i].stock_no);        //  检查商品库存
         params.checkStockParams.push(request.order.skuList[i].stock_no);        //  再次检查商品库存，避免因并发而出现的库存为负的情况
         params.checkStockAmount.push(request.order.skuList[i].amount);
@@ -436,7 +436,7 @@ function changeRefundStatus(request) {
     const deferred = Q.defer();
 
     //  退款进度
-    var status;
+    let status;
     switch (request.refund_status) {
         case 'SUCCESS':
             status = __CONFIG__.__ENUM_REFUND_STATUS__.SUCCESS;

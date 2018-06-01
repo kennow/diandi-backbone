@@ -7,6 +7,12 @@ const __HELPER__ = require('../utility/helper');
 const __CONFIG__ = require('./shopping.config');
 const __MOMENT__ = require('moment')();
 
+/**
+ *  微信小程序登录
+ *
+ * @param request
+ * @returns {*|promise|C}
+ */
 function wechatMiniProgramLogin(request) {
     const deferred = Q.defer();
     const nonceStr = __HELPER__.getNonceStr(32);
@@ -51,8 +57,8 @@ function wechatMiniProgramLogin(request) {
         .then(__MYSQL_API__.commitTransaction)              //  提交事务
         .then(__MYSQL_API__.cleanup)                        //  清理
         .then(function () {
-            request.nonceStr = nonceStr;                    //  记录自定义登录态
-            deferred.resolve(request);                      //  回传
+            // request.nonceStr = nonceStr;                  //  记录自定义登录态
+            deferred.resolve(nonceStr);                      //  回传
         })
         .catch(function (request) {
             __MYSQL_API__.onRejectWithRollback(request, function (err) {
@@ -61,6 +67,40 @@ function wechatMiniProgramLogin(request) {
         });
 
     return deferred.promise;
+}
+
+/**
+ *  验证用户身份信息
+ *
+ * @param request
+ * @returns {*|promise|C}
+ */
+function checkIdentity(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+
 }
 
 /**
@@ -380,15 +420,15 @@ function fetchMyCart(request) {
 }
 
 /**
- *   添加 / 更新
- *
+ * 添加 / 更新
  * @param request
- * @returns {*|promise}
+ * @param sql
+ * @returns {*|promise|C}
  */
 function addOrUpdate(request, sql) {
     const deferred = Q.defer();
 
-    var params = {
+    let params = {
         /**
          *  1. 检测登录态
          */
@@ -411,7 +451,7 @@ function addOrUpdate(request, sql) {
         xStepSQLs: [],
         xStepParams: []
     };
-    var cart = JSON.parse(request.cart);
+    let cart = JSON.parse(request.cart);
 
     __MYSQL_API__
         .setUpConnection(params)
@@ -419,10 +459,10 @@ function addOrUpdate(request, sql) {
         .then(__MYSQL_API__.checkSession)
         .then(__MYSQL_API__.singleLineQuery)
         .then(function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.params.xStepCount = cart.length;
-            for (var i = 0; i < request.params.xStepCount; i++) {
+            for (let i = 0; i < request.params.xStepCount; i++) {
                 // SQL语句
                 request.params.xStepSQLs.push(__STATEMENT__.__CHECK_CART__);
                 request.params.xStepSQLs.push(__STATEMENT__.__JOIN_TO_CART__);
@@ -575,7 +615,7 @@ function fetchMyOrders(request) {
 function submitRefund(request) {
     const deferred = Q.defer();
     const out_refund_no = __WX_PAY_HELPER__.generateRandomNO();
-    var params = {
+    let params = {
         /**
          *  1. 检测登录态
          */
@@ -618,7 +658,7 @@ function submitRefund(request) {
 
     const skuList = JSON.parse(request.skuList);
 
-    for (var i = 0; i < skuList.length; i++) {
+    for (let i = 0; i < skuList.length; i++) {
         params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_REFUND_SKU__);
         params.oneStepParams.push({
             out_refund_no: out_refund_no,
@@ -648,8 +688,9 @@ function submitRefund(request) {
 }
 
 module.exports = {
-    // 小程序登录
+    // 登录
     wechatMiniProgramLogin: wechatMiniProgramLogin,
+    checkIdentity: checkIdentity,
     // 收件人
     addConsignee: addConsignee,
     editConsignee: editConsignee,

@@ -1,12 +1,14 @@
+const __UTIL__ = require('util');
+const __MOMENT__ = require('moment')();
 /**
  * 产生随机字符串
  * @param length
  * @returns {string}
  */
 function getNonceStr(length) {
-    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const count = chars.length;
-    var i, nonceStr = "";
+    var i, nonceStr = '';
     for (i = 0; i < length; i++) {
         nonceStr += chars.substr(Math.floor(Math.random() * (count - 1) + 1), 1);
     }
@@ -22,7 +24,18 @@ function getTimestamp() {
     return parseInt(new Date().getTime() / 1000) + '';
 }
 
+function generateRandomFileName() {
+    const chars = '0123456789';
+    const count = chars.length;
+    let i, nonceStr = '';
+    for (i = 0; i < 8; i++) {
+        nonceStr += chars.substr(Math.floor(Math.random() * (count - 1) + 1), 1);
+    }
+    return __UTIL__.format('%s%s%s', 'wx', __MOMENT__.format('YYYYMMDDHHmmss'), nonceStr);
+}
+
 module.exports = {
     getNonceStr: getNonceStr,
-    getTimestamp: getTimestamp
+    getTimestamp: getTimestamp,
+    generateRandomFileName: generateRandomFileName
 };

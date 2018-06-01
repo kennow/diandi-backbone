@@ -52,8 +52,8 @@ function submitUnifiedOrder(request, response) {
     const attach = request.body.attach;
     const total_fee = request.body.total_fee;
     const skuList = JSON.parse(request.body.skuList);
-    var user_id = 0;
-    var feedback;
+    let user_id = 0;
+    let feedback;
 
 
     __SHOPPING_DATABASE__

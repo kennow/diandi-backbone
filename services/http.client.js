@@ -12,7 +12,7 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('http.client.
 function doHttpsGet(url, callback) {
     __LOGGER__.info('doHttpsGet ==> ' + url);
     __HTTPS__.get(url, function (response) {
-        var data = '';
+        let data = '';
         response.on('data', function (chunk) {
             data += chunk;
         });
@@ -34,7 +34,7 @@ function doHttpsGet(url, callback) {
 function doHttpGet(url, callback) {
     __LOGGER__.info('doHttpGet ==> ' + url);
     __HTTP__.get(url, function (response) {
-        var data = '';
+        let data = '';
         response.on('data', function (chunk) {
             data += chunk;
         });
@@ -76,7 +76,7 @@ function doHttpsPost(url, data, callback, agentOptions) {
     __LOGGER__.info('=====  doHttpsPost ==> URL: ' + url);
     // __LOGGER__.info('=====  doHttpsPost ==> options: ' + JSON.stringify(options));
     const req = __HTTPS__.request(options, function (res) {
-        var data = '';
+        let data = '';
         res.on('data', function (chunk) {
             data += chunk;
         });
@@ -115,7 +115,7 @@ function doHttpPost(host, port, data, callback) {
     };
     __LOGGER__.info('=====  doHttpPost ==> options: ' + JSON.stringify(options));
     const req = __HTTP__.request(options, function (res) {
-        var data = '';
+        let data = '';
         res.on('data', function (chunk) {
             data += chunk;
         });

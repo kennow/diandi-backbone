@@ -21,14 +21,14 @@ const __ERROR_CODE__ = require('../../utility/error.code');
  * @returns {string}
  */
 function convertToUrlParams(args) {
-    var keys = Object.keys(args);
+    let keys = Object.keys(args);
     keys = keys.sort();
-    var newArgs = {};
+    let newArgs = {};
     keys.forEach(function (key) {
         newArgs[key] = args[key];
     });
-    var string = '';
-    for (var k in newArgs) {
+    let string = '';
+    for (let k in newArgs) {
         if (k === 'sign') {
             continue;
         }
@@ -50,9 +50,9 @@ function convertToUrlParams(args) {
  * @returns {string}
  */
 function makeSign(args, key) {
-    var string = convertToUrlParams(args);
+    let string = convertToUrlParams(args);
     string = string + '&key=' + key;
-    var sign = __CRYPTO__.createHash('md5').update(string, 'utf8').digest('hex');
+    let sign = __CRYPTO__.createHash('md5').update(string, 'utf8').digest('hex');
     return sign.toUpperCase();
 }
 
@@ -89,9 +89,9 @@ function checkSign(args) {
  * @returns {string}
  */
 function convertToXml(args) {
-    var postData = '<xml>';
+    let postData = '<xml>';
 
-    for (var key in args) {
+    for (let key in args) {
         postData += __UTIL__.format('<%s>%s</%s>', key, args[key], key);
     }
     postData += '</xml>';
@@ -106,7 +106,7 @@ function convertToXml(args) {
 function generateRandomNO() {
     const chars = '0123456789';
     const count = chars.length;
-    var i, nonceStr = '';
+    let i, nonceStr = '';
     for (i = 0; i < 8; i++) {
         nonceStr += chars.substr(Math.floor(Math.random() * (count - 1) + 1), 1);
     }
@@ -121,7 +121,7 @@ function generateRandomNO() {
  * @returns {*}
  */
 function decryptData(encryptedData, algorithm, iv) {
-    var key, decipher, decoded;
+    let key, decipher, decoded;
 
     // 对商户key做md5，得到32位小写key*
     key = __CRYPTO__.createHash('md5').update(__WX_PAY_CONFIG__.__KEY__).digest('hex');
@@ -152,7 +152,7 @@ module.exports = {
 };
 
 // generateRandomNO();
-// var encryptedData = 'vgSb3f/TCDy6wyPK6XwpQkrw5pwLOg7+qpGR5xsddVsdXHQi4esS3Hjt1S2ulD9m/E1PWf+iQ2Rv3uSvyJESaxBt54o4UhiOXKHyZf2IWUoILiAnD7b9+u7eXH7dFJXX4UKiYGA7jH0eqljaIlhKNLbbUbWug9Jx9mN30FquCs8r3nXuqGasoibkLhyLeX1QsOPJ2fwvsEatwGIau9VwIO3hSRzlSvq8eR/DMOBcjzKiTVGI/tK03qwgA2yPbELP1tSbMh3HEeXMi6Iv02hgXBh3oY3q+6ePCJxN5jMgmca6oqRllj312WOkepSuKVEQapxc86hR1ilbCmjXTcJFkC+VN7Ruxj6okuLzoU+kVdFH4SyuyOz5yEk1Y/rykK7xrpDAFcOMYFjgZexpFdYLVcT+dVsF5lHQRw/FZRPoPn1JI6ZcqLqFnsMzTb/PFtmgyyQR8W6SZIbwYzaJ5ZlBjLovxXAFDF+7lWR0EwslpLLuPDfS0NZmwqk87JZEyN2TccaKN8wAhUusS8Mb6MjzHtVe9CjSWPp4vLwcLpFMx82HN2wYuvKZiJrPjvqByovF0KaoHdiHKkzEUyFYbKOPTWUKtCkCI2Wc6N8EfVEvVvTVmzghYoItC21OFORdMxGvYErj4/GNjTtBXHk+Bp2G0wRMc1fw90zMpZ6iMmThPvN8iGxCwkRNAbaImLXboiTg8pTQRNdJMl64hfFrSyCacGySP5ipEkwubGY+jUF8HyvsGo3R+zzqleAHOJJi6rqBQDVI16V45RZyQOwz3+GienTvsWTAv/hhchW+CvsWdhx2Z7arCPWFyQMkPNytoBtZlm6fQJJMkS8ym4BzHxKXi7r+7dbRGx3VCoZvfxDvVAEmI55TSWdvDWj0ehJNzd2a2FcOpjirUNZNrq2j78pDkg7FSPtyskG/OYPZUQW8mjAGC5K6wJl+RgbaIzLCDr6B5vvV2QhHJUK9xEG39uFMH5LzqCArZhAZHXRzsbcGBAQwRBowOP037oYY0MUlA6t7fQONWyWBDLkFaxZgRBcXbtDUgN9331CPRBf2Kbehx64r6x4yqjjKS4cOb7c3MVkzWWuBDxv83r/sxwtju1Z1SA==';
+// let encryptedData = 'vgSb3f/TCDy6wyPK6XwpQkrw5pwLOg7+qpGR5xsddVsdXHQi4esS3Hjt1S2ulD9m/E1PWf+iQ2Rv3uSvyJESaxBt54o4UhiOXKHyZf2IWUoILiAnD7b9+u7eXH7dFJXX4UKiYGA7jH0eqljaIlhKNLbbUbWug9Jx9mN30FquCs8r3nXuqGasoibkLhyLeX1QsOPJ2fwvsEatwGIau9VwIO3hSRzlSvq8eR/DMOBcjzKiTVGI/tK03qwgA2yPbELP1tSbMh3HEeXMi6Iv02hgXBh3oY3q+6ePCJxN5jMgmca6oqRllj312WOkepSuKVEQapxc86hR1ilbCmjXTcJFkC+VN7Ruxj6okuLzoU+kVdFH4SyuyOz5yEk1Y/rykK7xrpDAFcOMYFjgZexpFdYLVcT+dVsF5lHQRw/FZRPoPn1JI6ZcqLqFnsMzTb/PFtmgyyQR8W6SZIbwYzaJ5ZlBjLovxXAFDF+7lWR0EwslpLLuPDfS0NZmwqk87JZEyN2TccaKN8wAhUusS8Mb6MjzHtVe9CjSWPp4vLwcLpFMx82HN2wYuvKZiJrPjvqByovF0KaoHdiHKkzEUyFYbKOPTWUKtCkCI2Wc6N8EfVEvVvTVmzghYoItC21OFORdMxGvYErj4/GNjTtBXHk+Bp2G0wRMc1fw90zMpZ6iMmThPvN8iGxCwkRNAbaImLXboiTg8pTQRNdJMl64hfFrSyCacGySP5ipEkwubGY+jUF8HyvsGo3R+zzqleAHOJJi6rqBQDVI16V45RZyQOwz3+GienTvsWTAv/hhchW+CvsWdhx2Z7arCPWFyQMkPNytoBtZlm6fQJJMkS8ym4BzHxKXi7r+7dbRGx3VCoZvfxDvVAEmI55TSWdvDWj0ehJNzd2a2FcOpjirUNZNrq2j78pDkg7FSPtyskG/OYPZUQW8mjAGC5K6wJl+RgbaIzLCDr6B5vvV2QhHJUK9xEG39uFMH5LzqCArZhAZHXRzsbcGBAQwRBowOP037oYY0MUlA6t7fQONWyWBDLkFaxZgRBcXbtDUgN9331CPRBf2Kbehx64r6x4yqjjKS4cOb7c3MVkzWWuBDxv83r/sxwtju1Z1SA==';
 // console.log(decryptData(
 //     encryptedData,
 //     'AES-256-ECB',

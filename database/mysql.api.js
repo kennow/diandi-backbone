@@ -4,7 +4,7 @@ const __MYSQL_CONFIG__ = require('./mysql.config');
 const __LOGGER__ = require('../services/log4js.service').getLogger('mysql.api.js');
 const __ERROR__ = require('../utility/error.code');
 
-var api =
+let api =
     {
         // 使用mysql.config.js的配置信息创建一个MySQL连接池
         pool: __MYSQL__.createPool(__MYSQL_CONFIG__.mysql),
@@ -67,7 +67,7 @@ var api =
          * @returns {*|Promise|promise}
          */
         setUpConnection: function (parameters) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             // 从连接池获取连接
             this.pool.getConnection(function (err, connection) {
@@ -95,7 +95,7 @@ var api =
          * @returns {*|Promise|promise}
          */
         beginTransaction: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             // 启动事务
             request.connection.beginTransaction(function (err) {
@@ -120,7 +120,7 @@ var api =
          * @returns {*|Promise|promise}
          */
         commitTransaction: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
             // 提交事务
             request.connection.commit(function (err) {
                 __LOGGER__.info('==> commitTransaction ==> callback |  ' + err);
@@ -144,7 +144,7 @@ var api =
          * @returns {*|Promise|promise}
          */
         cleanup: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
             // 释放连接
             __LOGGER__.info('==>   cleanup');
             request.connection.release();
@@ -212,7 +212,7 @@ var api =
          * @returns {*|promise}
          */
         isRepeat: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(request.params.isRepeatSQL, request.params.isRepeatParams, function (err, result) {
                 api.isRepeatHandler(request, deferred, err, result);
@@ -227,7 +227,7 @@ var api =
          * @returns {*|promise}
          */
         isRepeatPlus: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(
                 request.params.isRepeatSQL,
@@ -246,7 +246,7 @@ var api =
          * @returns {*|promise}
          */
         basicInsert: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(request.params.basicInsertSQL, request.params.basicInsertParams, function (err, result) {
                 __LOGGER__.info('==> basicInsert ==> callback |  ' + err);
@@ -261,7 +261,7 @@ var api =
          * @param request
          */
         basicUpdate: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(request.params.basicUpdateSQL, request.params.basicUpdateParams, function (err, result) {
                 __LOGGER__.info('==> basicUpdate ==> callback |  ' + err);
@@ -277,7 +277,7 @@ var api =
          * @returns {*|promise}
          */
         basicDelete: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(request.params.deleteSQL, request.params.deleteParams, function (err, result) {
                 __LOGGER__.info('==> basicDelete ==> callback |  ' + err);
@@ -293,7 +293,7 @@ var api =
          * @returns {*|promise}
          */
         basicQuery: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(request.params.basicQuerySQL, request.params.basicQueryParams, function (err, result) {
                 __LOGGER__.info('==> basicQuery ==> callback |  ' + err);
@@ -308,10 +308,10 @@ var api =
          * @param request
          */
         batchQuery: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
-            __LOGGER__.debug(request.params.batchQuerySQL[request.params.batchQueryIndex])
-            __LOGGER__.debug(request.params.batchQueryParams[request.params.batchQueryIndex])
+            __LOGGER__.debug(request.params.batchQuerySQL[request.params.batchQueryIndex]);
+            __LOGGER__.debug(request.params.batchQueryParams[request.params.batchQueryIndex]);
             request.connection.query(
                 request.params.batchQuerySQL[request.params.batchQueryIndex],
                 request.params.batchQueryParams[request.params.batchQueryIndex],
@@ -329,7 +329,7 @@ var api =
 
         // 启动批量查询
         inAll: function (request) {
-            var i, length, tasks = [], deferred = Q.defer();
+            let i, length, tasks = [], deferred = Q.defer();
             //  将查询语句放入执行队列
             //  由于Q.all异步启动所有任务，在放入队列前，要确认执行的语句及其参数
             for (i = 0, length = request.params.batchQuerySQL.length; i < length; i++) {
@@ -338,9 +338,9 @@ var api =
             }
 
             Q.all(tasks)
-                // 所有任务执行结束后，对返回结果进行修饰
+            // 所有任务执行结束后，对返回结果进行修饰
                 .then(function (rawData) {
-                    var j, result = {};
+                    let j, result = {};
                     // 为按顺序返回的各个结果集添加标签
                     //__LOGGER__.debug(rawData);
                     for (j = 0; j < rawData.length; j++) {
@@ -371,7 +371,7 @@ var api =
          * @returns {*|promise}
          */
         checkSession: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(request.params.checkSessionSQL, request.params.checkSessionParams, function (err, result) {
                 __LOGGER__.info('==> checkSession ==> callback | ' + err);
@@ -409,7 +409,7 @@ var api =
          * @returns {*|promise}
          */
         checkStock: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(
                 request.params.checkStockSQL,
@@ -450,8 +450,8 @@ var api =
          * @returns {*|promise}
          */
         modifyRequestParams: function (request) {
-            var deferred = Q.defer();
-            var params = request.params;
+            const deferred = Q.defer();
+            let params = request.params;
             //  检测属性是否存在
             if (params.hasOwnProperty(params.modifyParamsKey)
                 && params[params.modifyParamsKey][0].hasOwnProperty(params.modifyParamsAttribute)
@@ -479,7 +479,7 @@ var api =
          * @returns {*|promise}
          */
         singleLineQuery: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(request.params.singleLineQuerySQL, request.params.singleLineQueryParams, function (err, result) {
                 __LOGGER__.info('==> singleLineQuery ==> callback |  ' + err);
@@ -519,7 +519,7 @@ var api =
          * @returns {*|promise}
          */
         oneStep: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             __LOGGER__.debug(request.params.oneStepSQLs[request.params.oneStepIndex]);
             __LOGGER__.debug(request.params.oneStepParams[request.params.oneStepIndex]);
@@ -552,7 +552,7 @@ var api =
          * @returns {*}
          */
         executeInOrder: function (request) {
-            var i,
+            let i,
                 length,
                 promise,
                 tasks = [];
@@ -580,7 +580,7 @@ var api =
          * @returns {*}
          */
         executeInOrderPlus: function (request) {
-            var i,
+            let i,
                 length,
                 promise,
                 tasks = [];
@@ -609,7 +609,7 @@ var api =
          * @returns {*|promise}
          */
         stepX: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             __LOGGER__.info(request.params.xStepIndex);
             __LOGGER__.info(request.params.xStepSQLs[request.params.xStepIndex]);
@@ -648,7 +648,7 @@ var api =
          * @returns {*|promise}
          */
         notExistHandler: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(
                 request.params.xStepSQLs[request.params.xStepIndex],
@@ -680,7 +680,7 @@ var api =
          * @returns {*|promise}
          */
         existHandler: function (request) {
-            var deferred = Q.defer();
+            const deferred = Q.defer();
 
             request.connection.query(
                 request.params.xStepSQLs[request.params.xStepIndex],
@@ -710,7 +710,7 @@ var api =
          * @returns {*}
          */
         executeStepX: function (request) {
-            var i,
+            let i,
                 promise,
                 tasks = [];
 
