@@ -1,12 +1,4 @@
 /**
- *  登录态
- */
-const __CHECK_SESSION__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE 3rd_session  = ?';
-/**
- *  用户
- */
-const __FETCH_USER_INFO__ = 'SELECT * FROM tb_user WHERE 3rd_session = ?';
-/**
  *  商品
  */
 const __ADD_NEW_SKU_ATTRIBUTE__ = 'INSERT INTO tb_sku_attribute SET ?';
@@ -31,16 +23,23 @@ const __CHANGE_ORDER_STATUS__ = 'UPDATE tb_order SET status = ?, remark = ? WHER
 const __ADD_REL_ORDER_SKU__ = 'INSERT INTO rel_order_sku SET ?';
 const __FETCH_ORDER_DETAIL__ = 'SELECT a.totalFee, a.freight, a.attach, a.createTime, a.payTime, a.status, b.name, b.mobile, b.address, b.postcode ' +
     'FROM tb_order a, tb_consignee b WHERE a.out_trade_no = ? and a.consignee_no  = b.consignee_no';
+const __FETCH_ORDER_LIST__ = 'SELECT out_trade_no, user_id, consignee_no, createTime, payTime, totalFee, a.status, attach, remark ' +
+    'FROM tb_order a, tb_user b WHERE b.3rd_session = ? AND a.user_id = b.uid AND a.createTime < ? limit ?';
+const __FETCH_A_ORDER__ = 'SELECT a.stock_no, a.amount, b.unit, b.attributes, c.name, c.pid ' +
+    'FROM rel_order_sku a, tb_sku b, tb_product c ' +
+    'WHERE a.out_trade_no = ? AND a.stock_no = b.stock_no AND b.product_id = c.pid';
+const __FETCH_A_ORDER_SKU__ = 'SELECT a.*, b.name, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c ' +
+    'WHERE a.aid = b.aid AND a.vid = c.vid AND a.pid in ' +
+    '(SELECT DISTINCT b.product_id FROM rel_order_sku a, tb_sku b, tb_product c ' +
+    'WHERE a.out_trade_no = ? AND a.stock_no = b.stock_no AND b.product_id = c.pid)';
 /**
  *   退款
  */
 const __SUBMIT_NEW_REFUND__ = 'UPDATE tb_refund SET refund_id = ?, status = ?, startTime = ?, remark = ? WHERE out_refund_no = ?';
 const __CHANGE_REFUND_STATUS__ = 'UPDATE tb_refund SET complete = ?, status = ?, remark = ? WHERE out_refund_no = ?';
-
+const __FETCH_REFUND_INFO__ = 'SELECT * FROM tb_refund WHERE out_trade_no = ? ';
 
 module.exports = {
-    __CHECK_SESSION__: __CHECK_SESSION__,
-    __FETCH_USER_INFO__: __FETCH_USER_INFO__,
     __ADD_NEW_SKU_ATTRIBUTE__: __ADD_NEW_SKU_ATTRIBUTE__,
     __ADD_NEW_SKU_VALUE__: __ADD_NEW_SKU_VALUE__,
     __CHECK_SKU_VALUE__: __CHECK_SKU_VALUE__,
@@ -60,5 +59,9 @@ module.exports = {
     __UPDATE_PRODUCT_SALES__: __UPDATE_PRODUCT_SALES__,
     __SUBMIT_NEW_REFUND__: __SUBMIT_NEW_REFUND__,
     __CHANGE_REFUND_STATUS__: __CHANGE_REFUND_STATUS__,
-    __FETCH_ORDER_DETAIL__: __FETCH_ORDER_DETAIL__
+    __FETCH_ORDER_DETAIL__: __FETCH_ORDER_DETAIL__,
+    __FETCH_ORDER_LIST__: __FETCH_ORDER_LIST__,
+    __FETCH_A_ORDER__: __FETCH_A_ORDER__,
+    __FETCH_A_ORDER_SKU__: __FETCH_A_ORDER_SKU__,
+    __FETCH_REFUND_INFO__: __FETCH_REFUND_INFO__
 };

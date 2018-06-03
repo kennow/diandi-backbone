@@ -338,7 +338,7 @@ let api =
             }
 
             Q.all(tasks)
-            // 所有任务执行结束后，对返回结果进行修饰
+                // 所有任务执行结束后，对返回结果进行修饰
                 .then(function (rawData) {
                     let j, result = {};
                     // 为按顺序返回的各个结果集添加标签
@@ -371,10 +371,32 @@ let api =
          * @returns {*|promise}
          */
         checkSession: function (request) {
+            return api.isExistHandler(request, request.params.checkSessionSQL, request.params.checkSessionParams, '账户已失效，请重新登录！');
+        },
+
+        /**
+         * 检查用户权限
+         * @param request
+         * @returns {*}
+         */
+        checkPermission: function (request) {
+            return api.isExistHandler(request, request.params.checkPermissionSQL, request.params.checkPermissionParams, '您没有权限！');
+        },
+
+        /**
+         *
+         * @param request
+         * @param sql
+         * @param params
+         * @param hint
+         * @returns {*}
+         */
+        isExistHandler: function (request, sql, params, hint) {
             const deferred = Q.defer();
 
-            request.connection.query(request.params.checkSessionSQL, request.params.checkSessionParams, function (err, result) {
-                __LOGGER__.info('==> checkSession ==> callback | ' + err);
+            request.connection.query(sql, params, function (err, result) {
+                __LOGGER__.info('==> isExistHandler ==> callback | ' + err);
+
                 if (err) {
                     deferred.reject({
                         connection: request.connection,
@@ -389,7 +411,7 @@ let api =
                             connection: request.connection,
                             params: request.params,
                             code: __ERROR__.loginStatusError,
-                            errMsg: '账户已失效，请重新登录！'
+                            errMsg: hint
                         });
                     } else {
                         deferred.resolve({

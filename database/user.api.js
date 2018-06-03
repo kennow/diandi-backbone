@@ -70,6 +70,47 @@ function wechatMiniProgramLogin(request) {
 }
 
 /**
+ *    用3rd session 换取openid
+ *
+ * @param request
+ * @returns {*|promise}
+ */
+function fetchUserOpenId(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 找到对应的 open_id
+             */
+            singleLineQuerySQL: __STATEMENT__.__FETCH_USER_INFO__,
+            singleLineQueryParams: [
+                request.session
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.singleLineQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
  *  验证用户身份信息
  *
  * @param request
@@ -687,10 +728,74 @@ function submitRefund(request) {
     return deferred.promise;
 }
 
+/**
+ *      获取用户的资料
+ *          --  后台用
+ *          --  微信账号信息
+ *          --  收件人信息
+ * @param request
+ * @returns {*}
+ */
+function fetchUserInfo(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 检测用户权限
+             */
+            checkPermissionSQL: __STATEMENT__.__CHECK_PERMISSION__,
+            checkPermissionParams: [
+                'ORDER',
+                'USER_INFO',
+                request.session
+            ],
+            /**
+             *  3. 批量查询订单
+             */
+            batchQueryIndex: 0,                             //  索引
+            batchQueryTag: [                                //  标签
+                'user',
+                'consignee'
+            ],
+            batchQuerySQL: [                                //  执行语句
+                __STATEMENT__.__FETCH_SPECIFIC_WECHAT__,
+                __STATEMENT__.__FETCH_SPECIFIC_CONSIGNEE__
+            ],
+            batchQueryParams: [                             //  对应参数
+                [request.user_id],
+                [request.consignee_no]
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.checkPermission)
+        .then(__MYSQL_API__.inAll)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     // 登录
     wechatMiniProgramLogin: wechatMiniProgramLogin,
     checkIdentity: checkIdentity,
+    fetchUserOpenId: fetchUserOpenId,
+    fetchUserInfo: fetchUserInfo,
     // 收件人
     addConsignee: addConsignee,
     editConsignee: editConsignee,

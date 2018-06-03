@@ -225,6 +225,34 @@ function submitRefund(request, response) {
         });
 }
 
+/**
+ *    获取用户资料
+ *
+ * @param request
+ * @param response
+ */
+function fetchUserInfo(request, response) {
+    __USER__
+        .fetchUserInfo(request.body)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            response(exception);
+        });
+}
+
+//fetchUserInfo({
+//    body: {
+//        session: 'oRKfQ0wn5FvfGsQi6BkperbYPEA5Dp3l',
+//        user_id: '1',
+//        consignee_no: 'hMJRqx9sG7UeNY9z3i5g6xIGQygRoFDT'
+//    }
+//}, res => {
+//    'use strict';
+//    console.log(res)
+//})
+
 module.exports = {
     login: login,
     addConsignee: addConsignee,
@@ -238,7 +266,8 @@ module.exports = {
     updateMyCart: updateMyCart,
     removeMyCart: removeMyCart,
     fetchMyOrders: fetchMyOrders,
-    submitRefund: submitRefund
+    submitRefund: submitRefund,
+    fetchUserInfo: fetchUserInfo
 };
 
 // submitRefund({

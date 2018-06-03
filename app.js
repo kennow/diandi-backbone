@@ -1,13 +1,14 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const createError = require('http-errors');
+const express = require('express');
+const path = require('path');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
 
-var shoppingRouter = require('./routes/shopping.route');
-var userRouter = require('./routes/user.route');
-var aliyunOssRouter = require('./routes/aliyun.oss.route');
+const shoppingRouter = require('./routes/shopping.route');
+const userRouter = require('./routes/user.route');
+const backboneRouter = require('./routes/backbone.route');
+const aliyunOssRouter = require('./routes/aliyun.oss.route');
 /**
  * The app object has methods for
  * Routing HTTP requests; see for example, app.METHOD and app.param.
@@ -15,7 +16,7 @@ var aliyunOssRouter = require('./routes/aliyun.oss.route');
  *      -   Rendering HTML views; see app.render.
  *      -   Registering a template engine; see app.engine.
  */
-var app = express();
+const app = express();
 /**
  * The view argument is a string that is the file path of the view file to render.
  *      -   This can be an absolute path, or a path relative to the views setting.
@@ -103,6 +104,7 @@ app.use(express.static(path.join(__dirname, 'public')));
  */
 app.use('/shopping', shoppingRouter);
 app.use('/user', userRouter);
+app.use('/backbone', backboneRouter);
 app.use('/oss', aliyunOssRouter);
 
 // catch 404 and forward to error handler

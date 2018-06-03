@@ -3,6 +3,7 @@ const __MOMENT__ = require('moment')();
 const __HELPER__ = require('../utility/helper');
 const __MYSQL_API__ = require('./mysql.api');
 const __CONFIG__ = require('./shopping.config');
+const __USER_STATEMENT__ = require('./user.sql.statement');
 const __STATEMENT__ = require('./shopping.sql.statement');
 // const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.api.js');
 
@@ -19,7 +20,7 @@ function addStockAttribute(request) {
                 /**
                  *  1. 检测登录态
                  */
-                checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+                checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
                 checkSessionParams: [
                     request.session
                 ],
@@ -60,7 +61,7 @@ function batchAddNewStockValue(request) {
         /**
          *  1. 检测登录态
          */
-        checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+        checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
         checkSessionParams: [
             request.session
         ],
@@ -116,7 +117,7 @@ function createNewProduct(request) {
         /**
          *  1. 检测登录态
          */
-        checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+        checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
         checkSessionParams: [
             request.session
         ],
@@ -178,47 +179,6 @@ function createNewProduct(request) {
         })
         .catch(function (request) {
             __MYSQL_API__.onRejectWithRollback(request, function (response) {
-                deferred.reject(response);
-            });
-        });
-
-    return deferred.promise;
-}
-
-/**
- *    用3rd session 换取openid
- *
- * @param request
- * @returns {*|promise}
- */
-function fetchUserOpenId(request) {
-    const deferred = Q.defer();
-
-    __MYSQL_API__
-        .setUpConnection({
-            /**
-             *  1. 检测登录态
-             */
-            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
-            checkSessionParams: [
-                request.session
-            ],
-            /**
-             *  2. 找到对应的 open_id
-             */
-            singleLineQuerySQL: __STATEMENT__.__FETCH_USER_INFO__,
-            singleLineQueryParams: [
-                request.session
-            ]
-        })
-        .then(__MYSQL_API__.checkSession)
-        .then(__MYSQL_API__.singleLineQuery)
-        .then(__MYSQL_API__.cleanup)
-        .then(function (result) {
-            deferred.resolve(result);
-        })
-        .catch(function (request) {
-            __MYSQL_API__.onReject(request, function (response) {
                 deferred.reject(response);
             });
         });
@@ -564,6 +524,112 @@ function fetchProductDetail(request) {
 }
 
 /**
+ *    获取订单列表
+ *
+ * @param request
+ */
+function fetchOrderList(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 检测用户权限
+             */
+            checkPermissionSQL: __USER_STATEMENT__.__CHECK_PERMISSION__,
+            checkPermissionParams: [
+                'ORDER',
+                'QUERY_ALL',
+                request.session
+            ],
+            /**
+             *  3. 查询订单列表
+             */
+            basicQuerySQL: __STATEMENT__.__FETCH_ORDER_LIST__,
+            basicQueryParams: [
+                request.session,
+                request.startTime,
+                parseInt(request.number)
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.checkPermission)
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+function fetchAOrder(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 检测用户权限
+             */
+            checkPermissionSQL: __USER_STATEMENT__.__CHECK_PERMISSION__,
+            checkPermissionParams: [
+                'ORDER',
+                'QUERY_ALL',
+                request.session
+            ],
+            /**
+             *  3. 批量查询订单
+             */
+            batchQueryIndex: 0,                             //  索引
+            batchQueryTag: [                                //  标签
+                'order',
+                'sku'
+            ],
+            batchQuerySQL: [                                //  执行语句
+                __STATEMENT__.__FETCH_A_ORDER__,
+                __STATEMENT__.__FETCH_A_ORDER_SKU__
+            ],
+            batchQueryParams: [                             //  对应参数
+                [request.out_trade_no],
+                [request.out_trade_no]
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.checkPermission)
+        .then(__MYSQL_API__.inAll)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
  *   获取订单详情
  * @param request
  * @returns {*|promise}
@@ -592,16 +658,68 @@ function fetchOrderDetail(request) {
     return deferred.promise;
 }
 
+/**
+ *    获取退款单详情
+ * @param request
+ * @returns {*}
+ */
+function fetchRefundInfo(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 检测用户权限
+             */
+            checkPermissionSQL: __USER_STATEMENT__.__CHECK_PERMISSION__,
+            checkPermissionParams: [
+                'ORDER',
+                'QUERY_ALL',
+                request.session
+            ],
+            /**
+             *  3. 查询退款进度
+             */
+            basicQuerySQL: __STATEMENT__.__FETCH_REFUND_INFO__,
+            basicQueryParams: [
+                request.out_trade_no
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.checkPermission)
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
-    fetchUserOpenId: fetchUserOpenId,
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail,
     addStockAttribute: addStockAttribute,
     submitNewOrder: submitNewOrder,
     updateOrderAfterPay: updateOrderAfterPay,
+    fetchOrderList: fetchOrderList,
+    fetchAOrder: fetchAOrder,
     fetchOrderDetail: fetchOrderDetail,
     submitNewRefund: submitNewRefund,
-    changeRefundStatus: changeRefundStatus
+    changeRefundStatus: changeRefundStatus,
+    fetchRefundInfo: fetchRefundInfo
 };
 
 //changeRefundStatus({

@@ -2,6 +2,7 @@ const Q = require('q');
 const __UTIL__ = require('util');
 const __WX_PAY_HELPER__ = require('../services/wechat.pay/wechat.pay.helper');
 const __WX_PAY_SERVICE__ = require('../services/wechat.pay/wechat.pay.service');
+const __USER_DATABASE__ = require('../database/user.api');
 const __SHOPPING_DATABASE__ = require('../database/shopping.api');
 const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.controller.js');
 
@@ -56,7 +57,7 @@ function submitUnifiedOrder(request, response) {
     let feedback;
 
 
-    __SHOPPING_DATABASE__
+    __USER_DATABASE__
         .fetchUserOpenId(request.body)
         .then(function (request) {      //  作下调整
             const deferred = Q.defer();
@@ -100,6 +101,67 @@ function submitUnifiedOrder(request, response) {
             response(exception);
         });
 }
+
+/**
+ *      获取订单列表
+ *      -   取部分数据
+ *
+ * @param request
+ * @param response
+ */
+function fetchOrderList(request, response) {
+    __SHOPPING_DATABASE__
+        .fetchOrderList(request.query)
+        .then(result => {
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ *      后台 - 获取某订单详情
+ * @param request
+ * @param response
+ */
+function fetchAOrder(request, response) {
+    __SHOPPING_DATABASE__
+        .fetchAOrder({
+            out_trade_no: request.params.out_trade_no,
+            session: request.query.session
+        })
+        .then(result => {
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+
+//fetchOrderList({
+//    query: {
+//        session: '5188hrY5siSKhcpUDr7L0AXV7JE5Ki3c',
+//        startTime: '2018-05-25',
+//        number: 20
+//    }
+//}, function (res) {
+//    __LOGGER__.debug(res);
+//});
+
+//fetchAOrder({
+//    params: {
+//        out_trade_no: '13297414012018051910422182936742'
+//    },
+//    query: {
+//        session: '5188hrY5siSKhcpUDr7L0AXV7JE5Ki3c'
+//    }
+//}, function (res) {
+//    __LOGGER__.debug(res);
+//})
 
 /**
  * 收到微信支付的结果通知
@@ -243,15 +305,46 @@ function receiveRefundResultNotification(request, response) {
         });
 }
 
+/**
+ *  查询退款进度
+ *      --  后台用
+ * @param request
+ * @param response
+ */
+function fetchRefundInfo(request, response) {
+    __SHOPPING_DATABASE__.fetchRefundInfo(request.body)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
 module.exports = {
     submitUnifiedOrder: submitUnifiedOrder,
     queryOrder: queryOrder,
+    fetchOrderList: fetchOrderList,
+    fetchAOrder: fetchAOrder,
     receivePayResultNotification: receivePayResultNotification,
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail,
     Refund: Refund,
-    receiveRefundResultNotification: receiveRefundResultNotification
+    receiveRefundResultNotification: receiveRefundResultNotification,
+    fetchRefundInfo: fetchRefundInfo
 };
+
+//fetchRefundInfo({
+//    body: {
+//        session: 'oRKfQ0wn5FvfGsQi6BkperbYPEA5Dp3l',
+//        out_trade_no: '13297414012018052214015068882433'
+//    }
+//}, res => {
+//    'use strict';
+//    console.log(res);
+//})
 
 //receiveRefundResultNotification({
 //    body: {
