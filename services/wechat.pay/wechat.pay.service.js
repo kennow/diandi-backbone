@@ -55,6 +55,19 @@ function unifiedOrder(request) {
 }
 
 /**
+ * 重新支付
+ * 重新发起一笔支付要使用原订单号，避免重复支付；
+ * 已支付过或已调用关单、撤销（请见后文的API列表）的订单号不能重新发起支付。
+ * @param request
+ * @returns {*|promise|C}
+ */
+function repay(request) {
+    const deferred = Q.defer();
+    deferred.resolve(__WX_PAY_DATA__.constructWechatPayResult(request));
+    return deferred.promise;
+}
+
+/**
  * 以下情况需要调用关单接口：
  *      1.  商户订单支付失败需要生成新单号重新发起支付，要对原订单号调用关单，避免重复支付；
  *      2.  系统下单后，用户支付超时，系统退出不再受理，避免用户继续，请调用关单接口。
@@ -68,8 +81,23 @@ function closeOrder(request) {
     __LOGGER__.debug(postData);
 
     // 调用关闭订单API
-    __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__CLOSE_ORDER__, postData, function (result) {
-        deferred.resolve(result);
+    __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__CLOSE_ORDER__, postData, function (rawData) {
+        __WX_PAY_DATA__
+            .parseReturnCloseOrder(rawData)       // 对返回结果进行解析【XML转JSON】
+            .then(__WX_PAY_HELPER__.checkSign)      // 验证结果的正确性
+            .then(function (result) {               // 确认无误后回传给 Controller
+                if (result.return_code === 'SUCCESS' &&
+                    result.result_code === 'SUCCESS'
+                ) {
+                    deferred.resolve(request);      // 透传参数
+                }
+                else {
+                    deferred.reject(result);
+                }
+            })
+            .catch(function (err) {
+                deferred.reject(err);
+            });
     }, null);
 
     return deferred.promise;
@@ -252,6 +280,7 @@ function Refund(request) {
 
 module.exports = {
     unifiedOrder: unifiedOrder,
+    repay: repay,
     closeOrder: closeOrder,
     queryOrder: queryOrder,
     Refund: Refund,
@@ -278,7 +307,7 @@ module.exports = {
 // });
 
 // closeOrder({
-//    out_trade_no: '132974140120180506095421'
+//     out_trade_no: '132974140120180506095421'
 // });
 
 // queryOrder({

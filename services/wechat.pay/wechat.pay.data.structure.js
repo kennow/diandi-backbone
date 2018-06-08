@@ -32,19 +32,69 @@ function parseReturnUnifiedOrder(rawData) {
                 return_msg: result.xml.return_msg[0]
             });
         } else {
-            const data = {
-                return_code: result.xml.return_code[0],                         // 通信标识，非交易标识
-                return_msg: result.xml.return_msg[0],                           // 返回信息，如非空，为错误原因
-                appid: result.xml.appid[0],                                     // 调用接口提交的小程序ID
-                mch_id: result.xml.mch_id[0],                                   // 调用接口提交的商户号
-                device_info: result.xml.device_info[0],
-                nonce_str: result.xml.nonce_str[0],                             // 微信返回的随机字符串
-                sign: result.xml.sign[0],                                       // 微信返回的签名值
-                result_code: result.xml.result_code[0],                         // 业务结果
-                prepay_id: result.xml.prepay_id[0],  // 微信生成的预支付会话标识，用于后续接口调用中使用，该值有效期为2小时
-                trade_type: result.xml.trade_type[0]                            // 交易类型
-            };
-            deferred.resolve(data);
+            let data;
+            if (result.xml.result_code[0] === 'SUCCESS') {
+                data = {
+                    return_code: result.xml.return_code[0],                         // 通信标识，非交易标识
+                    return_msg: result.xml.return_msg[0],                           // 返回信息，如非空，为错误原因
+                    appid: result.xml.appid[0],                                     // 调用接口提交的小程序ID
+                    mch_id: result.xml.mch_id[0],                                   // 调用接口提交的商户号
+                    device_info: result.xml.device_info[0],
+                    nonce_str: result.xml.nonce_str[0],                             // 微信返回的随机字符串
+                    sign: result.xml.sign[0],                                       // 微信返回的签名值
+                    result_code: result.xml.result_code[0],                         // 业务结果
+                    prepay_id: result.xml.prepay_id[0],  // 微信生成的预支付会话标识，用于后续接口调用中使用，该值有效期为2小时
+                    trade_type: result.xml.trade_type[0]                            // 交易类型
+                };
+                deferred.resolve(data);
+            } else {
+                data = {
+                    return_code: result.xml.return_code[0],                         // 通信标识，非交易标识
+                    return_msg: result.xml.return_msg[0],                           // 返回信息，如非空，为错误原因
+                    appid: result.xml.appid[0],                                     // 调用接口提交的小程序ID
+                    mch_id: result.xml.mch_id[0],                                   // 调用接口提交的商户号
+                    device_info: result.xml.device_info[0],
+                    nonce_str: result.xml.nonce_str[0],                             // 微信返回的随机字符串
+                    sign: result.xml.sign[0],                                       // 微信返回的签名值
+                    result_code: result.xml.result_code[0],                         // 业务结果
+                    err_code: result.xml.err_code[0],  // 微信生成的预支付会话标识，用于后续接口调用中使用，该值有效期为2小时
+                    err_code_des: result.xml.err_code_des[0]                            // 交易类型
+                };
+                deferred.reject(data);
+            }
+        }
+    });
+
+    return deferred.promise;
+}
+
+/**
+ *      解析关闭订单的返回结果
+ *
+ *
+ * @param rawData
+ * @returns {*|promise|C}
+ */
+function parseReturnCloseOrder(rawData) {
+    const deferred = Q.defer();
+
+    __XML_PARSER__(rawData, function (err, result) {
+        if (result.xml.return_code[0] !== 'SUCCESS') {
+            deferred.reject({
+                return_code: result.xml.return_code[0],
+                return_msg: result.xml.return_msg[0]
+            });
+        } else {
+            deferred.resolve({
+                return_code: result.xml.return_code[0],
+                return_msg: result.xml.return_msg[0],
+                appid: result.xml.appid[0],
+                mch_id: result.xml.mch_id[0],
+                sub_mch_id: result.xml.sub_mch_id[0],
+                nonce_str: result.xml.nonce_str[0],
+                sign: result.xml.sign[0],
+                result_code: result.xml.result_code[0]
+            });
         }
     });
 
@@ -314,6 +364,11 @@ function constructDownladFundFlowParams(request) {
     return params;
 }
 
+/**
+ * 构造退款的接口参数
+ * @param request
+ * @returns {{appid: string, mch_id: string, nonce_str: string, sign_type: string, out_trade_no: (*|string), out_refund_no: *, total_fee: (*|number), refund_fee: *, refund_fee_type: (string|*), refund_desc: string, refund_account: string, notify_url: string}}
+ */
 function constructRefundParams(request) {
     const params = {
         appid: __WX_PAY_CONFIG__.__APP_ID__,                        //  微信分配的小程序ID
@@ -337,6 +392,7 @@ function constructRefundParams(request) {
 
 module.exports = {
     parseReturnUnifiedOrder: parseReturnUnifiedOrder,
+    parseReturnCloseOrder: parseReturnCloseOrder,
     parseReturnQueryOrder: parseReturnQueryOrder,
     parseReturnRefund: parseReturnRefund,
     parseRefundNotification: parseRefundNotification,

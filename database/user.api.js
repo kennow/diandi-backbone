@@ -5,7 +5,7 @@ const __SHOPPING_STATEMENT__ = require('./shopping.sql.statement');
 const __STATEMENT__ = require('./user.sql.statement');
 const __HELPER__ = require('../utility/helper');
 const __CONFIG__ = require('./shopping.config');
-const __MOMENT__ = require('moment')();
+const __MOMENT__ = require('moment');
 
 /**
  *  微信小程序登录
@@ -683,7 +683,7 @@ function submitRefund(request) {
         oneStepParams: [
             [
                 __CONFIG__.__ENUM_ORDER_STATUS__.REFUND,
-                __MOMENT__.format('YYYY-MM-DD HH:mm:ss') + ' 用户申请退款',
+                __MOMENT__().format('YYYY-MM-DD HH:mm:ss') + ' 用户申请退款',
                 request.out_trade_no
             ],
             {

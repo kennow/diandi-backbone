@@ -7,6 +7,18 @@ const __CONTROLLER_USER__ = require('../controller/user.controller');
 /**
  *   订单列表
  */
+router.get('/product/list', function (req, res, next) {
+    __LOGGER__.info('========================== Product List ==========================');
+    __LOGGER__.debug(req.query);
+    __CONTROLLER_SHOPPING__.fetchProductList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *   订单列表
+ */
 router.get('/order/list', function (req, res, next) {
     __LOGGER__.info('========================== Order List ==========================');
     __LOGGER__.debug(req.query);
@@ -44,10 +56,22 @@ router.post('/user', function (req, res, next) {
 /**
  *   查询退款进度
  */
-router.post('/refund', function (req, res, next) {
+router.post('/refund/progress', function (req, res, next) {
     __LOGGER__.info('========================== Refund Info ==========================');
     __LOGGER__.debug(req.body);
     __CONTROLLER_SHOPPING__.fetchRefundInfo(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *   发起退款
+ */
+router.post('/refund', function (req, res, next) {
+    __LOGGER__.info('========================== Trigger Refund ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_SHOPPING__.refund(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });

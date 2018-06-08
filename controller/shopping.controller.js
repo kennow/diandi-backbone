@@ -14,7 +14,7 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.con
  */
 function fetchProductList(request, response) {
     __SHOPPING_DATABASE__
-        .fetchProductList(request)
+        .fetchProductList(request.query)
         .then(function (result) {
             response(result);
         })
@@ -23,6 +23,16 @@ function fetchProductList(request, response) {
             response(exception);
         });
 }
+
+// fetchProductList({
+//     query: {
+//         startTime: '2018-06-06',
+//         number: 1
+//     }
+// }, (res) => {
+//     'use strict';
+//     console.log(res);
+// });
 
 /**
  *   获取商品详情
@@ -103,6 +113,63 @@ function submitUnifiedOrder(request, response) {
 }
 
 /**
+ * 重新支付
+ * @param request
+ * @param response
+ */
+function repay(request, response) {
+    __SHOPPING_DATABASE__
+        .repay(request.body)                                 //  获取 prepay_id
+        .then(res => {
+            return Q({prepay_id: res.msg.prepayID});      //  转换
+        })
+        .then(__WX_PAY_SERVICE__.repay)                      //  签名
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+// repay({
+//     body: {
+//         out_trade_no: '13297414012018060410570615783848',
+//         session: 'j0TIyyyEBpppMuHRL7G2WnsindjQoJBj'
+//     }
+// }, res => {
+//     'use strict';
+//
+// });
+
+function closeOrder(request, response) {
+    __SHOPPING_DATABASE__
+        .checkSession(request.body)
+        .then(__WX_PAY_SERVICE__.closeOrder)
+        .then(__SHOPPING_DATABASE__.closeOrder)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+// closeOrder({
+//     body: {
+//         session: "ldoJyPDWYDSLb7uYBftRhvRguogSt2cK",
+//         out_trade_no: 'zONc9tfoLodZ4zLKnp2cY4uotDFJXVdr'
+//     }
+// }, (res) => {
+//     'use strict';
+//     console.log(res);
+// });
+
+/**
  *      获取订单列表
  *      -   取部分数据
  *
@@ -140,7 +207,6 @@ function fetchAOrder(request, response) {
             response(exception);
         });
 }
-
 
 //fetchOrderList({
 //    query: {
@@ -247,9 +313,10 @@ function queryOrder(request, response) {
  * @param request
  * @param response
  */
-function Refund(request, response) {
-    __WX_PAY_SERVICE__
-        .Refund(request.body)
+function refund(request, response) {
+    __SHOPPING_DATABASE__
+        .checkRefundPermission(request.body)
+        .then(__WX_PAY_SERVICE__.Refund)
         .then(__SHOPPING_DATABASE__.submitNewRefund)
         .then(function (result) {
             __LOGGER__.debug(result);
@@ -325,13 +392,15 @@ function fetchRefundInfo(request, response) {
 
 module.exports = {
     submitUnifiedOrder: submitUnifiedOrder,
+    repay: repay,
     queryOrder: queryOrder,
+    closeOrder: closeOrder,
     fetchOrderList: fetchOrderList,
     fetchAOrder: fetchAOrder,
     receivePayResultNotification: receivePayResultNotification,
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail,
-    Refund: Refund,
+    refund: refund,
     receiveRefundResultNotification: receiveRefundResultNotification,
     fetchRefundInfo: fetchRefundInfo
 };
@@ -360,12 +429,13 @@ module.exports = {
 //
 //});
 
-// Refund({
-//     body:{
+// refund({
+//     body: {
 //         out_trade_no: '13297414012018052214015068882433',
 //         out_refund_no: '13297414012018052214115944426193',
 //         total_fee: 1,
-//         refund_fee: 1
+//         refund_fee: 1,
+//         session: 'oRKfQ0wn5FvfGsQi6BkperbYPEA5Dp3l'
 //     }
 // }, function (res) {
 //     __LOGGER__.debug(res);

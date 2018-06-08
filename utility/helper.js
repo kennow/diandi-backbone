@@ -1,5 +1,5 @@
 const __UTIL__ = require('util');
-const __MOMENT__ = require('moment')();
+const __MOMENT__ = require('moment');
 /**
  * 产生随机字符串
  * @param length
@@ -31,7 +31,7 @@ function generateRandomFileName() {
     for (i = 0; i < 8; i++) {
         nonceStr += chars.substr(Math.floor(Math.random() * (count - 1) + 1), 1);
     }
-    return __UTIL__.format('%s%s%s', 'wx', __MOMENT__.format('YYYYMMDDHHmmss'), nonceStr);
+    return __UTIL__.format('%s%s%s', 'wx', __MOMENT__().format('YYYYMMDDHHmmss'), nonceStr);
 }
 
 module.exports = {

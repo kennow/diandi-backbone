@@ -43,7 +43,7 @@ router.get('/order/:id', function (req, res, next) {
     __LOGGER__.info('========================== Query Order ==========================');
     __LOGGER__.debug(req.params);
     __CONTROLLER_SHOPPING__.queryOrder(req, function (request) {
-        res.json(request, res, next);
+        res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });
 });
@@ -56,6 +56,42 @@ router.post('/order/new', function (req, res, next) {
     __LOGGER__.debug(req.body);
     __CONTROLLER_SHOPPING__.submitUnifiedOrder(req, function (request) {
         render(request, res, next);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *  重新支付
+ */
+router.post('/order/repay', function (req, res, next) {
+    __LOGGER__.info('========================== Repay ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_SHOPPING__.repay(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *  关闭订单
+ */
+router.post('/order/dead', function (req, res, next) {
+    __LOGGER__.info('========================== Close Order ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_SHOPPING__.closeOrder(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *   查询退款进度
+ */
+router.post('/refund/progress', function (req, res, next) {
+    __LOGGER__.info('========================== Refund Info ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_SHOPPING__.fetchRefundInfo(req, function (request) {
+        res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });
 });

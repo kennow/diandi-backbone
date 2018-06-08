@@ -384,6 +384,15 @@ let api =
         },
 
         /**
+         * 检查退款订单状态
+         * @param request
+         * @returns {*}
+         */
+        checkRefundStatus: function (request) {
+            return api.isExistHandler(request, request.params.checkRefundStatusSQL, request.params.checkRefundStatusParams, '请勿重复提交退款申请！');
+        },
+
+        /**
          *
          * @param request
          * @param sql

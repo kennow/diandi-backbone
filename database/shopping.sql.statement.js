@@ -8,6 +8,7 @@ const __ADD_NEW_SKU__ = 'INSERT INTO tb_sku SET ?';
 const __ADD_NEW_PRODUCT__ = 'INSERT INTO tb_product SET ?';
 const __ADD_REL_PRODUCT_ATTR_VALUE__ = 'INSERT INTO rel_product_attribute_value SET ?';
 const __FETCH_PRODUCT_LIST__ = 'SELECT * FROM tb_product';
+const __FETCH_PRODUCT_PART__ = 'SELECT * FROM tb_product WHERE createTime < ? LIMIT ?';
 const __FETCH_PRODUCT_STANDARDS__ = 'SELECT b.*, c.vid, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.pid = ? AND a.aid = b.aid AND a.vid = c.vid';
 const __FETCH_SKU_LIST__ = 'SELECT stock_no, unit, stock, attributes FROM tb_sku WHERE product_id = ?';
 /**
@@ -24,7 +25,7 @@ const __ADD_REL_ORDER_SKU__ = 'INSERT INTO rel_order_sku SET ?';
 const __FETCH_ORDER_DETAIL__ = 'SELECT a.totalFee, a.freight, a.attach, a.createTime, a.payTime, a.status, b.name, b.mobile, b.address, b.postcode ' +
     'FROM tb_order a, tb_consignee b WHERE a.out_trade_no = ? and a.consignee_no  = b.consignee_no';
 const __FETCH_ORDER_LIST__ = 'SELECT out_trade_no, user_id, consignee_no, createTime, payTime, totalFee, a.status, attach, remark ' +
-    'FROM tb_order a, tb_user b WHERE b.3rd_session = ? AND a.user_id = b.uid AND a.createTime < ? limit ?';
+    'FROM tb_order a, tb_user b WHERE b.3rd_session = ? AND a.user_id = b.uid AND a.createTime < ? ORDER BY a.createTime DESC limit ?';
 const __FETCH_A_ORDER__ = 'SELECT a.stock_no, a.amount, b.unit, b.attributes, c.name, c.pid ' +
     'FROM rel_order_sku a, tb_sku b, tb_product c ' +
     'WHERE a.out_trade_no = ? AND a.stock_no = b.stock_no AND b.product_id = c.pid';
@@ -32,12 +33,14 @@ const __FETCH_A_ORDER_SKU__ = 'SELECT a.*, b.name, c.value FROM rel_product_attr
     'WHERE a.aid = b.aid AND a.vid = c.vid AND a.pid in ' +
     '(SELECT DISTINCT b.product_id FROM rel_order_sku a, tb_sku b, tb_product c ' +
     'WHERE a.out_trade_no = ? AND a.stock_no = b.stock_no AND b.product_id = c.pid)';
+const __FETCH_PREPAY_ID__ = 'SELECT prepayID FROM tb_order WHERE out_trade_no = ?';
 /**
  *   退款
  */
 const __SUBMIT_NEW_REFUND__ = 'UPDATE tb_refund SET refund_id = ?, status = ?, startTime = ?, remark = ? WHERE out_refund_no = ?';
 const __CHANGE_REFUND_STATUS__ = 'UPDATE tb_refund SET complete = ?, status = ?, remark = ? WHERE out_refund_no = ?';
 const __FETCH_REFUND_INFO__ = 'SELECT * FROM tb_refund WHERE out_trade_no = ? ';
+const __CHECK_REFUND_STATUS__ = 'SELECT COUNT(*) AS number FROM tb_refund WHERE out_refund_no = ? AND status = 0';
 
 module.exports = {
     __ADD_NEW_SKU_ATTRIBUTE__: __ADD_NEW_SKU_ATTRIBUTE__,
@@ -47,6 +50,7 @@ module.exports = {
     __ADD_NEW_PRODUCT__: __ADD_NEW_PRODUCT__,
     __ADD_REL_PRODUCT_ATTR_VALUE__: __ADD_REL_PRODUCT_ATTR_VALUE__,
     __FETCH_PRODUCT_LIST__: __FETCH_PRODUCT_LIST__,
+    __FETCH_PRODUCT_PART__: __FETCH_PRODUCT_PART__,
     __FETCH_PRODUCT_STANDARDS__: __FETCH_PRODUCT_STANDARDS__,
     __FETCH_SKU_LIST__: __FETCH_SKU_LIST__,
     __ADD_NEW_ORDER__: __ADD_NEW_ORDER__,
@@ -63,5 +67,7 @@ module.exports = {
     __FETCH_ORDER_LIST__: __FETCH_ORDER_LIST__,
     __FETCH_A_ORDER__: __FETCH_A_ORDER__,
     __FETCH_A_ORDER_SKU__: __FETCH_A_ORDER_SKU__,
-    __FETCH_REFUND_INFO__: __FETCH_REFUND_INFO__
+    __FETCH_PREPAY_ID__: __FETCH_PREPAY_ID__,
+    __FETCH_REFUND_INFO__: __FETCH_REFUND_INFO__,
+    __CHECK_REFUND_STATUS__: __CHECK_REFUND_STATUS__
 };

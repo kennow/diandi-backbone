@@ -1,11 +1,40 @@
 const Q = require('q');
-const __MOMENT__ = require('moment')();
+const __MOMENT__ = require('moment');
 const __HELPER__ = require('../utility/helper');
 const __MYSQL_API__ = require('./mysql.api');
 const __CONFIG__ = require('./shopping.config');
 const __USER_STATEMENT__ = require('./user.sql.statement');
 const __STATEMENT__ = require('./shopping.sql.statement');
 // const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.api.js');
+
+/**
+ *  检测登录态
+ * @param request
+ * @returns {*|promise|C}
+ */
+function checkSession(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.cleanup)
+        .then(function () {
+            deferred.resolve(request);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
 
 /**
  *      新增SKU属性值
@@ -253,6 +282,48 @@ function submitNewOrder(request) {
 }
 
 /**
+ *  重新支付
+ *      -   获取订单的prepay_id
+ * @param request
+ */
+function repay(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 找到对应的 order
+             */
+            singleLineQuerySQL: __STATEMENT__.__FETCH_PREPAY_ID__,
+            singleLineQueryParams: [
+                request.out_trade_no
+            ]
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.singleLineQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            console.log(result);
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
  *      关闭订单
  *
  * @param request
@@ -266,7 +337,7 @@ function closeOrder(request) {
             basicUpdateSQL: __STATEMENT__.__CHANGE_ORDER_STATUS__,
             basicUpdateParams: [
                 __CONFIG__.__ENUM_ORDER_STATUS__.CLOSE,
-                __MOMENT__.format('YYYY-MM-DD HH:mm:ss') + '关闭订单',
+                __MOMENT__().format('YYYY-MM-DD HH:mm:ss') + '关闭订单',
                 request.out_trade_no]
         })
         .then(__MYSQL_API__.beginTransaction)
@@ -345,6 +416,56 @@ function updateOrderAfterPay(request) {
 }
 
 /**
+ * 检查发起退款的权限
+ * @param request
+ * @returns {*|promise|C}
+ */
+function checkRefundPermission(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 检测用户权限
+             */
+            checkPermissionSQL: __USER_STATEMENT__.__CHECK_PERMISSION__,
+            checkPermissionParams: [
+                'ORDER',
+                'REFUND',
+                request.session
+            ],
+            /**
+             *  3. 检测退款订单状态，不能重复提交退款请求
+             */
+            checkRefundStatusSQL: __STATEMENT__.__CHECK_REFUND_STATUS__,
+            checkRefundStatusParams: [
+                request.out_refund_no
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.checkPermission)
+        .then(__MYSQL_API__.checkRefundStatus)
+        .then(__MYSQL_API__.cleanup)
+        .then(function () {
+            deferred.resolve(request);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
  * 检查用户发起的退款申请，无误后调用微信退款接口，并更新退款进度
  * 字段：
  *      refund_id
@@ -365,8 +486,8 @@ function submitNewRefund(request) {
             basicUpdateParams: [
                 request.refund_id,
                 __CONFIG__.__ENUM_REFUND_STATUS__.REFUNDING,
-                __MOMENT__.format('YYYYMMDDHHmmss'),
-                __MOMENT__.format('YYYY-MM-DD HH:mm:ss') + ' JSAPI 发起退款申请',
+                __MOMENT__().format('YYYYMMDDHHmmss'),
+                __MOMENT__().format('YYYY-MM-DD HH:mm:ss') + ' JSAPI 发起退款申请',
                 request.out_refund_no
             ]
         })
@@ -411,7 +532,7 @@ function changeRefundStatus(request) {
             break;
     }
     // 进度说明
-    const remark = __MOMENT__.format('YYYY-MM-DD HH:mm:ss') +
+    const remark = __MOMENT__().format('YYYY-MM-DD HH:mm:ss') +
         ' refund_status: ' + request.refund_status + ' 退款入账方：' + request.refund_recv_accout;
 
 
@@ -428,7 +549,7 @@ function changeRefundStatus(request) {
             ],
             oneStepParams: [
                 [
-                    __MOMENT__.format('YYYYMMDDHHmmss'),
+                    __MOMENT__().format('YYYYMMDDHHmmss'),
                     status,
                     remark,
                     request.out_refund_no
@@ -465,10 +586,20 @@ function changeRefundStatus(request) {
 function fetchProductList(request) {
     const deferred = Q.defer();
 
+    let statement;
+    if (request.hasOwnProperty('number')) {
+        statement = __STATEMENT__.__FETCH_PRODUCT_PART__;
+    } else {
+        statement = __STATEMENT__.__FETCH_PRODUCT_LIST__;
+    }
+
     __MYSQL_API__
         .setUpConnection({
-            basicQuerySQL: __STATEMENT__.__FETCH_PRODUCT_LIST__,
-            basicQueryParams: []
+            basicQuerySQL: statement,
+            basicQueryParams: [
+                request.startTime,
+                parseInt(request.number)
+            ]
         })
         .then(__MYSQL_API__.basicQuery)
         .then(__MYSQL_API__.cleanup)
@@ -709,17 +840,22 @@ function fetchRefundInfo(request) {
 }
 
 module.exports = {
+    checkSession: checkSession,
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail,
     addStockAttribute: addStockAttribute,
     submitNewOrder: submitNewOrder,
     updateOrderAfterPay: updateOrderAfterPay,
+    repay: repay,
+    closeOrder: closeOrder,
     fetchOrderList: fetchOrderList,
     fetchAOrder: fetchAOrder,
     fetchOrderDetail: fetchOrderDetail,
+    checkRefundPermission: checkRefundPermission,
     submitNewRefund: submitNewRefund,
     changeRefundStatus: changeRefundStatus,
-    fetchRefundInfo: fetchRefundInfo
+    fetchRefundInfo: fetchRefundInfo,
+    createNewProduct: createNewProduct
 };
 
 //changeRefundStatus({
