@@ -40,9 +40,17 @@ app.set('view engine', 'pug');
  * For example, this middleware function will be executed for every request to the app
  */
 app.use(function (req, res, next) {
+    //  解决跨域请求的问题
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
     next();
+    // app.use(function (req, res, next) {
+    //     res.setHeader('Access-Control-Allow-Origin', 'http://valor-software.github.io');
+    //     res.setHeader('Access-Control-Allow-Methods', 'POST');
+    //     res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    //     res.setHeader('Access-Control-Allow-Credentials', true);
+    //     next();
+    // });
 });
 app.use(logger('dev'));
 /**
@@ -71,6 +79,7 @@ app.use(logger('dev'));
  */
 require('body-parser-xml')(bodyParser);
 // app.use(express.json());
+// 用于解析微信等第三方服务器返回XML格式的通知
 app.use(bodyParser.xml({
     limit: '1MB',               // Reject payload bigger than 1 MB
     xmlParseOptions: {
@@ -87,6 +96,27 @@ app.use(express.urlencoded({extended: false}));
  * Parse Cookie header and populate req.cookies with an object keyed by the cookie names.
  */
 app.use(cookieParser());
+
+/**
+ * Multer is a node.js middleware for handling multipart/form-data, which is primarily used for uploading files.
+ *
+ */
+// const multer = require('multer');
+// const DIR = './uploads/';
+// // const upload = multer({destination: DIR});
+// app.use(multer({
+//     destination: DIR,
+//     rename: function (fieldname, filename) {
+//         return filename + Date.now();
+//     },
+//     onFileUploadStart: function (file) {
+//         console.log(file.originalname + ' is starting ...');
+//     },
+//     onFileUploadComplete: function (file) {
+//         console.log(file.fieldname + ' uploaded to  ' + file.path);
+//     }
+// }));
+
 /**
  *          express.static
  *

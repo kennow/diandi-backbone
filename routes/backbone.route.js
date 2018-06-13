@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const multiparty = require('connect-multiparty');
+const __MULTI_PARTY_MIDDLEWARE__ = multiparty();
 const __LOGGER__ = require('../services/log4js.service').getLogger('backbone.route.js');
 const __CONTROLLER_SHOPPING__ = require('../controller/shopping.controller');
 const __CONTROLLER_USER__ = require('../controller/user.controller');
@@ -14,6 +16,17 @@ router.get('/product/list', function (req, res, next) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });
+});
+
+router.post('/product/thumbnail', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) {
+    __LOGGER__.info('========================== Thumbnail ==========================');
+    __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.files);
+    res.send('GOT IT!');
+    // __CONTROLLER_SHOPPING__.fetchProductList(req, function (request) {
+    //     res.json(request);
+    //     __LOGGER__.info('========================== END ==========================');
+    // });
 });
 
 /**
