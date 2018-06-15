@@ -37,38 +37,89 @@ function checkSession(request) {
 }
 
 /**
- *      新增SKU属性值
+ *      新增SKU属性名称
  *
  * @param request
  */
-function addStockAttribute(request) {
+function addNewStockAttribute(request) {
     const deferred = Q.defer();
 
-    __MYSQL_API__
-        .setUpConnection({
-                /**
-                 *  1. 检测登录态
-                 */
-                checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
-                checkSessionParams: [
-                    request.session
-                ],
-                /**
-                 *  2. 新增SKU属性
-                 */
-                basicInsertSQL: __STATEMENT__.__ADD_NEW_SKU_ATTRIBUTE__,
-                basicInsertParams: [{
-                    name: request.name
-                }]
+    let tmp = JSON.parse(request.attributes);
+    let attributes = tmp.map(item => {
+        'use strict';
+        let values = item.values.map(value => {
+            return {
+                vid: 0,
+                value: value
+            };
+        });
+        return {
+            aid: 0,
+            name: item.name,
+            values: values
+        };
+    });
+    console.dir(attributes);
+
+    let params = {
+        attributes: attributes,
+        /**
+         *  1. 检测登录态
+         */
+        checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+        checkSessionParams: [
+            request.session
+        ],
+        /**
+         *
+         */
+        xStepIndex: 0,
+        xStepCount: 0,
+        xStepSQLs: [],
+        xStepParams: [],
+        mopUpFn: function (res) {
+            let aid = 0;
+            //  如果返回数组，则为查询结果
+            if (res.result instanceof Array) {
+                aid = res.result[0].aid;
+            } else {
+                //  否则为新增记录的返回结果
+                aid = res.result.insertId;
             }
-        )
+            res.params.attributes = res.params.attributes.map(attribute => {
+                //  保存记录的aid
+                if (attribute.name === res.params.xStepParams[res.params.xStepIndex - 3][0]) {
+                    attribute.aid = aid;
+                }
+                return attribute;
+            });
+            return Q(res);
+        }
+    };
+
+    params.xStepCount = attributes.length;
+    for (let i = 0; i < params.xStepCount; i++) {
+        // SQL语句
+        params.xStepSQLs.push(__STATEMENT__.__CHECK_SKU_ATTRIBUTE__);
+        params.xStepSQLs.push(__STATEMENT__.__ADD_NEW_SKU_ATTRIBUTE__);
+        params.xStepSQLs.push(__STATEMENT__.__FETCH_SKU_ATTRIBUTE__);
+        // SQL语句的执行参数
+        params.xStepParams.push([attributes[i].name]);
+        params.xStepParams.push({
+            name: attributes[i].name
+        });
+        params.xStepParams.push([attributes[i].name]);
+    }
+
+    __MYSQL_API__
+        .setUpConnection(params)
         .then(__MYSQL_API__.beginTransaction)
-        .then(__MYSQL_API__.checkSession)
-        .then(__MYSQL_API__.basicInsert)
+        .then(__MYSQL_API__.executeStepXWithMopUp)
         .then(__MYSQL_API__.commitTransaction)
         .then(__MYSQL_API__.cleanup)
-        .then(function (result) {
-            deferred.resolve(result.params);
+        .then(function () {
+            console.log(params.attributes);
+            deferred.resolve(params.attributes);
         })
         .catch(function (request) {
             __MYSQL_API__.onRejectWithRollback(request, function (response) {
@@ -84,44 +135,64 @@ function addStockAttribute(request) {
  * @param request
  * @returns {*|promise}
  */
-function batchAddNewStockValue(request) {
+function addNewStockValue(request) {
     const deferred = Q.defer();
+
     let params = {
-        /**
-         *  1. 检测登录态
-         */
-        checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
-        checkSessionParams: [
-            request.session
-        ],
-        /**
-         *  2. 批量新增SKU属性值
-         */
-        oneStepIndex: 0,
-        isRepeatSQL: __STATEMENT__.__CHECK_SKU_VALUE__,
-        isRepeatParams: [],
-        oneStepSQLs: [],
-        oneStepParams: [],
-        oneStepPlusFn: __MYSQL_API__.isRepeatPlus
+        attributes: request,
+        xStepIndex: 0,
+        xStepCount: 0,
+        xStepSQLs: [],
+        xStepParams: [],
+        mopUpFn: function (res) {
+            let vid = 0;
+            //  如果返回数组，则为查询结果
+            if (res.result instanceof Array) {
+                vid = res.result[0].vid;
+            } else {
+                //  否则为新增记录的返回结果
+                vid = res.result.insertId;
+            }
+            res.params.attributes = res.params.attributes.map(attribute => {
+                //  保存记录的vid
+                attribute.values = attribute.values.map(item => {
+                    if (attribute.aid === res.params.xStepParams[res.params.xStepIndex - 3][1] &&
+                        item.value === res.params.xStepParams[res.params.xStepIndex - 3][0]) {
+                        item.vid = vid;
+                    }
+                    return item;
+                });
+                return attribute;
+            });
+            return Q(res);
+        }
     };
-    /**
-     *  构建批量插入的参数
-     */
-    for (let i = 0, length = request.values.length; i < length; i++) {
-        params.oneStepSQLs.push(__STATEMENT__.__ADD_NEW_SKU_VALUE__);
-        params.isRepeatParams.push([request.values[i].value, request.values[i].aid]);
-        params.oneStepParams.push(request.values[i]);
+
+    for (let i = 0; i < request.length; i++) {
+        for (let j = 0; j < request[i].values.length; j++) {
+            params.xStepCount++;
+            // SQL语句
+            params.xStepSQLs.push(__STATEMENT__.__CHECK_SKU_VALUE__);
+            params.xStepSQLs.push(__STATEMENT__.__ADD_NEW_SKU_VALUE__);
+            params.xStepSQLs.push(__STATEMENT__.__FETCH_SKU_VALUE__);
+            // SQL语句的执行参数
+            params.xStepParams.push([request[i].values[j].value, request[i].aid]);
+            params.xStepParams.push({
+                value: request[i].values[j].value,
+                aid: request[i].aid
+            });
+            params.xStepParams.push([request[i].values[j].value, request[i].aid]);
+        }
     }
 
     __MYSQL_API__
         .setUpConnection(params)
         .then(__MYSQL_API__.beginTransaction)
-        .then(__MYSQL_API__.checkSession)
-        .then(__MYSQL_API__.executeInOrderPlus)
+        .then(__MYSQL_API__.executeStepXWithMopUp)
         .then(__MYSQL_API__.commitTransaction)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
-            deferred.resolve(result);
+            deferred.resolve(params.attributes);
         })
         .catch(function (request) {
             __MYSQL_API__.onRejectWithRollback(request, function (response) {
@@ -133,15 +204,66 @@ function batchAddNewStockValue(request) {
 }
 
 /**
+ *  添加新图片
+ * @param request
+ * @returns {*|promise|C}
+ */
+function addNewImage(request) {
+    const deferred = Q.defer();
+
+    const imageId = __HELPER__.getNonceStr(32);
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  插入图片
+             */
+            basicInsertSQL: __STATEMENT__.__ADD_NEW_IMAGE__,
+            basicInsertParams: {
+                'imageid': imageId,
+                'name': request.name,
+                'type': request.type,
+                'size': request.size,
+                'url': request.url
+            }
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.basicInsert)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function () {
+            deferred.resolve({
+                imageId: imageId
+            });
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+// addNewImage({
+//     name: 'ps2018061516095182273193.jpg',
+//     type: 'image/jpeg',
+//     size: 74011,
+//     url: 'https://media.thinmelon.cc/ps2018061516095182273193.jpg'
+// }).then();
+
+// { session: 'kGKs01p7ONomrPWeGKdopUv1HbXcdQlZ',
+//     product: '{"name":"测试","introduce":"测试","attributes":[{"aid":1,"name":"大小","values":[{"vid":2,"value":"S"},{"vid":4,"value":"M"}]},{"aid":3,"name":"颜色","values":[{"vid":17,"value":"红色"}]}],"sku":[{"unit":0,"amount":0,"vids":"2,17,","大小":"S","颜色":"红色"},{"unit":0,"amount":0,"vids":"4,17,","大小":"M","颜色":"红色"}],"thumbnails":[{"imageId":"xfUDj7y9JWZVwIeubGEht1vdXfljKMlc","type":0}],"details":[{"imageId":"xfUDj7y9JWZVwIeubGEht1vdXfljKMlc","type":1}]}' }
+/**
  *      新增商品
  *
  *  同时更新SKU表、 Product表及 rel_product_attribute_value表
  *
  * @param request
  */
-function createNewProduct(request) {
+function addNewProduct(request) {
     const deferred = Q.defer();
     const productId = __HELPER__.getNonceStr(32);
+    const product = JSON.parse(request.product);
     let params = {
         /**
          *  1. 检测登录态
@@ -156,8 +278,8 @@ function createNewProduct(request) {
         basicInsertSQL: __STATEMENT__.__ADD_NEW_PRODUCT__,
         basicInsertParams: [{
             pid: productId,
-            name: request.name,
-            description: request.description
+            name: product.name,
+            description: product.introduce
         }],
         /**
          *  3. 批量新增商品与属性、属性值间的关系
@@ -170,13 +292,13 @@ function createNewProduct(request) {
     /**
      *  表 rel_product_attribute_value
      */
-    for (let i = 0; i < request.attributes.length; i++) {
-        for (let j = 0; j < request.attributes[i].values.length; j++) {
+    for (let i = 0; i < product.attributes.length; i++) {
+        for (let j = 0; j < product.attributes[i].values.length; j++) {
             params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_PRODUCT_ATTR_VALUE__);
             params.oneStepParams.push({
                 pid: productId,
-                aid: request.attributes[i].key,
-                vid: request.attributes[i].values[j]
+                aid: product.attributes[i].aid,
+                vid: product.attributes[i].values[j].vid
             });
         }
     }
@@ -184,14 +306,34 @@ function createNewProduct(request) {
     /**
      *  表 tb_sku
      */
-    for (let k = 0; k < request.skuList.length; k++) {
+    for (let k = 0; k < product.sku.length; k++) {
         params.oneStepSQLs.push(__STATEMENT__.__ADD_NEW_SKU__);
         params.oneStepParams.push({
             stock_no: __HELPER__.getNonceStr(32),
-            unit: request.skuList[k].unit,
-            stock: request.skuList[k].stock,
-            attributes: request.skuList[k].attributes,
+            unit: product.sku[k].unit,
+            stock: product.sku[k].amount,
+            attributes: product.sku[k].vids,
             product_id: productId
+        });
+    }
+
+    /**
+     *  表 rel_product_gallery
+     */
+    for (let p = 0; p < product.thumbnails.length; p++) {
+        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_PRODUCT_GALLERY__);
+        params.oneStepParams.push({
+            productid: productId,
+            imageid: product.thumbnails[p].imageId,
+            type: product.thumbnails[p].type
+        });
+    }
+    for (let p = 0; p < product.details.length; p++) {
+        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_PRODUCT_GALLERY__);
+        params.oneStepParams.push({
+            productid: productId,
+            imageid: product.details[p].imageId,
+            type: product.details[p].type
         });
     }
 
@@ -843,7 +985,10 @@ module.exports = {
     checkSession: checkSession,
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail,
-    addStockAttribute: addStockAttribute,
+    addNewStockAttribute: addNewStockAttribute,
+    addNewStockValue: addNewStockValue,
+    addNewImage: addNewImage,
+    addNewProduct: addNewProduct,
     submitNewOrder: submitNewOrder,
     updateOrderAfterPay: updateOrderAfterPay,
     repay: repay,
@@ -854,8 +999,7 @@ module.exports = {
     checkRefundPermission: checkRefundPermission,
     submitNewRefund: submitNewRefund,
     changeRefundStatus: changeRefundStatus,
-    fetchRefundInfo: fetchRefundInfo,
-    createNewProduct: createNewProduct
+    fetchRefundInfo: fetchRefundInfo
 };
 
 //changeRefundStatus({

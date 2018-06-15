@@ -338,7 +338,7 @@ let api =
             }
 
             Q.all(tasks)
-                // 所有任务执行结束后，对返回结果进行修饰
+            // 所有任务执行结束后，对返回结果进行修饰
                 .then(function (rawData) {
                     let j, result = {};
                     // 为按顺序返回的各个结果集添加标签
@@ -642,7 +642,7 @@ let api =
         stepX: function (request) {
             const deferred = Q.defer();
 
-            __LOGGER__.info(request.params.xStepIndex);
+            __LOGGER__.info('执行第' + (request.params.xStepIndex + 1) + '条命令');
             __LOGGER__.info(request.params.xStepSQLs[request.params.xStepIndex]);
             __LOGGER__.info(request.params.xStepParams[request.params.xStepIndex]);
             request.connection.query(
@@ -748,8 +748,8 @@ let api =
             // 放进执行列表
             for (i = 0; i < request.params.xStepCount; i++) {
                 tasks.push(api.stepX);                  //  检查属性值是否重复
-                tasks.push(api.notExistHandler);        //  不存在，新增
-                tasks.push(api.existHandler);           //  存在，更新
+                tasks.push(api.notExistHandler);        //  不存在的处理逻辑
+                tasks.push(api.existHandler);           //  存在的处理逻辑
             }
 
             promise = Q(request);
@@ -761,6 +761,37 @@ let api =
             }
 
             // TODO:  当在执行过程中发生异常时，跳过队列中剩下的任务
+
+            return promise;
+        },
+
+        /**
+         *  统筹工作并加上扫尾
+         * @param request
+         * @returns {*}
+         */
+        executeStepXWithMopUp: function (request) {
+            let i,
+                promise,
+                tasks = [];
+
+            // 放进执行列表
+            for (i = 0; i < request.params.xStepCount; i++) {
+                tasks.push(api.stepX);                  //  检查属性值是否重复
+                tasks.push(api.notExistHandler);        //  不存在的处理逻辑
+                tasks.push(api.existHandler);           //  存在的处理逻辑
+                tasks.push(request.params.mopUpFn);     //  扫尾
+            }
+
+            promise = Q(request);
+
+            for (i = 0; i < tasks.length; i += 4) {
+                // 根据第一个流程的执行结果，决定后续的执行顺序
+                promise = promise.then(tasks[i]);
+                promise = promise.then(tasks[i + 1], tasks[i + 2]);
+                // 扫尾工作
+                promise = promise.then(tasks[i + 3]);
+            }
 
             return promise;
         }

@@ -390,6 +390,54 @@ function fetchRefundInfo(request, response) {
         });
 }
 
+/**
+ *  新增商品属性
+ *      --  后台
+ * @param request
+ * @param response
+ */
+function newAttributes(request, response) {
+    __SHOPPING_DATABASE__
+        .addNewStockAttribute(request.body)
+        .then(__SHOPPING_DATABASE__.addNewStockValue)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ *  新增商品
+ *      --  后台
+ * @param request
+ * @param response
+ */
+function newProduct(request, response) {
+    __SHOPPING_DATABASE__
+        .addNewProduct(request.body)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+// newProduct({
+//     body: {
+//         session: 'kGKs01p7ONomrPWeGKdopUv1HbXcdQlZ',
+//         product: '{"name":"测试","introduce":"测试","attributes":[{"aid":1,"name":"大小","values":[{"vid":2,"value":"S"},{"vid":4,"value":"M"}]},{"aid":3,"name":"颜色","values":[{"vid":17,"value":"红色"}]}],"sku":[{"unit":0,"amount":0,"vids":"2,17,","大小":"S","颜色":"红色"},{"unit":0,"amount":0,"vids":"4,17,","大小":"M","颜色":"红色"}],"thumbnails":[{"imageId":"xfUDj7y9JWZVwIeubGEht1vdXfljKMlc","type":0}],"details":[{"imageId":"xfUDj7y9JWZVwIeubGEht1vdXfljKMlc","type":1}]}'
+//     }
+// }, function (res) {
+//     console.log(res);
+// });
+
 module.exports = {
     submitUnifiedOrder: submitUnifiedOrder,
     repay: repay,
@@ -402,7 +450,9 @@ module.exports = {
     fetchProductDetail: fetchProductDetail,
     refund: refund,
     receiveRefundResultNotification: receiveRefundResultNotification,
-    fetchRefundInfo: fetchRefundInfo
+    fetchRefundInfo: fetchRefundInfo,
+    newAttributes: newAttributes,
+    newProduct: newProduct
 };
 
 //fetchRefundInfo({

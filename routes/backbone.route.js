@@ -4,10 +4,11 @@ const multiparty = require('connect-multiparty');
 const __MULTI_PARTY_MIDDLEWARE__ = multiparty();
 const __LOGGER__ = require('../services/log4js.service').getLogger('backbone.route.js');
 const __CONTROLLER_SHOPPING__ = require('../controller/shopping.controller');
+const __CONTROLLER_STORE__ = require('../controller/store.controller');
 const __CONTROLLER_USER__ = require('../controller/user.controller');
 
 /**
- *   订单列表
+ *   商品列表
  */
 router.get('/product/list', function (req, res, next) {
     __LOGGER__.info('========================== Product List ==========================');
@@ -18,19 +19,48 @@ router.get('/product/list', function (req, res, next) {
     });
 });
 
+/**
+ *    上传商品微缩图
+ */
 router.post('/product/thumbnail', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) {
     __LOGGER__.info('========================== Thumbnail ==========================');
     __LOGGER__.debug(req.body);
     __LOGGER__.debug(req.files);
-    res.send('GOT IT!');
-    // __CONTROLLER_SHOPPING__.fetchProductList(req, function (request) {
-    //     res.json(request);
-    //     __LOGGER__.info('========================== END ==========================');
-    // });
+
+    __CONTROLLER_STORE__.uploadFile(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
 });
 
 /**
- *   订单列表
+ *      新增商品属性
+ */
+router.post('/product/attributes', function (req, res, next) {
+    __LOGGER__.info('========================== New Attributes ==========================');
+    __LOGGER__.debug(req.body);
+
+    __CONTROLLER_SHOPPING__.newAttributes(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      新增商品
+ */
+router.post('/product', function (req, res, next) {
+    __LOGGER__.info('========================== New Product ==========================');
+    __LOGGER__.debug(req.body);
+
+    __CONTROLLER_SHOPPING__.newProduct(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      订单列表
  */
 router.get('/order/list', function (req, res, next) {
     __LOGGER__.info('========================== Order List ==========================');
@@ -42,7 +72,7 @@ router.get('/order/list', function (req, res, next) {
 });
 
 /**
- *   查询某订单
+ *      查询某订单
  */
 router.get('/order/:out_trade_no', function (req, res, next) {
     __LOGGER__.info('========================== Specific Order Info ==========================');
@@ -55,7 +85,7 @@ router.get('/order/:out_trade_no', function (req, res, next) {
 });
 
 /**
- *   获取用户资料
+ *      获取用户资料
  */
 router.post('/user', function (req, res, next) {
     __LOGGER__.info('========================== User Info ==========================');
@@ -67,7 +97,7 @@ router.post('/user', function (req, res, next) {
 });
 
 /**
- *   查询退款进度
+ *      查询退款进度
  */
 router.post('/refund/progress', function (req, res, next) {
     __LOGGER__.info('========================== Refund Info ==========================');
@@ -79,7 +109,7 @@ router.post('/refund/progress', function (req, res, next) {
 });
 
 /**
- *   发起退款
+ *      发起退款
  */
 router.post('/refund', function (req, res, next) {
     __LOGGER__.info('========================== Trigger Refund ==========================');

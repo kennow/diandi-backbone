@@ -3,14 +3,20 @@
  */
 const __ADD_NEW_SKU_ATTRIBUTE__ = 'INSERT INTO tb_sku_attribute SET ?';
 const __ADD_NEW_SKU_VALUE__ = 'INSERT INTO tb_sku_value SET ?';
+const __ADD_NEW_IMAGE__ = 'INSERT INTO tb_gallery SET ?';
+const __CHECK_SKU_ATTRIBUTE__ = 'SELECT COUNT(*) AS number FROM tb_sku_attribute WHERE name = ?';
 const __CHECK_SKU_VALUE__ = 'SELECT COUNT(*) AS number FROM tb_sku_value WHERE value = ? AND aid = ?';
 const __ADD_NEW_SKU__ = 'INSERT INTO tb_sku SET ?';
 const __ADD_NEW_PRODUCT__ = 'INSERT INTO tb_product SET ?';
 const __ADD_REL_PRODUCT_ATTR_VALUE__ = 'INSERT INTO rel_product_attribute_value SET ?';
+const __ADD_REL_PRODUCT_GALLERY__ = 'INSERT INTO rel_product_gallery SET ?';
 const __FETCH_PRODUCT_LIST__ = 'SELECT * FROM tb_product';
 const __FETCH_PRODUCT_PART__ = 'SELECT * FROM tb_product WHERE createTime < ? LIMIT ?';
 const __FETCH_PRODUCT_STANDARDS__ = 'SELECT b.*, c.vid, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.pid = ? AND a.aid = b.aid AND a.vid = c.vid';
 const __FETCH_SKU_LIST__ = 'SELECT stock_no, unit, stock, attributes FROM tb_sku WHERE product_id = ?';
+const __FETCH_SKU_ATTRIBUTE__ = 'SELECT * FROM tb_sku_attribute WHERE name = ? LIMIT 1';
+const __FETCH_SKU_VALUE__ = 'SELECT * FROM tb_sku_value WHERE value = ? AND aid = ? LIMIT 1';
+
 /**
  *  订单
  */
@@ -45,14 +51,19 @@ const __CHECK_REFUND_STATUS__ = 'SELECT COUNT(*) AS number FROM tb_refund WHERE 
 module.exports = {
     __ADD_NEW_SKU_ATTRIBUTE__: __ADD_NEW_SKU_ATTRIBUTE__,
     __ADD_NEW_SKU_VALUE__: __ADD_NEW_SKU_VALUE__,
+    __ADD_NEW_IMAGE__: __ADD_NEW_IMAGE__,
+    __CHECK_SKU_ATTRIBUTE__: __CHECK_SKU_ATTRIBUTE__,
     __CHECK_SKU_VALUE__: __CHECK_SKU_VALUE__,
     __ADD_NEW_SKU__: __ADD_NEW_SKU__,
     __ADD_NEW_PRODUCT__: __ADD_NEW_PRODUCT__,
     __ADD_REL_PRODUCT_ATTR_VALUE__: __ADD_REL_PRODUCT_ATTR_VALUE__,
+    __ADD_REL_PRODUCT_GALLERY__: __ADD_REL_PRODUCT_GALLERY__,
     __FETCH_PRODUCT_LIST__: __FETCH_PRODUCT_LIST__,
     __FETCH_PRODUCT_PART__: __FETCH_PRODUCT_PART__,
     __FETCH_PRODUCT_STANDARDS__: __FETCH_PRODUCT_STANDARDS__,
     __FETCH_SKU_LIST__: __FETCH_SKU_LIST__,
+    __FETCH_SKU_ATTRIBUTE__: __FETCH_SKU_ATTRIBUTE__,
+    __FETCH_SKU_VALUE__: __FETCH_SKU_VALUE__,
     __ADD_NEW_ORDER__: __ADD_NEW_ORDER__,
     __CHECK_STOCK__: __CHECK_STOCK__,
     __UPDATE_STOCK__: __UPDATE_STOCK__,

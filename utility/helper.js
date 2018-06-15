@@ -31,7 +31,7 @@ function generateRandomFileName() {
     for (i = 0; i < 8; i++) {
         nonceStr += chars.substr(Math.floor(Math.random() * (count - 1) + 1), 1);
     }
-    return __UTIL__.format('%s%s%s', 'wx', __MOMENT__().format('YYYYMMDDHHmmss'), nonceStr);
+    return __UTIL__.format('%s%s%s', 'ps', __MOMENT__().format('YYYYMMDDHHmmss'), nonceStr);
 }
 
 module.exports = {

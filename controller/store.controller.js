@@ -1,5 +1,7 @@
+const Q = require('q');
 const __ALIYUN_OSS_SERVICE__ = require('../services/aliyun.oss/aliyun.oss.service');
-const __USER__ = require('../database/user.api');
+const __USER_DATABASE__ = require('../database/user.api');
+const __SHOPPING_DATABASE__ = require('../database/shopping.api');
 const __HELPER__ = require('../utility/helper');
 const __LOGGER__ = require('../services/log4js.service').getLogger('store.controller.js');
 
@@ -10,7 +12,7 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('store.contro
  * @param response
  */
 function fetchSTSToken(request, response) {
-    __USER__
+    __USER_DATABASE__
         .checkIdentity(request.params)
         .then(__ALIYUN_OSS_SERVICE__.fetchSTSToken)
         .then(function (result) {
@@ -30,7 +32,7 @@ function fetchSTSToken(request, response) {
  * @param response
  */
 function uploadFile(request, response) {
-    const tmpFile = request.files[request.body.fieldName];
+    const tmpFile = request.files[request.body.fieldName || 'file'];
     __LOGGER__.debug(__HELPER__.generateRandomFileName() + tmpFile.name.substr(tmpFile.name.lastIndexOf('.')));
     __ALIYUN_OSS_SERVICE__.setUpClient({
         options: {
@@ -42,6 +44,15 @@ function uploadFile(request, response) {
         }
     })
         .then(__ALIYUN_OSS_SERVICE__.retransmission)
+        .then(request => {
+            return Q({
+                'name': request.name,
+                'type': tmpFile.type,
+                'size': tmpFile.size,
+                'url': request.url
+            });
+        })
+        .then(__SHOPPING_DATABASE__.addNewImage)
         .then(request => {
             __LOGGER__.debug(request);
             response(request);
@@ -114,7 +125,7 @@ module.exports = {
 //             fieldName: 'wxChooseImage',
 //             originalFilename: 'wxc91180e424549fbf.o6zAJswtOGdvdBzvKkPZXBQS-HeQ.MlJ8bm6YSZ0ua75c13d93aaa348da7dbe15935321f28.jpg',
 //             // path: '/tmp/lxUcQW6cJ9SHzzlQ_ZxdBbKg.jpg',
-//             path: 'READ.md',
+//             path: 'README.md',
 //             headers: {
 //                 'content-disposition': 'form-data; name="wxChooseImage"; filename="wxc91180e424549fbf.o6zAJswtOGdvdBzvKkPZXBQS-HeQ.MlJ8bm6YSZ0ua75c13d93aaa348da7dbe15935321f28.jpg"',
 //                 'content-type': 'image/jpeg'
