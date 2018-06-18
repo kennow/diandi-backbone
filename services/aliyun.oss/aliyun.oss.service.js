@@ -6,6 +6,18 @@ const __LOGGER__ = require('../log4js.service').getLogger('aliyun.oss.service.js
 const __OSS__ = require('ali-oss');
 const __STS__ = require('ali-oss').STS;
 
+//{
+//
+//    "Region": "oss-cn-hangzhou",
+//    "AccessKeyId": "LTAILKrlLSQ0Zfss",
+//    "AccessKeySecret": "op4oxHaxVIRb2L7nh3uPmuCvcTnhiV",
+//    "Endpoint": "https://media.thinmelon.cc",
+//    "Bucket": "chinai",
+//    "STSRoleArn": "acs:ram::1698608069362176:role/aliyunosstokengeneratorrole",
+//    "STSTokenExpireTime": "900",
+//    "STSPolicyFile": "all_policy.txt"
+//}
+
 /**
  *  配置项
  *
@@ -119,7 +131,7 @@ function list(request) {
  */
 function directAccessObject(request) {
     const deferred = Q.defer();
-    __LOGGER__.debug(request.client);
+    //__LOGGER__.debug(request.client);
     let requestUrl = request.client.signatureUrl(
         request.options.resource,
         {}
@@ -130,16 +142,16 @@ function directAccessObject(request) {
     return deferred.promise;
 }
 
-// setUpClient({
-//     options: {
-//         resource: 'tmp/IMG_20180507_0001.jpg'
-//     }
-// })
-//     .then(directAccessObject)
-//     .then(url => {
-//         'use strict';
-//         __LOGGER__.info(url);
-//     });
+//setUpClient({
+//    options: {
+//        resource: 'IMG_2527.JPG'
+//    }
+//})
+//    .then(directAccessObject)
+//    .then(url => {
+//        'use strict';
+//        //__LOGGER__.info(url);
+//    });
 
 /**
  * 通过STS访问
@@ -185,7 +197,7 @@ function putStream(request) {
     __LOGGER__.info('============== 第' + request.options.retransmission + '次传送 ==============');
     let stream = fs.createReadStream(request.options.filePath);
     request.client
-        .putStream(request.options.fileName, stream)
+        .putStream(request.options.targetFolder + '/' + request.options.fileName, stream)
         .then(res => {
             deferred.resolve(res);
         })

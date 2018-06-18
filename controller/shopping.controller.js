@@ -24,15 +24,17 @@ function fetchProductList(request, response) {
         });
 }
 
-// fetchProductList({
-//     query: {
-//         startTime: '2018-06-06',
-//         number: 1
-//     }
-// }, (res) => {
-//     'use strict';
-//     console.log(res);
-// });
+
+//fetchProductList({
+//    query: {
+//        startTime: '2018-06-19',
+//        number: 1
+//    }
+//}, (res) => {
+//    'use strict';
+//    console.log(res.msg.product);
+//    console.log(res.msg.gallery);
+//});
 
 /**
  *   获取商品详情

@@ -1,10 +1,9 @@
 {
-
   "Region": "oss-cn-hangzhou",
-  "AccessKeyId": "LTAILKrlLSQ0Zfss",
-  "AccessKeySecret": "op4oxHaxVIRb2L7nh3uPmuCvcTnhiV",
-  "Endpoint": "https://media.thinmelon.cc",
-  "Bucket": "chinai",
+  "AccessKeyId": "LTAIyFdZXn4cX4z2",
+  "AccessKeySecret": "zHLk1KfwNRy0ehxgRjaOVWhipDWDqW",
+  "Endpoint": "https://warehouse.pusudo.cn",
+  "Bucket": "thrill",
   "STSRoleArn": "acs:ram::1698608069362176:role/aliyunosstokengeneratorrole",
   "STSTokenExpireTime": "900",
   "STSPolicyFile": "all_policy.txt"

@@ -4,22 +4,23 @@
  * Module dependencies.
  */
 
-var app = require('../app');
-var debug = require('debug')('diandi-backbone:server');
-var fs = require('fs');
-var path = require('path');
-var http = require('http');
-var https = require('https');
-var credentials = {
-    key: fs.readFileSync(path.join(path.resolve(__dirname, '..'), 'credentials', '214208225870010.key')),
-    cert: fs.readFileSync(path.join(path.resolve(__dirname, '..'), 'credentials', '214208225870010.pem'))
+const app = require('../app');
+const debug = require('debug')('diandi-backbone:server');
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const https = require('https');
+const credentials = {
+    key: fs.readFileSync(path.join(path.resolve(__dirname, '..'), 'credentials', 'https', '1529544433971.key')),
+    cert: fs.readFileSync(path.join(path.resolve(__dirname, '..'), 'credentials', 'https', '1529544433971.pem'))
 };
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+//var port = normalizePort(process.env.PORT || '3000');
+const port = normalizePort(process.env.PORT || '443');
 app.set('port', port);
 
 /**
@@ -27,7 +28,7 @@ app.set('port', port);
  */
 
 //var server = http.createServer(app);
-var server = https.createServer(credentials, app);
+let server = https.createServer(credentials, app);
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -42,7 +43,7 @@ server.on('listening', onListening);
  */
 
 function normalizePort(val) {
-    var port = parseInt(val, 10);
+    const port = parseInt(val, 10);
 
     if (isNaN(port)) {
         // named pipe
@@ -66,7 +67,7 @@ function onError(error) {
         throw error;
     }
 
-    var bind = typeof port === 'string'
+    let bind = typeof port === 'string'
         ? 'Pipe ' + port
         : 'Port ' + port;
 
@@ -90,8 +91,8 @@ function onError(error) {
  */
 
 function onListening() {
-    var addr = server.address();
-    var bind = typeof addr === 'string'
+    let addr = server.address();
+    let bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
     debug('Listening on ' + bind);

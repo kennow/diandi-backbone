@@ -17,7 +17,7 @@ module.exports =
             /**
              * 连接数据库所在的主机名. (默认: localhost)
              */
-            host: '106.14.154.220',
+            host: 'www.pusudo.cn',
 
             /**
              * MySQL用户的用户名

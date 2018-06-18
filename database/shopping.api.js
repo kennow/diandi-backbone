@@ -325,7 +325,8 @@ function addNewProduct(request) {
         params.oneStepParams.push({
             productid: productId,
             imageid: product.thumbnails[p].imageId,
-            type: product.thumbnails[p].type
+            type: product.thumbnails[p].type,
+            number: product.thumbnails[p].number
         });
     }
     for (let p = 0; p < product.details.length; p++) {
@@ -333,7 +334,8 @@ function addNewProduct(request) {
         params.oneStepParams.push({
             productid: productId,
             imageid: product.details[p].imageId,
-            type: product.details[p].type
+            type: product.details[p].type,
+            number: product.details[p].number
         });
     }
 
@@ -737,13 +739,24 @@ function fetchProductList(request) {
 
     __MYSQL_API__
         .setUpConnection({
-            basicQuerySQL: statement,
-            basicQueryParams: [
-                request.startTime,
-                parseInt(request.number)
+            /**
+             *  1. 批量查询商品
+             */
+            batchQueryIndex: 0,                             //  索引
+            batchQueryTag: [                                //  标签
+                'product',
+                'gallery'
+            ],
+            batchQuerySQL: [                                //  执行语句
+                statement,
+                __STATEMENT__.__FETCH_PRODUCT_GALLERY__
+            ],
+            batchQueryParams: [                             //  对应参数
+                [request.startTime, parseInt(request.number)],
+                [request.startTime, parseInt(request.number)]
             ]
         })
-        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.inAll)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
             deferred.resolve(result);
