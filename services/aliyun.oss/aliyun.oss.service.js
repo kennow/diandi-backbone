@@ -7,7 +7,6 @@ const __OSS__ = require('ali-oss');
 const __STS__ = require('ali-oss').STS;
 
 //{
-//
 //    "Region": "oss-cn-hangzhou",
 //    "AccessKeyId": "LTAILKrlLSQ0Zfss",
 //    "AccessKeySecret": "op4oxHaxVIRb2L7nh3uPmuCvcTnhiV",
@@ -125,7 +124,7 @@ function list(request) {
 
 /**
  * 直接访问
- *
+ *  --  调用 client 的 signatureUrl 方法生成资源的 URL
  * @param request
  * @returns {*|C|promise}
  */
@@ -273,9 +272,32 @@ function multipartUpload(request) {
     return deferred.promise;
 }
 
+/**
+ *
+ * @returns {*|promise|C}
+ */
+function getStream(request) {
+    const deferred = Q.defer();
+
+    request.client
+        .getStream(request.options.resource)
+        .then(res => {
+            // __LOGGER__.debug(res);
+            deferred.resolve(res);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            deferred.reject(exception);
+        });
+
+    return deferred.promise;
+}
+
+
 module.exports = {
     setUpClient: setUpClient,
     list: list,
+    getStream: getStream,
     putStream: putStream,
     retransmission: retransmission,
     multipartUpload: multipartUpload,

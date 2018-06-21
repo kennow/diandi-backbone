@@ -524,11 +524,11 @@ module.exports = {
 // fetchProductDetail(
 //     {
 //         params: {
-//             id: 'lJfQQu4AQGmxNCwfwrpzBnvxk9nRus2z'
+//             id: 'W7kmHOCNkVHCeDzy3lS2RJZSUnXgHSQL'
 //         }
 //     }
 //     , function (res) {
-//         // __LOGGER__.debug(res);
+//         __LOGGER__.debug(res);
 //     });
 
 // fetchProductList({}, function (res) {

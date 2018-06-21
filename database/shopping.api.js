@@ -749,7 +749,7 @@ function fetchProductList(request) {
             ],
             batchQuerySQL: [                                //  执行语句
                 statement,
-                __STATEMENT__.__FETCH_PRODUCT_GALLERY__
+                __STATEMENT__.__FETCH_PRODUCT_THUMBNAILS__
             ],
             batchQueryParams: [                             //  对应参数
                 [request.startTime, parseInt(request.number)],
@@ -784,13 +784,16 @@ function fetchProductDetail(request) {
             batchQueryIndex: 0,                             //  索引
             batchQueryTag: [                                //  标签
                 'standards',
-                'skuList'
+                'skuList',
+                'gallery'
             ],
             batchQuerySQL: [                                //  执行语句
                 __STATEMENT__.__FETCH_PRODUCT_STANDARDS__,
-                __STATEMENT__.__FETCH_SKU_LIST__
+                __STATEMENT__.__FETCH_SKU_LIST__,
+                __STATEMENT__.__FETCH_PRODUCT_GALLERY__
             ],
             batchQueryParams: [                             //  对应参数
+                [request.id],
                 [request.id],
                 [request.id]
             ]
@@ -1031,7 +1034,7 @@ module.exports = {
 //    transaction_id: '4200000129201805220802079601'
 //});
 // fetchProductDetail({
-//     product_id: 'lJfQQu4AQGmxNCwfwrpzBnvxk9nRus2z'
+//     id: 'W7kmHOCNkVHCeDzy3lS2RJZSUnXgHSQL'
 // });
 
 // fetchProductList({}, function (result) {
