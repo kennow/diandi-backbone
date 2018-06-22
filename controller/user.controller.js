@@ -316,13 +316,13 @@ module.exports = {
 //    __LOGGER__.debug(res)
 //})
 
-//fetchMyCart({
+// fetchMyCart({
 //    params: {
-//        session: 's5qti4ggBiZ9AOIt7qfVuUvJq5NAc6A9'
+//        session: 'VSoh6vxnomXFcO95DfI7kYyYQT5DSjZH'
 //    }
-//}, function (res) {
+// }, function (res) {
 //    __LOGGER__.debug(res.msg)
-//});
+// });
 
 // editConsignee({
 //     params: {

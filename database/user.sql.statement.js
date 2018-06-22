@@ -30,7 +30,11 @@ const __JOIN_TO_CART__ = 'INSERT INTO tb_cart SET ?';
 const __ADD_CART__ = 'UPDATE tb_cart SET amount = amount + ? WHERE user_id = ? AND stock_no = ?';
 const __UPDATE_CART__ = 'UPDATE tb_cart SET amount = ? WHERE user_id = ? AND stock_no = ?';
 const __REMOVE_MY_CART__ = 'DELETE FROM tb_cart WHERE stock_no  = ? AND user_id in (SELECT uid FROM tb_user WHERE 3rd_session = ?)';
+const __REMOVE_CART_ITEM__ = 'DELETE FROM tb_cart WHERE stock_no = ? and user_id in (SELECT uid FROM tb_user WHERE 3rd_session = ?)';
 const __FETCH_MY_CART__ = 'SELECT b.stock_no, b.amount, c.unit, c.attributes, d.pid, d.name FROM tb_user a, tb_cart b, tb_sku c, tb_product d WHERE a.3rd_session = ? AND a.uid = b.user_id AND b.stock_no = c.stock_no AND c.product_id = d.pid';
+const __FETCH_MY_CART_THUMBNAILS__ = 'SELECT a.name, b.productid FROM tb_gallery a, rel_product_gallery b ' +
+    ' WHERE b.type = 0 AND a.imageid = b.imageid AND b.productid IN ' +
+    '(SELECT DISTINCT d.pid FROM tb_user a, tb_cart b, tb_sku c, tb_product d WHERE a.3rd_session = ? AND a.uid = b.user_id AND b.stock_no = c.stock_no AND c.product_id = d.pid)';
 const __FETCH_PRODUCT_SKU__ = 'SELECT a.*, b.name, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.aid = b.aid AND a.vid = c.vid AND a.pid in (SELECT DISTINCT c.product_id FROM tb_user a, tb_cart b, tb_sku c WHERE a.3rd_session = ? AND a.uid = b.user_id AND b.stock_no = c.stock_no)';
 /**
  *  订单
@@ -73,7 +77,9 @@ module.exports = {
     __ADD_CART__: __ADD_CART__,
     __UPDATE_CART__: __UPDATE_CART__,
     __REMOVE_MY_CART__: __REMOVE_MY_CART__,
+    __REMOVE_CART_ITEM__: __REMOVE_CART_ITEM__,
     __FETCH_MY_CART__: __FETCH_MY_CART__,
+    __FETCH_MY_CART_THUMBNAILS__: __FETCH_MY_CART_THUMBNAILS__,
     __FETCH_PRODUCT_SKU__: __FETCH_PRODUCT_SKU__,
     __FETCH_MY_ORDER__: __FETCH_MY_ORDER__,
     __FETCH_ORDER_SKU__: __FETCH_ORDER_SKU__,

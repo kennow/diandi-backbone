@@ -435,13 +435,16 @@ function fetchMyCart(request) {
             batchQueryIndex: 0,                             //  索引
             batchQueryTag: [                                //  标签
                 'cart',
-                'sku'
+                'sku',
+                'thumbnails'
             ],
             batchQuerySQL: [                                //  执行语句
                 __STATEMENT__.__FETCH_MY_CART__,
-                __STATEMENT__.__FETCH_PRODUCT_SKU__
+                __STATEMENT__.__FETCH_PRODUCT_SKU__,
+                __STATEMENT__.__FETCH_MY_CART_THUMBNAILS__
             ],
             batchQueryParams: [                             //  对应参数
+                [request.session],
                 [request.session],
                 [request.session]
             ]
@@ -590,6 +593,57 @@ function removeMyCart(request) {
         })
         .catch(function (request) {
             __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ *      提交订单后，即从购物车内删除相应商品（批量）
+ * @param request
+ * @returns {*|C|promise}
+ */
+function updateMyCartAfterSubmit(request) {
+    const deferred = Q.defer();
+
+    let params = {
+        /**
+         *  1. 检测登录态
+         */
+        checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+        checkSessionParams: [
+            request.session
+        ],
+        /**
+         *  2. 批量删除
+         */
+        batchQueryIndex: 0,                             //  索引
+        batchQueryTag: [                                //  标签
+            'remove'
+        ],
+        batchQuerySQL: [                                //  执行语句
+            __STATEMENT__.__REMOVE_CART_ITEM__
+        ],
+        batchQueryParams: [                             //  对应参数
+            [request.user_id]
+        ]
+    };
+
+    //TODO: 根据request传入的SKU LIST参数构建params
+    //TODO: 需要与前端相对应
+
+    __MYSQL_API__
+        .setUpConnection(params)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.inAll)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
                 deferred.reject(response);
             });
         });
@@ -819,6 +873,6 @@ module.exports = {
 //     openid: 'oX9I95Tz_AOX-oAdgAIYvE0lYDjc'
 // });
 
-//fetchMyCart({
-//    session: 'HJwC99VlJhgjN4yzLL3MuqhWIFlBlDwh'
-//});
+// fetchMyCart({
+//    session: 'VSoh6vxnomXFcO95DfI7kYyYQT5DSjZH'
+// });
