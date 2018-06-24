@@ -29,8 +29,8 @@ var config = {
     /**
      * 回传通知地址
      */
-    __NOTIFY_URL__: 'https://www.thinmelon.cc:3000/shopping/wechat_pay/notification',
-    __REFUND_NOTIFY_URL__: 'https://www.thinmelon.cc:3000/shopping/wechat_pay/refund/notification',
+    __NOTIFY_URL__: 'https://www.pusudo.cn/shopping/wechat_pay/notification',
+    __REFUND_NOTIFY_URL__: 'https://www.pusudo.cn/shopping/wechat_pay/refund/notification',
 
     //=======【证书路径设置】=====================================
 
@@ -49,7 +49,7 @@ var config = {
      * APP和网页支付提交用户端ip
      * 默认为调用微信支付API的机器IP
      */
-    __SPBILL_CREATE_IP__: '106.14.154.220',
+    __SPBILL_CREATE_IP__: '106.14.149.225',
     /**
      * 账单类型
      */

@@ -128,6 +128,18 @@ router.post('/cart/remove', function (req, res, next) {
 });
 
 /**
+ *  提交订单后从购物车内移除要买的商品
+ */
+router.post('/cart/renew', function (req, res, next) {
+    __LOGGER__.info('========================== Renew My Cart ==========================');
+    __LOGGER__.debug(req.body);
+    __USER__.updateMyCartAfterSubmit(req, function (request) {
+        res.json(request, res, next);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
  *  查询我的订单
  */
 router.post('/my/order', function (req, res, next) {

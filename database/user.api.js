@@ -601,7 +601,8 @@ function removeMyCart(request) {
 }
 
 /**
- *      提交订单后，即从购物车内删除相应商品（批量）
+ *      提交订单后，从购物车内删除要购买的商品（批量）
+ *
  * @param request
  * @returns {*|C|promise}
  */
@@ -620,19 +621,20 @@ function updateMyCartAfterSubmit(request) {
          *  2. 批量删除
          */
         batchQueryIndex: 0,                             //  索引
-        batchQueryTag: [                                //  标签
-            'remove'
-        ],
-        batchQuerySQL: [                                //  执行语句
-            __STATEMENT__.__REMOVE_CART_ITEM__
-        ],
-        batchQueryParams: [                             //  对应参数
-            [request.user_id]
-        ]
+        batchQueryTag: [],                              //  标签
+        batchQuerySQL: [],                              //  执行语句
+        batchQueryParams: []                            //  对应参数
     };
 
-    //TODO: 根据request传入的SKU LIST参数构建params
-    //TODO: 需要与前端相对应
+    let skuList = JSON.parse(request.skuList);
+
+    for (let i = 0, length = skuList.length; i < length; i++) {
+        params.batchQueryTag.push('remove');
+        params.batchQuerySQL.push(__STATEMENT__.__REMOVE_CART_ITEM__);
+        params.batchQueryParams.push([
+            skuList[i].stock_no, request.session
+        ]);
+    }
 
     __MYSQL_API__
         .setUpConnection(params)
@@ -650,6 +652,11 @@ function updateMyCartAfterSubmit(request) {
 
     return deferred.promise;
 }
+
+//updateMyCartAfterSubmit({
+//    session: 'nws0gPWe0ou1qruACzHbPxJJqbVQRedT',
+//    skuList: '[{"stock_no":"0xflXpcSmSw8vW5bZumLIy4AsOIFFsK5","amount":1}]'
+//});
 
 /**
  *      我的订单
@@ -675,13 +682,16 @@ function fetchMyOrders(request) {
             batchQueryIndex: 0,                             //  索引
             batchQueryTag: [                                //  标签
                 'order',
-                'sku'
+                'sku',
+                'thumbnails'
             ],
             batchQuerySQL: [                                //  执行语句
                 __STATEMENT__.__FETCH_MY_ORDER__,
-                __STATEMENT__.__FETCH_ORDER_SKU__
+                __STATEMENT__.__FETCH_ORDER_SKU__,
+                __STATEMENT__.__FETCH_ORDER_THUMBNAILS__
             ],
             batchQueryParams: [                             //  对应参数
+                [request.session, request.startTime],
                 [request.session, request.startTime],
                 [request.session, request.startTime]
             ]
@@ -862,6 +872,7 @@ module.exports = {
     joinToCart: joinToCart,
     updateMyCart: updateMyCart,
     removeMyCart: removeMyCart,
+    updateMyCartAfterSubmit: updateMyCartAfterSubmit,
     // 订单
     fetchMyOrders: fetchMyOrders,
     // 发起退款申请

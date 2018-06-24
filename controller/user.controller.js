@@ -192,6 +192,23 @@ function removeMyCart(request, response) {
 }
 
 /**
+ *      提交订单后，从购物车内移除要买的商品
+ *
+ * @param request
+ * @param response
+ */
+function updateMyCartAfterSubmit(request, response) {
+    __USER__
+        .updateMyCartAfterSubmit(request.body)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            response(exception);
+        });
+}
+
+/**
  *   获取我的订单
  *
  * @param request
@@ -265,6 +282,7 @@ module.exports = {
     joinToCart: joinToCart,
     updateMyCart: updateMyCart,
     removeMyCart: removeMyCart,
+    updateMyCartAfterSubmit: updateMyCartAfterSubmit,
     fetchMyOrders: fetchMyOrders,
     submitRefund: submitRefund,
     fetchUserInfo: fetchUserInfo
@@ -283,14 +301,14 @@ module.exports = {
 //     __LOGGER__.info(result);
 // });
 
-// fetchMyOrders({
-//     body: {
-//         session: 'ABssCvvogZEQuWGDdfHOYIA8tQXKuDbA',
-//         startTime: '20180519'
-//     }
-// }, function (result) {
-//     __LOGGER__.info(result);
-// });
+ //fetchMyOrders({
+ //    body: {
+ //        session: 'icvjmMzifEXtmnS7J8qRnkF53NbSdEQj',
+ //        startTime: '20180624'
+ //    }
+ //}, function (result) {
+ //    __LOGGER__.info(result);
+ //});
 
 //updateMyCart({
 //    body: {

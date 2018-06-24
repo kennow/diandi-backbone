@@ -49,6 +49,11 @@ const __FETCH_ORDER_SKU__ = 'SELECT a.*, b.name, c.value ' +
     'a.pid in (SELECT DISTINCT c.product_id ' +
     'FROM tb_order a, rel_order_sku b, tb_sku c, tb_product d, tb_user e ' +
     'WHERE e.3rd_session = ? AND e.uid = a.user_id AND a.createTime < ? AND a.out_trade_no = b.out_trade_no AND b.stock_no= c.stock_no AND c.product_id = d.pid)';
+const __FETCH_ORDER_THUMBNAILS__ = 'SELECT a.name, b.productid FROM tb_gallery a, rel_product_gallery b ' +
+    ' WHERE b.type = 0 AND a.imageid = b.imageid AND b.productid IN ' +
+    '(SELECT DISTINCT c.product_id ' +
+    'FROM tb_order a, rel_order_sku b, tb_sku c, tb_product d, tb_user e ' +
+    'WHERE e.3rd_session = ? AND e.uid = a.user_id AND a.createTime < ? AND a.out_trade_no = b.out_trade_no AND b.stock_no= c.stock_no AND c.product_id = d.pid)';
 /**
  *  退款
  */
@@ -83,6 +88,7 @@ module.exports = {
     __FETCH_PRODUCT_SKU__: __FETCH_PRODUCT_SKU__,
     __FETCH_MY_ORDER__: __FETCH_MY_ORDER__,
     __FETCH_ORDER_SKU__: __FETCH_ORDER_SKU__,
+    __FETCH_ORDER_THUMBNAILS__: __FETCH_ORDER_THUMBNAILS__,
     __CHECK_REFUND__: __CHECK_REFUND__,
     __SUBMIT_REFUND__: __SUBMIT_REFUND__,
     __ADD_REL_REFUND_SKU__: __ADD_REL_REFUND_SKU__

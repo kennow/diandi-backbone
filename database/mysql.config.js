@@ -8,11 +8,15 @@ module.exports =
 
             /**
              * 当没有连接池或者链接数打到最大值时pool的行为.
-             *      -- 为true时链接会被放入队列中，当可用是调用
+             *      -- 为true时链接会被放入队列中，当可用时调用
              *      -- 为false时会立即返回error.
              *      (默认: true)
              */
             waitForConnections: true,
+
+            //connectTimeout: 60 * 60 * 1000,
+            //aquireTimeout: 60 * 60 * 1000,
+            //timeout: 60 * 60 * 1000,
 
             /**
              * 连接数据库所在的主机名. (默认: localhost)
