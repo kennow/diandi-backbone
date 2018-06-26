@@ -60,6 +60,32 @@ router.post('/product', function (req, res, next) {
 });
 
 /**
+ *      移除商品
+ */
+router.post('/product/dead', function (req, res, next) {
+    __LOGGER__.info('========================== Remove Product ==========================');
+    __LOGGER__.debug(req.body);
+
+    __CONTROLLER_SHOPPING__.removeProduct(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      修改商品状态
+ */
+router.post('/product/status', function (req, res, next) {
+    __LOGGER__.info('========================== Change Product Status ==========================');
+    __LOGGER__.debug(req.body);
+
+    __CONTROLLER_SHOPPING__.changeProductStatus(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
  *      订单列表
  */
 router.get('/order/list', function (req, res, next) {

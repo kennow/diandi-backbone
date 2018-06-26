@@ -268,7 +268,7 @@ function constructUnifiedOrderParams(request) {
         device_info: request.device_info || 'MINI-PROGRAM',         //  自定义参数，可以为终端设备号(门店号或收银设备ID)
         nonce_str: __HELPER__.getNonceStr(32),                      //  随机字符串
         sign_type: request.sign_type || 'MD5',                      //  签名类型，默认为MD5，支持HMAC-SHA256和MD5
-        body: request.body,                                         //  商品简单描述
+        body: request.body.substr(0,32),                            //  商品简单描述  String(128)
         detail: request.detail || '',                               //  商品详细描述
         attach: request.attach || '',                               //  附加数据，在查询API和支付通知中原样返回
         out_trade_no: request.out_trade_no,                         //  商户系统内部订单号
@@ -276,7 +276,7 @@ function constructUnifiedOrderParams(request) {
         total_fee: request.total_fee,                               //  订单总金额
         spbill_create_ip: request.spbill_create_ip || __WX_PAY_CONFIG__.__SPBILL_CREATE_IP__,   //  APP和网页支付提交用户端ip
         time_start: MOMENT().format('YYYYMMDDHHmmss'),              //  订单生成时间
-        time_expire: MOMENT().add(5, 'minutes').format('YYYYMMDDHHmmss'),   //  订单失效时间
+        time_expire: MOMENT().add(30, 'minutes').format('YYYYMMDDHHmmss'),      //  订单失效时间，半小时内未
         goods_tag: request.goods_tag || '',                         //  订单优惠标记，使用代金券或立减优惠功能时需要的参数
         notify_url: __WX_PAY_CONFIG__.__NOTIFY_URL__,               //  异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数
         trade_type: 'JSAPI',                                        //  交易类型

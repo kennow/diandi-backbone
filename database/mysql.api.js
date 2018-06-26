@@ -262,7 +262,6 @@ let api =
          */
         basicUpdate: function (request) {
             const deferred = Q.defer();
-
             request.connection.query(request.params.basicUpdateSQL, request.params.basicUpdateParams, function (err, result) {
                 __LOGGER__.info('==> basicUpdate ==> callback |  ' + err);
                 api.commonHandler(deferred, request, err, result);

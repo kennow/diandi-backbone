@@ -296,7 +296,7 @@ module.exports = {
 // });
 
 // unifiedOrder({
-//     body: 'body',
+//     body: '不需插电不需点燃，一键启动的日本VAPE电子蚊香 | 不需插电不需点燃，一键启动的日本VAPE电子蚊香 | ',
 //     attach: 'attach',
 //     total_fee: 1,
 //     goods_tag: 'nice',

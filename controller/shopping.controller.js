@@ -232,6 +232,35 @@ function fetchAOrder(request, response) {
 //})
 
 /**
+ *  超时未支付订单
+ *      --  调用微信支付的关闭订单接口
+ *      --  更新订单的状态
+ * @param request
+ * @param response
+ */
+function fetchOrderNotPayTimeout(request, response) {
+    __SHOPPING_DATABASE__
+        .fetchOrderNotPayTimeout({})
+        .then(result => {
+            if (result.code === 0) {
+                for (let i = 0; i < result.msg.length; i++) {
+                    __LOGGER__.debug(result.msg[i].out_trade_no);
+                    __WX_PAY_SERVICE__.closeOrder({out_trade_no: result.msg[i].out_trade_no})
+                        .then(__SHOPPING_DATABASE__.closeOrder)
+                        .catch(function (exception) {
+                            __LOGGER__.error(exception);
+                            response(exception);
+                        });
+                }
+            }
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
  * 收到微信支付的结果通知
  *  { xml:
     * { appid: 'wxc91180e424549fbf',
@@ -431,6 +460,43 @@ function newProduct(request, response) {
         });
 }
 
+/**
+ *  删除商品
+ *      --  后台
+ * @param request
+ * @param response
+ */
+function removeProduct(request, response) {
+    __SHOPPING_DATABASE__
+        .removeProduct(request.body)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ *  理性商品状态
+ * @param request
+ * @param response
+ */
+function changeProductStatus(request, response) {
+    __SHOPPING_DATABASE__
+        .changeProductStatus(request.body)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
 // newProduct({
 //     body: {
 //         session: 'kGKs01p7ONomrPWeGKdopUv1HbXcdQlZ',
@@ -440,6 +506,17 @@ function newProduct(request, response) {
 //     console.log(res);
 // });
 
+// changeProductStatus({
+//     body: {
+//         status: 1,
+//         productid: 'lJfQQu4AQGmxNCwfwrpzBnvxk9nRus2z'
+//     }
+// }, res => {
+//     'use strict';
+//
+// });
+
+
 module.exports = {
     submitUnifiedOrder: submitUnifiedOrder,
     repay: repay,
@@ -447,6 +524,7 @@ module.exports = {
     closeOrder: closeOrder,
     fetchOrderList: fetchOrderList,
     fetchAOrder: fetchAOrder,
+    fetchOrderNotPayTimeout: fetchOrderNotPayTimeout,
     receivePayResultNotification: receivePayResultNotification,
     fetchProductList: fetchProductList,
     fetchProductDetail: fetchProductDetail,
@@ -454,7 +532,9 @@ module.exports = {
     receiveRefundResultNotification: receiveRefundResultNotification,
     fetchRefundInfo: fetchRefundInfo,
     newAttributes: newAttributes,
-    newProduct: newProduct
+    newProduct: newProduct,
+    removeProduct: removeProduct,
+    changeProductStatus: changeProductStatus
 };
 
 //fetchRefundInfo({

@@ -360,6 +360,96 @@ function addNewProduct(request) {
 }
 
 /**
+ *   移除商品
+ *      --  后台
+ *      --  主表： tb_product
+ *          关联： tb_sku, rel_product_attribute_value, rel_product_gallery
+ * @param request
+ * @returns {*|C|promise}
+ */
+function removeProduct(request) {
+    const deferred = Q.defer();
+    let params = {
+        /**
+         *  1. 批量查询商品
+         */
+        batchQueryIndex: 0,                             //  索引
+        batchQueryTag: [                                //  标签
+            'sku',
+            'attribute',
+            'gallery',
+            'product'
+        ],
+        batchQuerySQL: [                                //  执行语句
+            __STATEMENT__.__REMOVE_PRODUCT_SKU__,
+            __STATEMENT__.__REMOVE_PRODUCT_ATTRIBUTE__,
+            __STATEMENT__.__REMOVE_PRODUCT_GALLERY__,
+            __STATEMENT__.__REMOVE_PRODUCT__
+        ],
+        batchQueryParams: [                             //  对应参数
+            [request.productid],
+            [request.productid],
+            [request.productid],
+            [request.productid]
+        ]
+    };
+    __MYSQL_API__
+        .setUpConnection(params)
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.inAll)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 改变商品的状态
+ *      --  上/下架
+ * @param request
+ * @returns {*|C|promise}
+ */
+function changeProductStatus(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            basicUpdateSQL: __STATEMENT__.__UPDATE_PRODUCT_STATUS__,
+            basicUpdateParams: [
+                request.status, request.productid
+            ]
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.basicUpdate)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+// removeProduct({
+//     productid: 'SZvjvLOcbuAmH8lsS7S8WpJDO6d49r5N'
+// }).then(res => {
+//     console.log(res);
+// });
+
+/**
  * 提交订单
  * @param request
  * @returns {*|promise}
@@ -864,6 +954,12 @@ function fetchOrderList(request) {
     return deferred.promise;
 }
 
+/**
+ *  查询某个订单
+ *      --  后台
+ * @param request
+ * @returns {*|C|promise}
+ */
 function fetchAOrder(request) {
     const deferred = Q.defer();
 
@@ -948,6 +1044,33 @@ function fetchOrderDetail(request) {
 }
 
 /**
+ *   获取超时未支付的订单
+ * @param request
+ * @returns {*|C|promise}
+ */
+function fetchOrderNotPayTimeout(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            basicQuerySQL: __STATEMENT__.__FETCH_ORDER_NOT_PAY_TIMEOUT__,
+            basicQueryParams: []
+        })
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
  *    获取退款单详情
  * @param request
  * @returns {*}
@@ -1005,6 +1128,8 @@ module.exports = {
     addNewStockValue: addNewStockValue,
     addNewImage: addNewImage,
     addNewProduct: addNewProduct,
+    removeProduct: removeProduct,
+    changeProductStatus: changeProductStatus,
     submitNewOrder: submitNewOrder,
     updateOrderAfterPay: updateOrderAfterPay,
     repay: repay,
@@ -1012,6 +1137,7 @@ module.exports = {
     fetchOrderList: fetchOrderList,
     fetchAOrder: fetchAOrder,
     fetchOrderDetail: fetchOrderDetail,
+    fetchOrderNotPayTimeout: fetchOrderNotPayTimeout,
     checkRefundPermission: checkRefundPermission,
     submitNewRefund: submitNewRefund,
     changeRefundStatus: changeRefundStatus,
