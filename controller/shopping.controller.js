@@ -24,17 +24,18 @@ function fetchProductList(request, response) {
         });
 }
 
-
-//fetchProductList({
-//    query: {
-//        startTime: '2018-06-19',
-//        number: 1
-//    }
-//}, (res) => {
-//    'use strict';
-//    console.log(res.msg.product);
-//    console.log(res.msg.gallery);
-//});
+// fetchProductList({
+//     query: {
+//         session: 'bn8JL4gFvduiIfNC1fwAPGGEPXnZvltS',
+//         startTime: '2018-06-28',
+//         number: 10,
+//         queryType: 'FULL'
+//     }
+// }, (res) => {
+//     'use strict';
+//     console.log(res.msg.product);
+//     console.log(res.msg.gallery);
+// });
 
 /**
  *   获取商品详情

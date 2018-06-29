@@ -7,7 +7,7 @@ function clean() {
         __SHOPPING_CONTROLLER__
             .fetchOrderNotPayTimeout({}, result => {
             });
-    }, 3600);
+    }, 12 * 3600 * 1000);
 }
 
 clean();

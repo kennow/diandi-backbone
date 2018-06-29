@@ -1,4 +1,6 @@
+const Q = require('q');
 const __CREDENTIAL_SERVICE__ = require('../services/wechat.mini.program/credential.service');
+const __SYSTEM__ = require('../database/system.api');
 const __USER__ = require('../database/user.api');
 const __LOGGER__ = require('../services/log4js.service').getLogger('user.controller.js');
 
@@ -259,6 +261,27 @@ function fetchUserInfo(request, response) {
         });
 }
 
+/**
+ *      登录后台
+ *
+ * @param request
+ * @param response
+ */
+function backboneLogin(request, response) {
+    __SYSTEM__
+        .checkSMS(request.body)
+        .then(() => {
+            return Q(request.body);
+        })
+        .then(__USER__.checkMobile)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            response(exception);
+        });
+}
+
 //fetchUserInfo({
 //    body: {
 //        session: 'oRKfQ0wn5FvfGsQi6BkperbYPEA5Dp3l',
@@ -270,8 +293,19 @@ function fetchUserInfo(request, response) {
 //    console.log(res)
 //})
 
+// backboneLogin({
+//     body: {
+//         requestId: 'F3566660-E3D3-4686-803C-DC678267EA98',
+//         bizId: '211609130261689467^0',
+//         phone: '18159393355',
+//         verificationCode: '854314'
+//     }
+// }, () => {
+// });
+
 module.exports = {
     login: login,
+    backboneLogin: backboneLogin,
     addConsignee: addConsignee,
     editConsignee: editConsignee,
     removeConsignee: removeConsignee,
@@ -301,14 +335,14 @@ module.exports = {
 //     __LOGGER__.info(result);
 // });
 
- //fetchMyOrders({
- //    body: {
- //        session: 'icvjmMzifEXtmnS7J8qRnkF53NbSdEQj',
- //        startTime: '20180624'
- //    }
- //}, function (result) {
- //    __LOGGER__.info(result);
- //});
+//fetchMyOrders({
+//    body: {
+//        session: 'icvjmMzifEXtmnS7J8qRnkF53NbSdEQj',
+//        startTime: '20180624'
+//    }
+//}, function (result) {
+//    __LOGGER__.info(result);
+//});
 
 //updateMyCart({
 //    body: {

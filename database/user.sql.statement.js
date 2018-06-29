@@ -2,6 +2,7 @@
  *  登录态
  */
 const __CHECK_SESSION__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE 3rd_session  = ?';
+const __CHECK_MOBILE__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE phone  = ?';
 const __IS_OPENID_REPEAT__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE openid = ?';
 const __ADD_MINI_PROGRAM_USER__ = 'INSERT INTO tb_user SET ?';
 const __UPDATE_MINI_PROGRAM_USER__ = 'UPDATE tb_user SET ? WHERE openid = ?';
@@ -63,6 +64,7 @@ const __ADD_REL_REFUND_SKU__ = 'INSERT INTO rel_refund_sku SET ?';
 
 module.exports = {
     __CHECK_SESSION__: __CHECK_SESSION__,
+    __CHECK_MOBILE__: __CHECK_MOBILE__,
     __FETCH_USER_INFO__: __FETCH_USER_INFO__,
     __FETCH_SPECIFIC_WECHAT__: __FETCH_SPECIFIC_WECHAT__,
     __CHECK_PERMISSION__: __CHECK_PERMISSION__,

@@ -383,6 +383,15 @@ let api =
         },
 
         /**
+         * 检查短信验证码
+         * @param request
+         * @returns {*}
+         */
+        checkSMS: function (request) {
+            return api.isExistHandler(request, request.params.checkSMSSQL, request.params.checkSMSParams, '请输入正确的验证码！');
+        },
+
+        /**
          * 检查退款订单状态
          * @param request
          * @returns {*}

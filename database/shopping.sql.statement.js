@@ -10,7 +10,7 @@ const __ADD_NEW_SKU__ = 'INSERT INTO tb_sku SET ?';
 const __ADD_NEW_PRODUCT__ = 'INSERT INTO tb_product SET ?';
 const __ADD_REL_PRODUCT_ATTR_VALUE__ = 'INSERT INTO rel_product_attribute_value SET ?';
 const __ADD_REL_PRODUCT_GALLERY__ = 'INSERT INTO rel_product_gallery SET ?';
-const __FETCH_PRODUCT_LIST__ = 'SELECT * FROM tb_product';
+const __FETCH_PRODUCT_FULL__ = 'SELECT * FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?';
 const __FETCH_PRODUCT_PART__ = 'SELECT * FROM tb_product WHERE status = 0 AND createTime < ? ORDER BY createTime DESC LIMIT ?';
 const __FETCH_PRODUCT_THUMBNAILS__ = 'SELECT a.productid, b.name FROM rel_product_gallery a, tb_gallery b WHERE a.productid in (SELECT foo.pid FROM (SELECT pid FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?) as foo) AND a.type = 0 AND a.imageid = b.imageid';
 const __FETCH_PRODUCT_STANDARDS__ = 'SELECT b.*, c.vid, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.pid = ? AND a.aid = b.aid AND a.vid = c.vid';
@@ -66,7 +66,7 @@ module.exports = {
     __ADD_NEW_PRODUCT__: __ADD_NEW_PRODUCT__,
     __ADD_REL_PRODUCT_ATTR_VALUE__: __ADD_REL_PRODUCT_ATTR_VALUE__,
     __ADD_REL_PRODUCT_GALLERY__: __ADD_REL_PRODUCT_GALLERY__,
-    __FETCH_PRODUCT_LIST__: __FETCH_PRODUCT_LIST__,
+    __FETCH_PRODUCT_FULL__: __FETCH_PRODUCT_FULL__,
     __FETCH_PRODUCT_PART__: __FETCH_PRODUCT_PART__,
     __FETCH_PRODUCT_THUMBNAILS__: __FETCH_PRODUCT_THUMBNAILS__,
     __FETCH_PRODUCT_STANDARDS__: __FETCH_PRODUCT_STANDARDS__,

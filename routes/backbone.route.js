@@ -6,6 +6,7 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('backbone.rou
 const __CONTROLLER_SHOPPING__ = require('../controller/shopping.controller');
 const __CONTROLLER_STORE__ = require('../controller/store.controller');
 const __CONTROLLER_USER__ = require('../controller/user.controller');
+const __CONTROLLER_SYSTEM__ = require('../controller/system.controller');
 
 /**
  *   商品列表
@@ -141,6 +142,18 @@ router.post('/refund', function (req, res, next) {
     __LOGGER__.info('========================== Trigger Refund ==========================');
     __LOGGER__.debug(req.body);
     __CONTROLLER_SHOPPING__.refund(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      发送短信
+ */
+router.post('/sms', function (req, res, next) {
+    __LOGGER__.info('========================== SEND SMS ==========================');
+    __LOGGER__.info(req.body);
+    __CONTROLLER_SYSTEM__.sendSMS(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });

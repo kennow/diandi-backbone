@@ -1,5 +1,5 @@
 const Q = require('q');
-const __MYSQL_API__ = require('./mysql.api');
+const __MYSQL_API__ = require('./mysql.base');
 const __WX_PAY_HELPER__ = require('../services/wechat.pay/wechat.pay.helper');
 const __SHOPPING_STATEMENT__ = require('./shopping.sql.statement');
 const __STATEMENT__ = require('./user.sql.statement');
@@ -141,7 +141,39 @@ function checkIdentity(request) {
         });
 
     return deferred.promise;
+}
 
+/**
+ * 校验用户是否存在
+ *      --      后台
+ * @param request
+ * @returns {*|C|promise}
+ */
+function checkMobile(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __STATEMENT__.__CHECK_MOBILE__,
+            checkSessionParams: [
+                request.phone
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
 }
 
 /**
@@ -858,6 +890,7 @@ module.exports = {
     // 登录
     wechatMiniProgramLogin: wechatMiniProgramLogin,
     checkIdentity: checkIdentity,
+    checkMobile: checkMobile,
     fetchUserOpenId: fetchUserOpenId,
     fetchUserInfo: fetchUserInfo,
     // 收件人

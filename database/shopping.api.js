@@ -1,7 +1,7 @@
 const Q = require('q');
 const __MOMENT__ = require('moment');
 const __HELPER__ = require('../utility/helper');
-const __MYSQL_API__ = require('./mysql.api');
+const __MYSQL_API__ = require('./mysql.base');
 const __CONFIG__ = require('./shopping.config');
 const __USER_STATEMENT__ = require('./user.sql.statement');
 const __STATEMENT__ = require('./shopping.sql.statement');
@@ -821,16 +821,23 @@ function fetchProductList(request) {
     const deferred = Q.defer();
 
     let statement;
-    if (request.hasOwnProperty('number')) {
-        statement = __STATEMENT__.__FETCH_PRODUCT_PART__;
+    if (request.hasOwnProperty('queryType')) {
+        statement = __STATEMENT__.__FETCH_PRODUCT_FULL__;
     } else {
-        statement = __STATEMENT__.__FETCH_PRODUCT_LIST__;
+        statement = __STATEMENT__.__FETCH_PRODUCT_PART__;
     }
 
     __MYSQL_API__
         .setUpConnection({
             /**
-             *  1. 批量查询商品
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 批量查询商品
              */
             batchQueryIndex: 0,                             //  索引
             batchQueryTag: [                                //  标签
@@ -846,6 +853,7 @@ function fetchProductList(request) {
                 [request.startTime, parseInt(request.number)]
             ]
         })
+        .then(__MYSQL_API__.checkSession)
         .then(__MYSQL_API__.inAll)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
