@@ -293,15 +293,17 @@ function backboneLogin(request, response) {
 //    console.log(res)
 //})
 
-// backboneLogin({
-//     body: {
-//         requestId: 'F3566660-E3D3-4686-803C-DC678267EA98',
-//         bizId: '211609130261689467^0',
-//         phone: '18159393355',
-//         verificationCode: '854314'
-//     }
-// }, () => {
-// });
+//backboneLogin({
+//    body: {
+//        requestId: 'F3566660-E3D3-4686-803C-DC678267EA98',
+//        bizId: '211609130261689467^0',
+//        phone: '18159393355',
+//        verificationCode: '854314'
+//    }
+//}, (res) => {
+//    'use strict';
+//    console.log(res);
+//});
 
 module.exports = {
     login: login,

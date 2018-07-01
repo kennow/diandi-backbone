@@ -159,4 +159,17 @@ router.post('/sms', function (req, res, next) {
     });
 });
 
+/**
+ *      登录
+ */
+router.post('/login', function (req, res, next) {
+    __LOGGER__.info('========================== LOGIN ==========================');
+    __LOGGER__.info(req.body);
+    __CONTROLLER_USER__.backboneLogin(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+
 module.exports = router;

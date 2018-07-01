@@ -9,6 +9,7 @@ const __UPDATE_MINI_PROGRAM_USER__ = 'UPDATE tb_user SET ? WHERE openid = ?';
 /**
  *  用户
  */
+const __FETCH_USER_SESSION__ = 'SELECT 3rd_session FROM tb_user WHERE phone = ?';
 const __FETCH_USER_INFO__ = 'SELECT * FROM tb_user WHERE 3rd_session = ?';
 const __CHECK_PERMISSION__ = 'SELECT COUNT(*) AS number FROM tb_user a, tb_role b, rel_role_action c WHERE c.module = ? AND c.action = ? AND a.3rd_session = ? AND a.role = b.rid AND b.rid = c.role_id';
 const __FETCH_SPECIFIC_WECHAT__ = 'SELECT nickname, sex, headimgurl FROM tb_wechat a, tb_user b WHERE a.openid = b.openid AND b.uid = ?';
@@ -66,6 +67,7 @@ module.exports = {
     __CHECK_SESSION__: __CHECK_SESSION__,
     __CHECK_MOBILE__: __CHECK_MOBILE__,
     __FETCH_USER_INFO__: __FETCH_USER_INFO__,
+    __FETCH_USER_SESSION__: __FETCH_USER_SESSION__,
     __FETCH_SPECIFIC_WECHAT__: __FETCH_SPECIFIC_WECHAT__,
     __CHECK_PERMISSION__: __CHECK_PERMISSION__,
     __ADD_NEW_CONSIGNEE__: __ADD_NEW_CONSIGNEE__,

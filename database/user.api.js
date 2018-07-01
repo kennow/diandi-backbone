@@ -160,9 +160,17 @@ function checkMobile(request) {
             checkSessionSQL: __STATEMENT__.__CHECK_MOBILE__,
             checkSessionParams: [
                 request.phone
+            ],
+            /**
+             *
+             */
+            basicQuerySQL: __STATEMENT__.__FETCH_USER_SESSION__,
+            basicQueryParams: [
+                request.phone
             ]
         })
         .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicQuery)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
             deferred.resolve(result);
