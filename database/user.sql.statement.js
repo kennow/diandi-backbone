@@ -14,6 +14,12 @@ const __FETCH_USER_INFO__ = 'SELECT * FROM tb_user WHERE 3rd_session = ?';
 const __CHECK_PERMISSION__ = 'SELECT COUNT(*) AS number FROM tb_user a, tb_role b, rel_role_action c WHERE c.module = ? AND c.action = ? AND a.3rd_session = ? AND a.role = b.rid AND b.rid = c.role_id';
 const __FETCH_SPECIFIC_WECHAT__ = 'SELECT nickname, sex, headimgurl FROM tb_wechat a, tb_user b WHERE a.openid = b.openid AND b.uid = ?';
 /**
+ *  管理员
+ */
+const __FETCH_ALL_USER__ = 'SELECT phone, 3rd_session, description FROM tb_user a, tb_role b WHERE a.role = b.rid;';
+const __FETCH_MANAGER__ = 'SELECT phone, 3rd_session, description FROM tb_user a, tb_role b WHERE role <> 1 AND a.role = b.rid;';
+const __ADD_ROLE_ACTION__ = 'INSERT INTO rel_role_action SET ?';
+/**
  *  收件人
  */
 const __ADD_NEW_CONSIGNEE__ = 'INSERT INTO tb_consignee SET ?';
@@ -69,6 +75,9 @@ module.exports = {
     __FETCH_USER_INFO__: __FETCH_USER_INFO__,
     __FETCH_USER_SESSION__: __FETCH_USER_SESSION__,
     __FETCH_SPECIFIC_WECHAT__: __FETCH_SPECIFIC_WECHAT__,
+    __FETCH_ALL_USER__: __FETCH_ALL_USER__,
+    __FETCH_MANAGER__: __FETCH_MANAGER__,
+    __ADD_ROLE_ACTION__: __ADD_ROLE_ACTION__,
     __CHECK_PERMISSION__: __CHECK_PERMISSION__,
     __ADD_NEW_CONSIGNEE__: __ADD_NEW_CONSIGNEE__,
     __EDIT_CONSIGNEE__: __EDIT_CONSIGNEE__,

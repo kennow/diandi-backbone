@@ -35,6 +35,20 @@ router.post('/product/thumbnail', __MULTI_PARTY_MIDDLEWARE__, function (req, res
 });
 
 /**
+ *    上传商品介绍视频
+ */
+router.post('/product/video', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) {
+    __LOGGER__.info('========================== Video ==========================');
+    __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.files);
+
+    __CONTROLLER_STORE__.multipartUpload(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
  *      新增商品属性
  */
 router.post('/product/attributes', function (req, res, next) {
@@ -63,9 +77,10 @@ router.post('/product', function (req, res, next) {
 /**
  *      移除商品
  */
-router.post('/product/dead', function (req, res, next) {
+router.delete('/product', function (req, res, next) {
     __LOGGER__.info('========================== Remove Product ==========================');
     __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.query);
 
     __CONTROLLER_SHOPPING__.removeProduct(req, function (request) {
         res.json(request);
@@ -118,6 +133,18 @@ router.post('/user', function (req, res, next) {
     __LOGGER__.info('========================== User Info ==========================');
     __LOGGER__.debug(req.body);
     __CONTROLLER_USER__.fetchUserInfo(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      后台用户管理
+ */
+router.post('/user/manager', function (req, res, next) {
+    __LOGGER__.info('========================== User MANAGER ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_USER__.fetchUserList(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });

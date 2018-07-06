@@ -320,24 +320,10 @@ function addNewProduct(request) {
     /**
      *  表 rel_product_gallery
      */
-    for (let p = 0; p < product.thumbnails.length; p++) {
-        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_PRODUCT_GALLERY__);
-        params.oneStepParams.push({
-            productid: productId,
-            imageid: product.thumbnails[p].imageId,
-            type: product.thumbnails[p].type,
-            number: product.thumbnails[p].number
-        });
-    }
-    for (let p = 0; p < product.details.length; p++) {
-        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_PRODUCT_GALLERY__);
-        params.oneStepParams.push({
-            productid: productId,
-            imageid: product.details[p].imageId,
-            type: product.details[p].type,
-            number: product.details[p].number
-        });
-    }
+
+    constructProductGallerySQL(params, productId, product.thumbnails);
+    constructProductGallerySQL(params, productId, product.details);
+    constructProductGallerySQL(params, productId, product.videos);
 
     __MYSQL_API__
         .setUpConnection(params)
@@ -357,6 +343,18 @@ function addNewProduct(request) {
         });
 
     return deferred.promise;
+}
+
+function constructProductGallerySQL(params, productId, gallery) {
+    for (let p = 0; p < gallery.length; p++) {
+        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_PRODUCT_GALLERY__);
+        params.oneStepParams.push({
+            productid: productId,
+            imageid: gallery[p].imageId,
+            type: gallery[p].type,
+            number: gallery[p].number
+        });
+    }
 }
 
 /**
@@ -881,16 +879,19 @@ function fetchProductDetail(request) {
         .setUpConnection({
             batchQueryIndex: 0,                             //  索引
             batchQueryTag: [                                //  标签
+                'product',
                 'standards',
                 'skuList',
                 'gallery'
             ],
             batchQuerySQL: [                                //  执行语句
+                __STATEMENT__.__FETCH_PRODUCT_DETAILS__,
                 __STATEMENT__.__FETCH_PRODUCT_STANDARDS__,
                 __STATEMENT__.__FETCH_SKU_LIST__,
                 __STATEMENT__.__FETCH_PRODUCT_GALLERY__
             ],
             batchQueryParams: [                             //  对应参数
+                [request.id],
                 [request.id],
                 [request.id],
                 [request.id]

@@ -253,7 +253,7 @@ function multipartUpload(request) {
     request.options.retransmission++;
     __LOGGER__.info('============== 第' + request.options.retransmission + '次传送 ==============');
     request.client
-        .multipartUpload(request.options.fileName, request.options.filePath, {
+        .multipartUpload(request.options.targetFolder + '/' + request.options.fileName, request.options.filePath, {
             checkpoint: request.options.checkpoint,         //  断点续传
             progress: function*(percentage, checkpoint, res) {
                 __LOGGER__.info('Progress: ' + percentage);

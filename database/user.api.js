@@ -894,6 +894,104 @@ function fetchUserInfo(request) {
     return deferred.promise;
 }
 
+/**
+ *      获取用户列表
+ *      --  即可查询所有用户，也可仅查询管理员
+ * @param request
+ * @returns {*|C|promise}
+ */
+function fetchUserList(request) {
+    const deferred = Q.defer();
+
+    let querySQL = '';
+    if (request.hasOwnProperty('queryType') && request.queryType === 'MANAGER') {
+        querySQL = __STATEMENT__.__FETCH_MANAGER__;
+    } else {
+        querySQL = __STATEMENT__.__FETCH_ALL_USER__;
+    }
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 检测用户权限
+             */
+            checkPermissionSQL: __STATEMENT__.__CHECK_PERMISSION__,
+            checkPermissionParams: [
+                'USER',
+                'QUERY',
+                request.session
+            ],
+            /**
+             *  3. 查询用户列表
+             */
+            basicQuerySQL: querySQL,
+            basicQueryParams: []
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.checkPermission)
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ *  添加角色权限
+ * @param request
+ * @returns {*|C|promise}
+ */
+function addRoleAction(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 添加权限
+             */
+            basicInsertSQL: __STATEMENT__.__ADD_ROLE_ACTION__,
+            basicInsertParams: [{
+                role_id: request.roleId,
+                module: request.module,
+                action: request.action
+            }]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicInsert)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     // 登录
     wechatMiniProgramLogin: wechatMiniProgramLogin,
@@ -901,6 +999,9 @@ module.exports = {
     checkMobile: checkMobile,
     fetchUserOpenId: fetchUserOpenId,
     fetchUserInfo: fetchUserInfo,
+    // 后台 - 管理员
+    fetchUserList: fetchUserList,
+    addRoleAction: addRoleAction,
     // 收件人
     addConsignee: addConsignee,
     editConsignee: editConsignee,

@@ -72,18 +72,30 @@ function uploadFile(request, response) {
  * @param response
  */
 function multipartUpload(request, response) {
-    const tmpFile = request.files[request.body.fieldName];
-    __LOGGER__.debug(__HELPER__.generateRandomFileName() + tmpFile.name.substr(tmpFile.name.lastIndexOf('.')));
+    const tmpFile = request.files[request.body.fieldName || 'file'];
+    const ossFileName = __HELPER__.generateRandomFileName() + tmpFile.name.substr(tmpFile.name.lastIndexOf('.'));
+    __LOGGER__.debug(ossFileName);
     __ALIYUN_OSS_SERVICE__.setUpClient({
         options: {
             retransmission: 0,
             filePath: tmpFile.path,
-            fileName: __HELPER__.generateRandomFileName() + tmpFile.name.substr(tmpFile.name.lastIndexOf('.')),
+            fileName: ossFileName,
             fileSize: tmpFile.size,
+            targetFolder: request.body.folder || 'backbone/video',
             redoFn: __ALIYUN_OSS_SERVICE__.multipartUpload
         }
     })
         .then(__ALIYUN_OSS_SERVICE__.retransmission)
+        .then(request => {
+            __LOGGER__.debug(request);
+            return Q({
+                'name': request.name,
+                'type': tmpFile.type,
+                'size': tmpFile.size,
+                'url': ''
+            });
+        })
+        .then(__SHOPPING_DATABASE__.addNewImage)
         .then(request => {
             __LOGGER__.debug(request);
             response(request);
@@ -93,6 +105,12 @@ function multipartUpload(request, response) {
         });
 }
 
+/**
+ *      下载文件
+ *
+ * @param request
+ * @param response
+ */
 function downloadFile(request, response) {
     __LOGGER__.debug(decodeURIComponent(request.params.name));
     __ALIYUN_OSS_SERVICE__
@@ -119,20 +137,24 @@ module.exports = {
 };
 
 // multipartUpload({
-//     body: {fieldName: 'wxChooseVideo'},
+//     body: {
+//         fieldName: 'wxChooseVideo',
+//         folder: 'backbone/video'
+//
+//     },
 //     files: {
 //         wxChooseVideo: {
 //             fieldName: 'wxChooseVideo',
-//             originalFilename: 'Wildlife.wmv',
+//             originalFilename: 'Slideshow.mp4',
 //             // path: '/tmp/lxUcQW6cJ9SHzzlQ_ZxdBbKg.jpg',
-//             path: 'Wildlife.wmv',
+//             path: 'Slideshow.mp4',
 //             headers: {
-//                 'content-disposition': 'form-data; name="wxChooseImage"; filename="wxc91180e424549fbf.o6zAJswtOGdvdBzvKkPZXBQS-HeQ.MlJ8bm6YSZ0ua75c13d93aaa348da7dbe15935321f28.jpg"',
-//                 'content-type': 'image/jpeg'
+//                 'content-disposition': 'form-data; name="wxChooseVideo"; filename="Slideshow.mp4"',
+//                 'content-type': 'mp4'
 //             },
 //             size: 663651,
-//             name: 'Wildlife.wmv',
-//             type: 'wmv'
+//             name: 'Slideshow.mp4',
+//             type: 'mp4'
 //         }
 //     }
 // }, function (res) {

@@ -262,6 +262,62 @@ function fetchUserInfo(request, response) {
 }
 
 /**
+ *      获取用户列表
+ *
+ * @param request
+ * @param response
+ */
+function fetchUserList(request, response) {
+    __USER__
+        .fetchUserList(request.body)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            response(exception);
+        });
+}
+
+// fetchUserList({
+//     body: {
+//         session: 'rV4eDLD4ZC06ct5V3N3ZtduQeXKoufG8',
+//         queryType: 'MANAGER'
+//     }
+// }, result => {
+//     'use strict';
+//     console.log(result);
+// });
+
+/**
+ *      添加角色权限
+ *
+ * @param request
+ * @param response
+ */
+function addRoleAction(request, response) {
+    __USER__
+        .addRoleAction(request.body)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            response(exception);
+        });
+}
+
+// addRoleAction({
+//     body: {
+//         session: 'rV4eDLD4ZC06ct5V3N3ZtduQeXKoufG8',
+//         roleId: 2,
+//         module: 'USER',
+//         action: 'QUERY'
+//     }
+// }, result => {
+//     'use strict';
+//     console.log(result);
+// });
+
+/**
  *      登录后台
  *
  * @param request
@@ -321,7 +377,11 @@ module.exports = {
     updateMyCartAfterSubmit: updateMyCartAfterSubmit,
     fetchMyOrders: fetchMyOrders,
     submitRefund: submitRefund,
-    fetchUserInfo: fetchUserInfo
+    fetchUserInfo: fetchUserInfo,
+    // 后台管理
+    //      -- 用户管理
+    fetchUserList: fetchUserList,
+    addRoleAction: addRoleAction
 };
 
 // submitRefund({

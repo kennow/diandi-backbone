@@ -469,7 +469,7 @@ function newProduct(request, response) {
  */
 function removeProduct(request, response) {
     __SHOPPING_DATABASE__
-        .removeProduct(request.body)
+        .removeProduct(request.query)
         .then(function (result) {
             __LOGGER__.debug(result);
             response(result);

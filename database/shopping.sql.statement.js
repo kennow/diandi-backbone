@@ -12,9 +12,10 @@ const __ADD_REL_PRODUCT_ATTR_VALUE__ = 'INSERT INTO rel_product_attribute_value 
 const __ADD_REL_PRODUCT_GALLERY__ = 'INSERT INTO rel_product_gallery SET ?';
 const __FETCH_PRODUCT_FULL__ = 'SELECT * FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?';
 const __FETCH_PRODUCT_PART__ = 'SELECT * FROM tb_product WHERE status = 0 AND createTime < ? ORDER BY createTime DESC LIMIT ?';
+const __FETCH_PRODUCT_DETAILS__ = 'SELECT name, description, sales FROM tb_product WHERE pid = ?';
 const __FETCH_PRODUCT_THUMBNAILS__ = 'SELECT a.productid, b.name FROM rel_product_gallery a, tb_gallery b WHERE a.productid in (SELECT foo.pid FROM (SELECT pid FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?) as foo) AND a.type = 0 AND a.imageid = b.imageid';
 const __FETCH_PRODUCT_STANDARDS__ = 'SELECT b.*, c.vid, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.pid = ? AND a.aid = b.aid AND a.vid = c.vid';
-const __FETCH_PRODUCT_GALLERY__ = 'SELECT a.productid, b.name FROM rel_product_gallery a, tb_gallery b WHERE a.productid = ? AND a.type = 1 AND a.imageid = b.imageid';
+const __FETCH_PRODUCT_GALLERY__ = 'SELECT a.productid, a.type, b.name FROM rel_product_gallery a, tb_gallery b WHERE a.productid = ? AND a.imageid = b.imageid';
 const __FETCH_SKU_LIST__ = 'SELECT stock_no, unit, stock, attributes FROM tb_sku WHERE product_id = ?';
 const __FETCH_SKU_ATTRIBUTE__ = 'SELECT * FROM tb_sku_attribute WHERE name = ? LIMIT 1';
 const __FETCH_SKU_VALUE__ = 'SELECT * FROM tb_sku_value WHERE value = ? AND aid = ? LIMIT 1';
@@ -68,6 +69,7 @@ module.exports = {
     __ADD_REL_PRODUCT_GALLERY__: __ADD_REL_PRODUCT_GALLERY__,
     __FETCH_PRODUCT_FULL__: __FETCH_PRODUCT_FULL__,
     __FETCH_PRODUCT_PART__: __FETCH_PRODUCT_PART__,
+    __FETCH_PRODUCT_DETAILS__: __FETCH_PRODUCT_DETAILS__,
     __FETCH_PRODUCT_THUMBNAILS__: __FETCH_PRODUCT_THUMBNAILS__,
     __FETCH_PRODUCT_STANDARDS__: __FETCH_PRODUCT_STANDARDS__,
     __FETCH_PRODUCT_GALLERY__: __FETCH_PRODUCT_GALLERY__,
