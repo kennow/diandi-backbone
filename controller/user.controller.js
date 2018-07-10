@@ -1,5 +1,5 @@
 const Q = require('q');
-const __CREDENTIAL_SERVICE__ = require('../services/wechat.mini.program/credential.service');
+const __CREDENTIAL_SERVICE__ = require('../services/wechat.mini.program/wechat.mini.program.service');
 const __SYSTEM__ = require('../database/system.api');
 const __USER__ = require('../database/user.api');
 const __LOGGER__ = require('../services/log4js.service').getLogger('user.controller.js');

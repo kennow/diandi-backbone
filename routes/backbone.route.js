@@ -198,5 +198,30 @@ router.post('/login', function (req, res, next) {
     });
 });
 
+/**
+ *      接入微信小程序消息服务
+ */
+router.get('/', function (req, res, next) {
+    __LOGGER__.info('========================== 接入微信小程序消息服务 ==========================');
+    __LOGGER__.info(req.params);
+    __LOGGER__.info(req.body);
+    __LOGGER__.info(req.query);
+    __LOGGER__.info(req.query.echostr);
+    res.send(req.query.echostr);
+    __LOGGER__.info('========================== END ==========================');
+});
+
+/**
+ *      接收来自微信的消息通知
+ */
+router.all('/notification', function (req, res, next) {
+    __LOGGER__.info('========================== RECEIVE NOTIFICATION ==========================');
+    __LOGGER__.info(req.params);
+    __LOGGER__.info(req.body);
+    __LOGGER__.info(req.query);
+    __LOGGER__.info(req.query.echostr);
+    res.send(req.query.echostr);
+    __LOGGER__.info('========================== END ==========================');
+});
 
 module.exports = router;

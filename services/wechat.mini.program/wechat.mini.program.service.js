@@ -1,7 +1,7 @@
 const Q = require('q');
 const __UTIL__ = require('util');
 const __HTTP_CLIENT__ = require('../http.client');
-const __LOGGER__ = require('../log4js.service').getLogger('credential.service.js');
+const __LOGGER__ = require('../log4js.service').getLogger('wechat.mini.program.service.js');
 
 /**
  * 微信小程序
