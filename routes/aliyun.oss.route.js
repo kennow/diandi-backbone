@@ -43,7 +43,7 @@ router.get('/:session', function (req, res, next) {
  *   上传图片
  *      --  支持重传机制
  */
-router.post('/image/new', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) {
+router.post('/image', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) {
     __LOGGER__.info('========================== UPLOAD IMAGE ==========================');
     __LOGGER__.debug(req.body);
     __LOGGER__.debug(req.files);
@@ -59,7 +59,7 @@ router.post('/image/new', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) 
  *      --  使用分片上传
  *      --  支持断点续传
  */
-router.post('/video/new', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) {
+router.post('/video', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) {
     __LOGGER__.info('========================== UPLOAD VIDEO ==========================');
     __LOGGER__.debug(req.body);
     __LOGGER__.debug(req.files);

@@ -18,7 +18,7 @@ router.post('/login', function (req, res, next) {
 /**
  *   新增收件人
  */
-router.post('/new/consignee/:session', function (req, res, next) {
+router.post('/consignee/:session', function (req, res, next) {
     __LOGGER__.info('========================== New Consignee ==========================');
     __LOGGER__.debug(req.params);
     __LOGGER__.debug(req.body);
@@ -31,7 +31,7 @@ router.post('/new/consignee/:session', function (req, res, next) {
 /**
  *   编辑收件人
  */
-router.post('/edit/consignee/:session', function (req, res, next) {
+router.put('/consignee/:session', function (req, res, next) {
     __LOGGER__.info('========================== Edit Consignee ==========================');
     __LOGGER__.debug(req.params);
     __LOGGER__.debug(req.body);
@@ -94,9 +94,11 @@ router.get('/my/cart/:session', function (req, res, next) {
 /**
  *  添加至购物车
  */
-router.post('/cart/new', function (req, res, next) {
+router.post('/cart', function (req, res, next) {
     __LOGGER__.info('========================== Join To Cart ==========================');
     __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.query);
+    __LOGGER__.debug(req.params);
     __USER__.joinToCart(req, function (request) {
         res.json(request, res, next);
         __LOGGER__.info('========================== END ==========================');
@@ -106,9 +108,11 @@ router.post('/cart/new', function (req, res, next) {
 /**
  *  更新我的购物车
  */
-router.post('/cart/update', function (req, res, next) {
+router.put('/cart', function (req, res, next) {
     __LOGGER__.info('========================== Update My Cart ==========================');
     __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.query);
+    __LOGGER__.debug(req.params);
     __USER__.updateMyCart(req, function (request) {
         res.json(request, res, next);
         __LOGGER__.info('========================== END ==========================');
@@ -118,9 +122,11 @@ router.post('/cart/update', function (req, res, next) {
 /**
  *  从购物车中移除商品
  */
-router.post('/cart/remove', function (req, res, next) {
+router.delete('/cart', function (req, res, next) {
     __LOGGER__.info('========================== Remove Item From Cart ==========================');
     __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.query);
+    __LOGGER__.debug(req.params);
     __USER__.removeMyCart(req, function (request) {
         res.json(request, res, next);
         __LOGGER__.info('========================== END ==========================');
@@ -130,8 +136,8 @@ router.post('/cart/remove', function (req, res, next) {
 /**
  *  提交订单后从购物车内移除要买的商品
  */
-router.post('/cart/renew', function (req, res, next) {
-    __LOGGER__.info('========================== Renew My Cart ==========================');
+router.put('/cart/afterSubmit', function (req, res, next) {
+    __LOGGER__.info('========================== Remove Cart Item After Submit ==========================');
     __LOGGER__.debug(req.body);
     __USER__.updateMyCartAfterSubmit(req, function (request) {
         res.json(request, res, next);

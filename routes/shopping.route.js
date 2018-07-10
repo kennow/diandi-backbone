@@ -51,7 +51,7 @@ router.get('/order/:id', function (req, res, next) {
 /**
  *  提交新订单
  */
-router.post('/order/new', function (req, res, next) {
+router.post('/order', function (req, res, next) {
     __LOGGER__.info('========================== Submit New Order ==========================');
     __LOGGER__.debug(req.body);
     __CONTROLLER_SHOPPING__.submitUnifiedOrder(req, function (request) {
@@ -75,7 +75,7 @@ router.post('/order/repay', function (req, res, next) {
 /**
  *  关闭订单
  */
-router.post('/order/dead', function (req, res, next) {
+router.delete('/order', function (req, res, next) {
     __LOGGER__.info('========================== Close Order ==========================');
     __LOGGER__.debug(req.body);
     __CONTROLLER_SHOPPING__.closeOrder(req, function (request) {
