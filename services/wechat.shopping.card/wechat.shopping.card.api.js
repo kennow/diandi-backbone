@@ -10,6 +10,8 @@ const __BATCH_QUERY_CARD_LIST__ = 'https://api.weixin.qq.com/card/batchget?acces
 const __MODIFY_CARD_STOCK__ = 'https://api.weixin.qq.com/card/modifystock?access_token=%s';
 const __DELETE_CARD__ = 'https://api.weixin.qq.com/card/delete?access_token=%s';
 const __SET_CARD_UNAVAILABLE__ = 'https://api.weixin.qq.com/card/code/unavailable?access_token=%s';
+const __SET_CARD_PAY_CELL__ = 'https://api.weixin.qq.com/card/paycell/set?access_token=%s';
+const __SET_CARD_SELF_CONSUME_CELL__ = 'https://api.weixin.qq.com/card/selfconsumecell/set?access_token=%s';
 const __CONSUME_CARD__ = 'https://api.weixin.qq.com/card/code/consume?access_token=%s';
 
 module.exports = {
@@ -25,5 +27,7 @@ module.exports = {
     __MODIFY_CARD_STOCK__: __MODIFY_CARD_STOCK__,
     __DELETE_CARD__: __DELETE_CARD__,
     __SET_CARD_UNAVAILABLE__: __SET_CARD_UNAVAILABLE__,
+    __SET_CARD_PAY_CELL__: __SET_CARD_PAY_CELL__,
+    __SET_CARD_SELF_CONSUME_CELL__: __SET_CARD_SELF_CONSUME_CELL__,
     __CONSUME_CARD__: __CONSUME_CARD__
 };

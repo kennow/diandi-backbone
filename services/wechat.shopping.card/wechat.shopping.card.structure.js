@@ -1,10 +1,21 @@
 /**
+ * 卡券类别
+ */
+const __CARD_TYPE__ = {
+    CARD_TYPE_GROUPON: 'CARD_TYPE_GROUPON',         //  团购券
+    CARD_TYPE_DISCOUNT: 'CARD_TYPE_DISCOUNT',       //  折扣券
+    CARD_TYPE_GIFT: 'CARD_TYPE_GIFT',               //  兑换券
+    CARD_TYPE_CASH: 'CARD_TYPE_CASH',               //  代金券
+    CARD_TYPE_GENERAL_COUPON: 'CARD_TYPE_GENERAL_COUPON',         //  优惠券
+};
+
+/**
  * 码型
  */
 const __CODE_TYPE__ = {
-    CODE_TYPE_TEXT: 'CODE_TYPE_TEXT',           //  文本
-    CODE_TYPE_BARCODE: 'CODE_TYPE_BARCODE',     //  一维码
-    CODE_TYPE_QRCODE: 'CODE_TYPE_QRCODE',       //  二维码
+    CODE_TYPE_TEXT: 'CODE_TYPE_TEXT',                   //  文本
+    CODE_TYPE_BARCODE: 'CODE_TYPE_BARCODE',             //  一维码
+    CODE_TYPE_QRCODE: 'CODE_TYPE_QRCODE',               //  二维码
     CODE_TYPE_ONLY_QRCODE: 'CODE_TYPE_ONLY_QRCODE',     //  二维码无code显示
     CODE_TYPE_ONLY_BARCODE: 'CODE_TYPE_ONLY_BARCODE',   //  一维码无code显示
     CODE_TYPE_NONE: 'CODE_TYPE_NONE'                    //   不显示code和条形码类型
@@ -171,6 +182,117 @@ function constructCardTimeLimit(request) {
 }
 
 /**
+ *      团购券
+ */
+function constructCardGroupon(request) {
+    return {
+        'card': {
+            'card_type': 'GROUPON',
+            'groupon': {
+                'base_info': constructCardBaseInfo(request),
+                'advanced_info': {
+                    'use_condition': constructCardUseCondition(request),
+                    'abstract': constructCardAbstract(request),
+                    'text_image_list': request.text_image_list,
+                    'time_limit': constructCardTimeLimit(request),
+                    'business_service': request.business_service
+                },
+                'deal_detail': request.deal_detail
+            }
+        }
+    };
+}
+
+/**
+ *      代金券
+ */
+function constructCardCash(request) {
+    return {
+        'card': {
+            'card_type': 'CASH',
+            'cash': {
+                'base_info': constructCardBaseInfo(request),
+                'advanced_info': {
+                    'use_condition': constructCardUseCondition(request),
+                    'abstract': constructCardAbstract(request),
+                    'text_image_list': request.text_image_list,
+                    'time_limit': constructCardTimeLimit(request),
+                    'business_service': request.business_service
+                },
+                'least_cost': request.least_cost,
+                'reduce_cost': request.reduce_cost
+            }
+        }
+    };
+}
+
+/**
+ *      折扣券
+ */
+function constructCardDiscount(request) {
+    return {
+        'card': {
+            'card_type': 'DISCOUNT',
+            'discount': {
+                'base_info': constructCardBaseInfo(request),
+                'advanced_info': {
+                    'use_condition': constructCardUseCondition(request),
+                    'abstract': constructCardAbstract(request),
+                    'text_image_list': request.text_image_list,
+                    'time_limit': constructCardTimeLimit(request),
+                    'business_service': request.business_service
+                },
+                'discount': request.discount
+            }
+        }
+    };
+}
+
+/**
+ *      兑换券
+ */
+function constructCardGift(request) {
+    return {
+        'card': {
+            'card_type': 'GIFT',
+            'gift': {
+                'base_info': constructCardBaseInfo(request),
+                'advanced_info': {
+                    'use_condition': constructCardUseCondition(request),
+                    'abstract': constructCardAbstract(request),
+                    'text_image_list': request.text_image_list,
+                    'time_limit': constructCardTimeLimit(request),
+                    'business_service': request.business_service
+                },
+                'gift': request.gift
+            }
+        }
+    };
+}
+
+/**
+ *      优惠券
+ */
+function constructCardGeneralCoupon(request) {
+    return {
+        'card': {
+            'card_type': 'GENERAL_COUPON',
+            'general_coupon': {
+                'base_info': constructCardBaseInfo(request),
+                'advanced_info': {
+                    'use_condition': constructCardUseCondition(request),
+                    'abstract': constructCardAbstract(request),
+                    'text_image_list': request.text_image_list,
+                    'time_limit': constructCardTimeLimit(request),
+                    'business_service': request.business_service
+                },
+                'default_detail': request.default_detail
+            }
+        }
+    };
+}
+
+/**
  *      创建二维码
  * 开发者可调用该接口生成一张卡券二维码供用户扫码后添加卡券到卡包
  * 自定义Code码的卡券调用接口时，POST数据中需指定code，非自定义code不需指定，指定openid同理。
@@ -314,7 +436,32 @@ function constructConsumeCard(request) {
     };
 }
 
+/**
+ * 设置买单接口
+ * @param request
+ * @returns {{card_id: *, is_open: boolean}}
+ */
+function constructCardPayCell(request) {
+    return {
+        card_id: request.card_id,
+        is_open: request.is_open || true
+    };
+}
+
+/**
+ * 设置自助核销接口
+ * @param request
+ * @returns {{card_id: *, is_open: boolean}}
+ */
+function constructCardSelfConsumeCell(request) {
+    return {
+        card_id: request.card_id,
+        is_open: request.is_open || true
+    };
+}
+
 module.exports = {
+    __CARD_TYPE__: __CARD_TYPE__,
     __CODE_TYPE__: __CODE_TYPE__,
     __DATE_TYPE__: __DATE_TYPE__,
     __BUSINESS_SERVICE__: __BUSINESS_SERVICE__,
@@ -323,6 +470,11 @@ module.exports = {
     constructCardUseCondition: constructCardUseCondition,
     constructCardAbstract: constructCardAbstract,
     constructCardTimeLimit: constructCardTimeLimit,
+    constructCardGroupon: constructCardGroupon,
+    constructCardCash: constructCardCash,
+    constructCardDiscount: constructCardDiscount,
+    constructCardGift: constructCardGift,
+    constructCardGeneralCoupon: constructCardGeneralCoupon,
     constructCardQR: constructCardQR,
     constructQueryCode: constructQueryCode,
     constructQueryUserCardList: constructQueryUserCardList,
@@ -331,6 +483,8 @@ module.exports = {
     constructModifyCardStock: constructModifyCardStock,
     constructDeleteCard: constructDeleteCard,
     constructSetCardUnavailable: constructSetCardUnavailable,
+    constructCardPayCell: constructCardPayCell,
+    constructCardSelfConsumeCell: constructCardSelfConsumeCell,
     constructConsumeCard: constructConsumeCard
 };
 

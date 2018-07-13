@@ -26,23 +26,27 @@ const __STRUCTURE__ = require('./wechat.shopping.card.structure');
  */
 function createShoppingCard(request) {
     const deferred = Q.defer();
+    let postData;
 
-    let postData = {
-        'card': {
-            'card_type': 'GROUPON',
-            'groupon': {
-                'base_info': __STRUCTURE__.constructCardBaseInfo(request),
-                'advanced_info': {
-                    'use_condition': __STRUCTURE__.constructCardUseCondition(request),
-                    'abstract': __STRUCTURE__.constructCardAbstract(request),
-                    'text_image_list': request.text_image_list,
-                    'time_limit': __STRUCTURE__.constructCardTimeLimit(request),
-                    'business_service': request.business_service
-                },
-                'deal_detail': '以下锅底2选1（有菌王锅、麻辣锅、大骨锅、番茄锅、清补 凉锅、酸菜鱼锅可选）：\n大锅1份 12元\n小锅2份 16元 '
-            }
-        }
-    };
+    switch (request.card_type) {
+        case 'CARD_TYPE_GROUPON':
+            postData = __STRUCTURE__.constructCardGroupon(request);
+            break;
+        case 'CARD_TYPE_DISCOUNT':
+            postData = __STRUCTURE__.constructCardDiscount(request);
+            break;
+        case 'CARD_TYPE_GIFT':
+            postData = __STRUCTURE__.constructCardGift(request);
+            break;
+        case 'CARD_TYPE_CASH':
+            postData = __STRUCTURE__.constructCardCash(request);
+            break;
+        case 'CARD_TYPE_GENERAL_COUPON':
+            postData = __STRUCTURE__.constructCardGeneralCoupon(request);
+            break;
+        default:
+            break;
+    }
 
     __HTTP_CLIENT__
         .doHttpsPost(
@@ -53,7 +57,9 @@ function createShoppingCard(request) {
                 if (result.errcode === 0) {
                     deferred.resolve({
                         access_token: request.access_token,
-                        card_id: result.card_id
+                        card_id: result.card_id,
+                        action_name: 'QR_CARD',
+                        expire_seconds: 1800
                     });
                 } else {
                     deferred.reject(result.errmsg);
@@ -374,74 +380,146 @@ function setCardUnavailable(request) {
  * 3、支持会员营销，二次营销，如会员卡交易送积分，抵扣积分，买单后赠券等。
  */
 
+/**
+ * 设置买单接口
+ * 创建卡券之后，开发者可以通过设置微信买单接口设置该card_id支持微信买单功能。
+ * 值得开发者注意的是，设置买单的card_id必须已经配置了门店，否则会报错。
+ *
+ * 注意事项：
+ * 1.设置快速买单的卡券须支持至少一家有核销员门店，否则无法设置成功；
+ * 2.若该卡券设置了center_url（居中使用跳转链接）,须先将该设置更新为空后再设置自快速买单方可生效。
+ * @param request
+ * @returns {*|promise|C}
+ */
+function setCardPayCell(request) {
+    const deferred = Q.defer();
 
+    __HTTP_CLIENT__
+        .doHttpsPost(
+            __UTIL__.format(__API__.__SET_CARD_PAY_CELL__, request.access_token),
+            __STRUCTURE__.constructCardPayCell(request),
+            function (rawData) {
+                deferred.resolve(JSON.parse(rawData));
+            },
+            null
+        );
+
+    return deferred.promise;
+}
+
+/**
+ * 设置自助核销接口
+ *
+ * 自助核销与扫码/输码核销互为补充
+ * 卡券商户助手通过扫码/输码完成核销的同时，也确保了用券的真实性，适合有强对账需求的商户使用；
+ * 而自助核销由用户发起，全程由用户操作，适合对账需求不强的商户使用。
+ *
+ * 目前，自助核销可能适合以下场景使用：
+ * 1.不允许店员上班期间带手机；
+ * 2.高峰期店内人流量大，扫码/输码核销速度不能满足短时需求；
+ * 3.会议入场，短时有大量核销任务；
+ *
+ * 1.设置自助核销的卡券须支持至少一家门店，否则无法设置成功；
+ * 2.若该卡券设置了center_url（居中使用跳转链接）,须先将该设置更新为空后再设置自助核销功能方可生效。
+ * @param request
+ * @returns {*|promise|C}
+ */
+function setCardSelfConsumeCell(request) {
+    const deferred = Q.defer();
+
+    __HTTP_CLIENT__
+        .doHttpsPost(
+            __UTIL__.format(__API__.__SET_CARD_SELF_CONSUME_CELL__, request.access_token),
+            __STRUCTURE__.constructCardSelfConsumeCell(request),
+            function (rawData) {
+                deferred.resolve(JSON.parse(rawData));
+            },
+            null
+        );
+
+    return deferred.promise;
+}
+
+//
+__SERVICE_ACCESS_TOKEN__
+    .accessToken()
+    .then(request => {
+        const beginTimestamp = __MOMENT__().format('X');
+        const endTimestamp = __MOMENT__().add(7, 'days').format('X');
+
+        return Q({
+            card_type: __STRUCTURE__.__CARD_TYPE__.CARD_TYPE_CASH,
+
+            access_token: request.access_token,
+            logo_url: 'https://warehouse.pusudo.cn/logo.png',
+            brand_name: '莆素科技',
+            code_type: __STRUCTURE__.__CODE_TYPE__.CODE_TYPE_QRCODE,
+            title: '132元双人火锅套餐',
+            color: 'Color040',
+            notice: '使用时向服务员出示此券',
+            description: '不可与其他优惠同享\n如需团购券发票，请在消费时向商户提出\n店内均可使用，仅限堂食',
+            date_type: __STRUCTURE__.__DATE_TYPE__.DATE_TYPE_FIX_TIME_RANGE,
+            begin_timestamp: beginTimestamp,
+            end_timestamp: endTimestamp,
+            sku: {
+                'quantity': 500000
+            },
+
+            location_id_list: [
+                215645680
+            ],
+
+            can_use_with_other_discount: false,
+            abstract: '微信餐厅推出多种新季菜品，期待您的光临',
+            icon_url_list: [
+                'https://warehouse.pusudo.cn/cuisine-2248567_960_720.jpg'
+            ],
+            text_image_list: [
+                {
+                    'image_url': 'http://mmbiz.qpic.cn/mmbiz/p98FjXy8LacgHxp3sJ3vn97bGLz0ib0Sfz1bjiaoOYA027iasqSG0sjpiby4vce3AtaPu6cIhBHkt6IjlkY9YnDsfw/0',
+                    'text': '此菜品精选食材，以独特的烹饪方法，最大程度地刺激食 客的味蕾'
+                },
+                {
+                    'image_url': 'http://mmbiz.qpic.cn/mmbiz/p98FjXy8LacgHxp3sJ3vn97bGLz0ib0Sfz1bjiaoOYA027iasqSG0sj piby4vce3AtaPu6cIhBHkt6IjlkY9YnDsfw/0',
+                    'text': '此菜品迎合大众口味，老少皆宜，营养均衡'
+                }
+            ],
+            time_limit_type: 'SUNDAY',
+            time_limit_begin_hour: 11,
+            time_limit_begin_minute: 0,
+            time_limit_end_hour: 23,
+            time_limit_end_minute: 59,
+            business_service: [
+                __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_DELIVER,
+                __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_FREE_PARK,
+                __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_WITH_PET,
+                __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_FREE_WIFI
+            ],
+
+            // deal_detail: '以下锅底2选1（有菌王锅、麻辣锅、大骨锅、番茄锅、清补 凉锅、酸菜鱼锅可选）：\n大锅1份 12元\n小锅2份 16元 '
+            least_cost: 10000,
+            reduce_cost: 500
+            // discount: 30
+            // gift: '可兑换音乐木盒一个'
+            // default_detail: '优惠券专用，填写优惠详情'
+        });
+    })
+    .then(createShoppingCard)
+    .then(createQRCode)
+    .then(res => {
+        __LOGGER__.info(res);
+        __LOGGER__.info(res.show_qrcode_url);
+    })
+    .catch(exception => {
+        __LOGGER__.error(exception);
+    });
 
 // __SERVICE_ACCESS_TOKEN__
 //     .accessToken()
 //     .then(request => {
-//         const beginTimestamp = __MOMENT__().format('X');
-//         const endTimestamp = __MOMENT__().add(7, 'days').format('X');
-//
 //         return Q({
 //             access_token: request.access_token,
-//             logo_url: 'https://warehouse.pusudo.cn/IMG_2527.JPG?Expires=1531192729&OSSAccessKeyId=TMP.AQE9dz9YeSKWCqwkiqccUX5GmPEeq61B-2qpjXOw_XPgdV5TPZ8eVfAqhsGAAAAwLAIVAL1O6DdioQ_z3tZC5tHDy3Spd1fqAhMgZ5PXU5Ga8EvhUfpSR95viqf5&Signature=lvj5mbxk7T4bEMcZQodzfJ%2BgDKM%3D',
-//             brand_name: '莆素科技',
-//             code_type: __STRUCTURE__.__CODE_TYPE__.CODE_TYPE_QRCODE,
-//             title: '132元双人火锅套餐',
-//             color: 'Color100',
-//             notice: '使用时向服务员出示此券',
-//             description: '不可与其他优惠同享\n如需团购券发票，请在消费时向商户提出\n店内均可使用，仅限堂食',
-//             date_type: __STRUCTURE__.__DATE_TYPE__.DATE_TYPE_FIX_TIME_RANGE,
-//             begin_timestamp: beginTimestamp,
-//             end_timestamp: endTimestamp,
-//             sku: {
-//                 'quantity': 500000
-//             },
-//
-//             can_use_with_other_discount: false,
-//             abstract: '微信餐厅推出多种新季菜品，期待您的光临',
-//             icon_url_list: [
-//                 'http://mmbiz.qpic.cn/mmbiz/p98FjXy8LacgHxp3sJ3vn97bGLz0ib0Sfz1bjiaoOYA027iasqSG0sjpiby4vce3AtaPu6cIhBHkt6IjlkY9YnDsfw/0'
-//             ],
-//             text_image_list: [
-//                 {
-//                     'image_url': 'http://mmbiz.qpic.cn/mmbiz/p98FjXy8LacgHxp3sJ3vn97bGLz0ib0Sfz1bjiaoOYA027iasqSG0sjpiby4vce3AtaPu6cIhBHkt6IjlkY9YnDsfw/0',
-//                     'text': '此菜品精选食材，以独特的烹饪方法，最大程度地刺激食 客的味蕾'
-//                 },
-//                 {
-//                     'image_url': 'http://mmbiz.qpic.cn/mmbiz/p98FjXy8LacgHxp3sJ3vn97bGLz0ib0Sfz1bjiaoOYA027iasqSG0sj piby4vce3AtaPu6cIhBHkt6IjlkY9YnDsfw/0',
-//                     'text': '此菜品迎合大众口味，老少皆宜，营养均衡'
-//                 }
-//             ],
-//             time_limit_type: 'SUNDAY',
-//             time_limit_begin_hour: 11,
-//             time_limit_begin_minute: 0,
-//             time_limit_end_hour: 23,
-//             time_limit_end_minute: 59,
-//             business_service: [
-//                 __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_DELIVER,
-//                 __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_FREE_PARK,
-//                 __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_WITH_PET,
-//                 __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_FREE_WIFI
-//             ]
-//         });
-//     })
-//     .then(createShoppingCard)
-//     .then(createQRCode)
-//     .then(res => {
-//         __LOGGER__.info(res);
-//         __LOGGER__.info(res.show_qrcode_url);
-//     })
-//     .catch(exception => {
-//         __LOGGER__.error(exception);
-//     });
-
-// __SERVICE_ACCESS_TOKEN__
-//     .accessToken()
-//     .then(request => {
-//         return Q({
-//             access_token: request.access_token,
-//             card_id: 'pn9h6uHe54ZcyUIsPmHhlpuAhwlE',
+//             card_id: 'pWWirwWsPaYNLDUugrmR7530EfGk',
 //             action_name: 'QR_CARD',
 //             expire_seconds: 1800
 //         });
@@ -583,6 +661,32 @@ function setCardUnavailable(request) {
 //         });
 //     })
 //     .then(consumeCard)
+//     .then(res => {
+//         console.log(res);
+//     });
+
+// __SERVICE_ACCESS_TOKEN__
+//     .accessToken()
+//     .then(request => {
+//         return Q({
+//             access_token: request.access_token,
+//             card_id: 'pWWirwTXfRL0Wbz5MLnvmq75xeqY'
+//         });
+//     })
+//     .then(setCardPayCell)
+//     .then(res => {
+//         console.log(res);
+//     });
+
+// __SERVICE_ACCESS_TOKEN__
+//     .accessToken()
+//     .then(request => {
+//         return Q({
+//             access_token: request.access_token,
+//             card_id: 'pn9h6uFGjUi9FQ2nM7NUj7q8ENwk'
+//         });
+//     })
+//     .then(setCardSelfConsumeCell)
 //     .then(res => {
 //         console.log(res);
 //     });

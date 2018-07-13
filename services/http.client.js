@@ -74,7 +74,7 @@ function doHttpsPost(url, data, callback, agentOptions) {
         options.passphrase = agentOptions.passphrase;
     }
     __LOGGER__.info('=====  doHttpsPost ==> URL: ' + url);
-    // __LOGGER__.info('=====  doHttpsPost ==> options: ' + JSON.stringify(options));
+    __LOGGER__.info('=====  doHttpsPost ==> options: ' + JSON.stringify(options));
     const req = __HTTPS__.request(options, function (res) {
         let data = '';
         res.on('data', function (chunk) {
