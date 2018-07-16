@@ -187,6 +187,18 @@ router.post('/sms', function (req, res, next) {
 });
 
 /**
+ *      卡券列表
+ */
+router.get('/card/list', function (req, res, next) {
+    __LOGGER__.info('========================== CARD LIST ==========================');
+    __LOGGER__.info(req.params);
+    __CONTROLLER_SHOPPING__.fetchDispatchCardList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
  *      登录
  */
 router.post('/login', function (req, res, next) {

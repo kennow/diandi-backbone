@@ -279,7 +279,8 @@ function addNewProduct(request) {
         basicInsertParams: [{
             pid: productId,
             name: product.name,
-            description: product.introduce
+            description: product.introduce,
+            type: product.type
         }],
         /**
          *  3. 批量新增商品与属性、属性值间的关系

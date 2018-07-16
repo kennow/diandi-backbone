@@ -12,7 +12,7 @@ const __ADD_REL_PRODUCT_ATTR_VALUE__ = 'INSERT INTO rel_product_attribute_value 
 const __ADD_REL_PRODUCT_GALLERY__ = 'INSERT INTO rel_product_gallery SET ?';
 const __FETCH_PRODUCT_FULL__ = 'SELECT * FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?';
 const __FETCH_PRODUCT_PART__ = 'SELECT * FROM tb_product WHERE status = 0 AND createTime < ? ORDER BY createTime DESC LIMIT ?';
-const __FETCH_PRODUCT_DETAILS__ = 'SELECT name, description, sales FROM tb_product WHERE pid = ?';
+const __FETCH_PRODUCT_DETAILS__ = 'SELECT name, description, sales, type FROM tb_product WHERE pid = ?';
 const __FETCH_PRODUCT_THUMBNAILS__ = 'SELECT a.productid, b.name FROM rel_product_gallery a, tb_gallery b WHERE a.productid in (SELECT foo.pid FROM (SELECT pid FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?) as foo) AND a.type = 0 AND a.imageid = b.imageid';
 const __FETCH_PRODUCT_STANDARDS__ = 'SELECT b.*, c.vid, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.pid = ? AND a.aid = b.aid AND a.vid = c.vid';
 const __FETCH_PRODUCT_GALLERY__ = 'SELECT a.productid, a.type, b.name FROM rel_product_gallery a, tb_gallery b WHERE a.productid = ? AND a.imageid = b.imageid';
@@ -36,8 +36,7 @@ const __CHECK_CONSISTENCY__ = 'SELECT COUNT(*) AS number FROM tb_order WHERE out
 const __UPDATE_ORDER_AFTER_PAY__ = 'UPDATE tb_order SET bankType = ?, mchID = ?, tradeType = ?, transactionID = ?, payTime = ?, status = ?, remark = ? WHERE out_trade_no = ?';
 const __CHANGE_ORDER_STATUS__ = 'UPDATE tb_order SET status = ?, remark = ? WHERE out_trade_no = ? ';
 const __ADD_REL_ORDER_SKU__ = 'INSERT INTO rel_order_sku SET ?';
-const __FETCH_ORDER_DETAIL__ = 'SELECT a.totalFee, a.freight, a.attach, a.createTime, a.payTime, a.status, b.name, b.mobile, b.address, b.postcode ' +
-    'FROM tb_order a, tb_consignee b WHERE a.out_trade_no = ? and a.consignee_no  = b.consignee_no';
+const __FETCH_ORDER_DETAIL__ = 'SELECT a.totalFee, a.freight, a.attach, a.createTime, a.payTime, a.status, b.name, b.mobile, b.address, b.postcode FROM tb_order a LEFT JOIN tb_consignee b ON a.consignee_no = b.consignee_no WHERE a.out_trade_no = ?';
 const __FETCH_ORDER_LIST__ = 'SELECT out_trade_no, user_id, consignee_no, createTime, payTime, totalFee, a.status, attach, remark ' +
     'FROM tb_order a, tb_user b WHERE b.3rd_session = ? AND a.user_id = b.uid AND a.createTime < ? ORDER BY a.createTime DESC limit ?';
 const __FETCH_A_ORDER__ = 'SELECT a.stock_no, a.amount, b.unit, b.attributes, c.name, c.pid ' +

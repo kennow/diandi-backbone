@@ -440,79 +440,83 @@ function setCardSelfConsumeCell(request) {
     return deferred.promise;
 }
 
+module.exports = {
+    batchQueryCardList: batchQueryCardList
+};
+
 //
-__SERVICE_ACCESS_TOKEN__
-    .accessToken()
-    .then(request => {
-        const beginTimestamp = __MOMENT__().format('X');
-        const endTimestamp = __MOMENT__().add(7, 'days').format('X');
-
-        return Q({
-            card_type: __STRUCTURE__.__CARD_TYPE__.CARD_TYPE_CASH,
-
-            access_token: request.access_token,
-            logo_url: 'https://warehouse.pusudo.cn/logo.png',
-            brand_name: '莆素科技',
-            code_type: __STRUCTURE__.__CODE_TYPE__.CODE_TYPE_QRCODE,
-            title: '132元双人火锅套餐',
-            color: 'Color040',
-            notice: '使用时向服务员出示此券',
-            description: '不可与其他优惠同享\n如需团购券发票，请在消费时向商户提出\n店内均可使用，仅限堂食',
-            date_type: __STRUCTURE__.__DATE_TYPE__.DATE_TYPE_FIX_TIME_RANGE,
-            begin_timestamp: beginTimestamp,
-            end_timestamp: endTimestamp,
-            sku: {
-                'quantity': 500000
-            },
-
-            location_id_list: [
-                215645680
-            ],
-
-            can_use_with_other_discount: false,
-            abstract: '微信餐厅推出多种新季菜品，期待您的光临',
-            icon_url_list: [
-                'https://warehouse.pusudo.cn/cuisine-2248567_960_720.jpg'
-            ],
-            text_image_list: [
-                {
-                    'image_url': 'http://mmbiz.qpic.cn/mmbiz/p98FjXy8LacgHxp3sJ3vn97bGLz0ib0Sfz1bjiaoOYA027iasqSG0sjpiby4vce3AtaPu6cIhBHkt6IjlkY9YnDsfw/0',
-                    'text': '此菜品精选食材，以独特的烹饪方法，最大程度地刺激食 客的味蕾'
-                },
-                {
-                    'image_url': 'http://mmbiz.qpic.cn/mmbiz/p98FjXy8LacgHxp3sJ3vn97bGLz0ib0Sfz1bjiaoOYA027iasqSG0sj piby4vce3AtaPu6cIhBHkt6IjlkY9YnDsfw/0',
-                    'text': '此菜品迎合大众口味，老少皆宜，营养均衡'
-                }
-            ],
-            time_limit_type: 'SUNDAY',
-            time_limit_begin_hour: 11,
-            time_limit_begin_minute: 0,
-            time_limit_end_hour: 23,
-            time_limit_end_minute: 59,
-            business_service: [
-                __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_DELIVER,
-                __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_FREE_PARK,
-                __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_WITH_PET,
-                __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_FREE_WIFI
-            ],
-
-            // deal_detail: '以下锅底2选1（有菌王锅、麻辣锅、大骨锅、番茄锅、清补 凉锅、酸菜鱼锅可选）：\n大锅1份 12元\n小锅2份 16元 '
-            least_cost: 10000,
-            reduce_cost: 500
-            // discount: 30
-            // gift: '可兑换音乐木盒一个'
-            // default_detail: '优惠券专用，填写优惠详情'
-        });
-    })
-    .then(createShoppingCard)
-    .then(createQRCode)
-    .then(res => {
-        __LOGGER__.info(res);
-        __LOGGER__.info(res.show_qrcode_url);
-    })
-    .catch(exception => {
-        __LOGGER__.error(exception);
-    });
+// __SERVICE_ACCESS_TOKEN__
+//     .accessToken()
+//     .then(request => {
+//         const beginTimestamp = __MOMENT__().format('X');
+//         const endTimestamp = __MOMENT__().add(7, 'days').format('X');
+//
+//         return Q({
+//             card_type: __STRUCTURE__.__CARD_TYPE__.CARD_TYPE_CASH,
+//
+//             access_token: request.access_token,
+//             logo_url: 'https://warehouse.pusudo.cn/logo.png',
+//             brand_name: '莆素科技',
+//             code_type: __STRUCTURE__.__CODE_TYPE__.CODE_TYPE_QRCODE,
+//             title: '132元双人火锅套餐',
+//             color: 'Color040',
+//             notice: '使用时向服务员出示此券',
+//             description: '不可与其他优惠同享\n如需团购券发票，请在消费时向商户提出\n店内均可使用，仅限堂食',
+//             date_type: __STRUCTURE__.__DATE_TYPE__.DATE_TYPE_FIX_TIME_RANGE,
+//             begin_timestamp: beginTimestamp,
+//             end_timestamp: endTimestamp,
+//             sku: {
+//                 'quantity': 500000
+//             },
+//
+//             location_id_list: [
+//                 215645680
+//             ],
+//
+//             can_use_with_other_discount: false,
+//             abstract: '微信餐厅推出多种新季菜品，期待您的光临',
+//             icon_url_list: [
+//                 'https://warehouse.pusudo.cn/cuisine-2248567_960_720.jpg'
+//             ],
+//             text_image_list: [
+//                 {
+//                     'image_url': 'http://mmbiz.qpic.cn/mmbiz/p98FjXy8LacgHxp3sJ3vn97bGLz0ib0Sfz1bjiaoOYA027iasqSG0sjpiby4vce3AtaPu6cIhBHkt6IjlkY9YnDsfw/0',
+//                     'text': '此菜品精选食材，以独特的烹饪方法，最大程度地刺激食 客的味蕾'
+//                 },
+//                 {
+//                     'image_url': 'http://mmbiz.qpic.cn/mmbiz/p98FjXy8LacgHxp3sJ3vn97bGLz0ib0Sfz1bjiaoOYA027iasqSG0sj piby4vce3AtaPu6cIhBHkt6IjlkY9YnDsfw/0',
+//                     'text': '此菜品迎合大众口味，老少皆宜，营养均衡'
+//                 }
+//             ],
+//             time_limit_type: 'SUNDAY',
+//             time_limit_begin_hour: 11,
+//             time_limit_begin_minute: 0,
+//             time_limit_end_hour: 23,
+//             time_limit_end_minute: 59,
+//             business_service: [
+//                 __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_DELIVER,
+//                 __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_FREE_PARK,
+//                 __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_WITH_PET,
+//                 __STRUCTURE__.__BUSINESS_SERVICE__.BIZ_SERVICE_FREE_WIFI
+//             ],
+//
+//             // deal_detail: '以下锅底2选1（有菌王锅、麻辣锅、大骨锅、番茄锅、清补 凉锅、酸菜鱼锅可选）：\n大锅1份 12元\n小锅2份 16元 '
+//             least_cost: 10000,
+//             reduce_cost: 500
+//             // discount: 30
+//             // gift: '可兑换音乐木盒一个'
+//             // default_detail: '优惠券专用，填写优惠详情'
+//         });
+//     })
+//     .then(createShoppingCard)
+//     .then(createQRCode)
+//     .then(res => {
+//         __LOGGER__.info(res);
+//         __LOGGER__.info(res.show_qrcode_url);
+//     })
+//     .catch(exception => {
+//         __LOGGER__.error(exception);
+//     });
 
 // __SERVICE_ACCESS_TOKEN__
 //     .accessToken()
@@ -602,7 +606,10 @@ __SERVICE_ACCESS_TOKEN__
 //     .then(request => {
 //         return Q({
 //             access_token: request.access_token,
-//             status_list: [__STRUCTURE__.__CARD_STATUS__.CARD_STATUS_NOT_VERIFY]
+//             status_list: [
+//                 // __STRUCTURE__.__CARD_STATUS__.CARD_STATUS_VERIFY_OK,
+//                 __STRUCTURE__.__CARD_STATUS__.CARD_STATUS_DISPATCH
+//             ]
 //         });
 //     })
 //     .then(batchQueryCardList)

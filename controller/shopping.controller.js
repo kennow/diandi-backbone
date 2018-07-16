@@ -5,6 +5,9 @@ const __WX_PAY_SERVICE__ = require('../services/wechat.pay/wechat.pay.service');
 const __USER_DATABASE__ = require('../database/user.api');
 const __SHOPPING_DATABASE__ = require('../database/shopping.api');
 const __LOGGER__ = require('../services/log4js.service').getLogger('shopping.controller.js');
+const __SERVICE_WECHAT_ACCESS_TOKEN__ = require('../services/wechat.access_token/wechat.access_token.service');
+const __SERVICE_WECHAT_SHOPPING_CARD__ = require('../services/wechat.shopping.card/wechat.shopping.card.service');
+const __STRUCTURE__ = require('../services/wechat.shopping.card/wechat.shopping.card.structure');
 
 /**
  *   获取商品列表
@@ -481,7 +484,7 @@ function removeProduct(request, response) {
 }
 
 /**
- *  理性商品状态
+ *  修改商品状态
  * @param request
  * @param response
  */
@@ -497,6 +500,37 @@ function changeProductStatus(request, response) {
             response(exception);
         });
 }
+
+/**
+ * 获取状态为已投放的所有卡券列表
+ * @param request
+ * @param response
+ */
+function fetchDispatchCardList(request, response) {
+    __SERVICE_WECHAT_ACCESS_TOKEN__
+        .accessToken()
+        .then(data => {
+            return Q({
+                access_token: data.access_token,
+                status_list: [
+                    // __STRUCTURE__.__CARD_STATUS__.CARD_STATUS_VERIFY_OK,
+                    __STRUCTURE__.__CARD_STATUS__.CARD_STATUS_DISPATCH
+                ]
+            });
+        })
+        .then(__SERVICE_WECHAT_SHOPPING_CARD__.batchQueryCardList)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+// fetchDispatchCardList({}, () => {
+// });
 
 // newProduct({
 //     body: {
@@ -535,7 +569,8 @@ module.exports = {
     newAttributes: newAttributes,
     newProduct: newProduct,
     removeProduct: removeProduct,
-    changeProductStatus: changeProductStatus
+    changeProductStatus: changeProductStatus,
+    fetchDispatchCardList: fetchDispatchCardList
 };
 
 //fetchRefundInfo({
