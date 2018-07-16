@@ -441,7 +441,8 @@ function setCardSelfConsumeCell(request) {
 }
 
 module.exports = {
-    batchQueryCardList: batchQueryCardList
+    batchQueryCardList: batchQueryCardList,
+    queryCardDetail: queryCardDetail
 };
 
 //
@@ -584,19 +585,6 @@ module.exports = {
 //         });
 //     })
 //     .then(queryUserCardList)
-//     .then(res => {
-//         console.log(res);
-//     });
-
-// __SERVICE_ACCESS_TOKEN__
-//     .accessToken()
-//     .then(request => {
-//         return Q({
-//             access_token: request.access_token,
-//             card_id: 'pn9h6uEjxnBRBZAv-eMj1lmt8Fjc'
-//         });
-//     })
-//     .then(queryCardDetail)
 //     .then(res => {
 //         console.log(res);
 //     });

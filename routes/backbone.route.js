@@ -192,7 +192,20 @@ router.post('/sms', function (req, res, next) {
 router.get('/card/list', function (req, res, next) {
     __LOGGER__.info('========================== CARD LIST ==========================');
     __LOGGER__.info(req.params);
+    __LOGGER__.info(req.query);
     __CONTROLLER_SHOPPING__.fetchDispatchCardList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      卡券详情
+ */
+router.get('/card/:id', function (req, res, next) {
+    __LOGGER__.info('========================== CARD DETAIL ==========================');
+    __LOGGER__.info(req.params);
+    __CONTROLLER_SHOPPING__.queryCardDetail(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });

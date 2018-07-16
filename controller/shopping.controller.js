@@ -507,8 +507,9 @@ function changeProductStatus(request, response) {
  * @param response
  */
 function fetchDispatchCardList(request, response) {
-    __SERVICE_WECHAT_ACCESS_TOKEN__
-        .accessToken()
+    __USER_DATABASE__
+        .checkIdentity(request.query)
+        .then(__SERVICE_WECHAT_ACCESS_TOKEN__.accessToken)
         .then(data => {
             return Q({
                 access_token: data.access_token,
@@ -529,8 +530,44 @@ function fetchDispatchCardList(request, response) {
         });
 }
 
-// fetchDispatchCardList({}, () => {
-// });
+/**
+ * 获取卡券详情
+ * @param request
+ * @param response
+ */
+function queryCardDetail(request, response) {
+    __USER_DATABASE__
+        .checkIdentity(request.query)
+        .then(__SERVICE_WECHAT_ACCESS_TOKEN__.accessToken)
+        .then(data => {
+            return Q({
+                access_token: data.access_token,
+                card_id: request.params.id
+            });
+        })
+        .then(__SERVICE_WECHAT_SHOPPING_CARD__.queryCardDetail)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+//fetchDispatchCardList({
+//    query: {
+//        session: ''
+//    }
+//}, () => {
+//});
+
+//queryCardDetail({
+//    query: {session: '0sO6soyPNFoLXPqZlgxXl51G1s8ctuOU'},
+//    params: {id: 'pWWirwadTzPNcwpiS1Am5nMU0XhE'}
+//}, () => {
+//});
 
 // newProduct({
 //     body: {
@@ -570,7 +607,8 @@ module.exports = {
     newProduct: newProduct,
     removeProduct: removeProduct,
     changeProductStatus: changeProductStatus,
-    fetchDispatchCardList: fetchDispatchCardList
+    fetchDispatchCardList: fetchDispatchCardList,
+    queryCardDetail: queryCardDetail
 };
 
 //fetchRefundInfo({
