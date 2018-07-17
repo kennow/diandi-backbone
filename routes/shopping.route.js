@@ -120,4 +120,16 @@ router.all('/wechat_pay/refund/notification', function (req, res, next) {
     });
 });
 
+/**
+ *  将卡券放入微信卡包
+ */
+router.post('/card/holder', function (req, res, next) {
+    __LOGGER__.info('========================== PUT INTO WECHAT CARD HOLDER ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_SHOPPING__.putCouponIntoCardHolder(req.body, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
 module.exports = router;

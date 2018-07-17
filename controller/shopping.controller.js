@@ -556,6 +556,132 @@ function queryCardDetail(request, response) {
         });
 }
 
+/**
+ * 获取商品所关联卡券
+ * @param request
+ * @param response
+ */
+function queryProductCard(request, response) {
+    __SHOPPING_DATABASE__
+        .queryProductCard(request)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ * 在商品与卡券间建立关联
+ * @param request
+ * @param response
+ */
+function associateProductCard(request, response) {
+    __SHOPPING_DATABASE__
+        .associateProductCard(request.body)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ * 将卡券放入微信卡包
+ * @param request
+ * @param response
+ */
+function putCouponIntoCardHolder(request, response) {
+    let params = {};
+
+    __WX_PAY_SERVICE__
+        .queryOrder({
+            out_trade_no: request.out_trade_no
+        })
+        .then(data => {
+            const deferred = Q.defer();
+
+            if (data.return_code === 'SUCCESS' &&
+                data.return_msg === 'OK' &&
+                data.result_code === 'SUCCESS' &&
+                data.trade_state === 'SUCCESS'
+            ) {
+                params = {
+                    openid: data.openid,
+                    session: request.session,
+                    product_id: request.product_id
+                };
+                deferred.resolve(params);
+            } else {
+                deferred.reject('请支付成功后再领取卡券');
+            }
+            return deferred.promise;
+        })
+        .then(__SHOPPING_DATABASE__.checkProductCard)
+        .then(packet => {
+            const deferred = Q.defer();
+
+            if (packet.code === 0 && packet.msg.length > 0) {
+                params.card_id = packet.msg[0].cardId;
+                deferred.resolve(params);
+            } else {
+                deferred.reject('未能找到该卡券');
+            }
+
+            return deferred.promise;
+        })
+        .then(__SERVICE_WECHAT_ACCESS_TOKEN__.accessToken)
+        .then(__SERVICE_WECHAT_ACCESS_TOKEN__.cardAPITicket)
+        .then(ticket => {
+            return Q({
+                openid: params.openid,
+                card_id: params.card_id,
+                ticket: ticket.ticket
+            });
+        })
+        .then(__SERVICE_WECHAT_ACCESS_TOKEN__.signature)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+// putCouponIntoCardHolder({
+//     out_trade_no: '13297414012018071614440696447168',
+//     session: 'nCuDTm5pe3Wl4gAAsn6jEQvm8GouXltg',
+//     product_id: 'MFEZM9sbAmbm2fkEyj34Egl5XozYWtpK'
+// }, res => {
+// });
+
+// associateProductCard({
+//     body: {
+//         session: '0sO6soyPNFoLXPqZlgxXl51G1s8ctuOU',
+//         product_id: 'MFEZM9sbAmbm2fkEyj34Egl5XozYWtpK',
+//         card_id: 'pn9h6uEjxnBRBZAv-fMj1lmt8Fjc'
+//     }
+// }, () => {
+// });
+
+// queryProductCard({
+//     params: {
+//         product_id: ''
+//     },
+//     query: {
+//         session: '0sO6soyPNFoLXPqZlgxXl51G1s8ctuOU'
+//     }
+// }, () => {
+// });
+
 //fetchDispatchCardList({
 //    query: {
 //        session: ''
@@ -608,7 +734,10 @@ module.exports = {
     removeProduct: removeProduct,
     changeProductStatus: changeProductStatus,
     fetchDispatchCardList: fetchDispatchCardList,
-    queryCardDetail: queryCardDetail
+    queryCardDetail: queryCardDetail,
+    queryProductCard: queryProductCard,
+    associateProductCard: associateProductCard,
+    putCouponIntoCardHolder:putCouponIntoCardHolder
 };
 
 //fetchRefundInfo({
@@ -649,7 +778,7 @@ module.exports = {
 
 // queryOrder({
 //     params: {
-//         id: '13297414012018051917224152133861'
+//         id: '13297414012018051910422182936742'
 //     }
 // }, function (res) {
 //     __LOGGER__.debug(res);

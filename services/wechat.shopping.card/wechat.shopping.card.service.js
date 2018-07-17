@@ -524,7 +524,8 @@ module.exports = {
 //     .then(request => {
 //         return Q({
 //             access_token: request.access_token,
-//             card_id: 'pWWirwWsPaYNLDUugrmR7530EfGk',
+//             card_id: 'pWWirwY_iHgLxsMdeP858iyD2744',
+//             openid: 'oX9I95Tz_AOX-oAdgAIYvE0lYDjc',
 //             action_name: 'QR_CARD',
 //             expire_seconds: 1800
 //         });

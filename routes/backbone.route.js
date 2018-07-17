@@ -212,6 +212,31 @@ router.get('/card/:id', function (req, res, next) {
 });
 
 /**
+ *      查询商品所关联的卡券ID
+ */
+router.get('/card/product/:id', function (req, res, next) {
+    __LOGGER__.info('========================== PRODUCT CARD ==========================');
+    __LOGGER__.info(req.params);
+    __LOGGER__.info(req.query);
+    __CONTROLLER_SHOPPING__.queryProductCard(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      关联商品与卡券
+ */
+router.post('/card/product', function (req, res, next) {
+    __LOGGER__.info('========================== ASSOCIATE PRODUCT CARD ==========================');
+    __LOGGER__.info(req.body);
+    __CONTROLLER_SHOPPING__.associateProductCard(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
  *      登录
  */
 router.post('/login', function (req, res, next) {

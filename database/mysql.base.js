@@ -401,6 +401,15 @@ let api =
         },
 
         /**
+         * 检查 openid 是否前后一致
+         * @param request
+         * @returns {*}
+         */
+        checkOpenIDConsistency: function (request) {
+            return api.isExistHandler(request, request.params.checkOpenIDConsistencySQL, request.params.checkOpenIDConsistencyParams, '领取卡券与支付订单所使用的账户不一致！');
+        },
+
+        /**
          *
          * @param request
          * @param sql

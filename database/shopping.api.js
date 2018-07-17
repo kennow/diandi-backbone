@@ -1034,12 +1034,21 @@ function fetchOrderDetail(request) {
 
     __MYSQL_API__
         .setUpConnection({
-            basicQuerySQL: __STATEMENT__.__FETCH_ORDER_DETAIL__,
-            basicQueryParams: [
-                request.out_trade_no
+            batchQueryIndex: 0,                             //  索引
+            batchQueryTag: [                                //  标签
+                'detail',
+                'product'
+            ],
+            batchQuerySQL: [                                //  执行语句
+                __STATEMENT__.__FETCH_ORDER_DETAIL__,
+                __STATEMENT__.__FETCH_ORDER_PRODUCT__
+            ],
+            batchQueryParams: [                             //  对应参数
+                [request.out_trade_no],
+                [request.out_trade_no]
             ]
         })
-        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.inAll)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
             deferred.resolve(result);
@@ -1130,6 +1139,142 @@ function fetchRefundInfo(request) {
     return deferred.promise;
 }
 
+/**
+ * 查询商品关联的卡券ID
+ * @param request
+ * @returns {*|C|promise}
+ */
+function queryProductCard(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.query.session
+            ],
+            /**
+             *  2. 查询商品对应的卡券ID
+             */
+            basicQuerySQL: __STATEMENT__.__QUERY_PRODUCT_CARD__,
+            basicQueryParams: [
+                request.params.id
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 在商品与卡券间建立关联
+ * @param request
+ * @returns {*|C|promise}
+ */
+function associateProductCard(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 判断该商品是否已经关联卡券
+             */
+            isRepeatSQL: __STATEMENT__.__CHECK_ASSOCIATE__,
+            isRepeatParams: [
+                request.product_id
+            ],
+            /**
+             *  3. 不存在，则新增一条联接
+             *     存在，更新卡券ID
+             */
+            basicInsertSQL: __STATEMENT__.__ADD_PRODUCT_CARD__,
+            basicInsertParams: {
+                productId: request.product_id,
+                cardId: request.card_id
+            },
+            basicUpdateSQL: __STATEMENT__.__UPDATE_PRODUCT_CARD__,
+            basicUpdateParams: [
+                request.card_id,
+                request.product_id
+            ]
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.isRepeat)
+        .then(
+            __MYSQL_API__.basicInsert,
+            __MYSQL_API__.basicUpdate,
+        )
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+function checkProductCard(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测是否与支付订单时所使用的账户一致
+             */
+            checkOpenIDConsistencySQL: __STATEMENT__.__CHECK_OPENID_CONSISTENCY__,
+            checkOpenIDConsistencyParams: [
+                request.openid,
+                request.session
+            ],
+            /**
+             *  2. 查询商品对应的卡券ID
+             */
+            basicQuerySQL: __STATEMENT__.__QUERY_PRODUCT_CARD__,
+            basicQueryParams: [
+                request.product_id
+            ]
+        })
+        .then(__MYSQL_API__.checkOpenIDConsistency)
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     checkSession: checkSession,
     fetchProductList: fetchProductList,
@@ -1151,7 +1296,10 @@ module.exports = {
     checkRefundPermission: checkRefundPermission,
     submitNewRefund: submitNewRefund,
     changeRefundStatus: changeRefundStatus,
-    fetchRefundInfo: fetchRefundInfo
+    fetchRefundInfo: fetchRefundInfo,
+    queryProductCard: queryProductCard,
+    associateProductCard: associateProductCard,
+    checkProductCard: checkProductCard
 };
 
 //changeRefundStatus({

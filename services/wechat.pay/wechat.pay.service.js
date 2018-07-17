@@ -118,7 +118,7 @@ function queryOrder(request) {
     // 生成POST Data
     const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructQueryOrderParams(request));
     __LOGGER__.debug(postData);
-    // 调用关闭订单API
+    // 调用查询订单API
     __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__ORDER_QUERY__, postData, function (rawData) {
         __WX_PAY_DATA__
             .parseReturnQueryOrder(rawData)       // 对返回结果进行解析【XML转JSON】

@@ -37,6 +37,7 @@ const __UPDATE_ORDER_AFTER_PAY__ = 'UPDATE tb_order SET bankType = ?, mchID = ?,
 const __CHANGE_ORDER_STATUS__ = 'UPDATE tb_order SET status = ?, remark = ? WHERE out_trade_no = ? ';
 const __ADD_REL_ORDER_SKU__ = 'INSERT INTO rel_order_sku SET ?';
 const __FETCH_ORDER_DETAIL__ = 'SELECT a.totalFee, a.freight, a.attach, a.createTime, a.payTime, a.status, b.name, b.mobile, b.address, b.postcode FROM tb_order a LEFT JOIN tb_consignee b ON a.consignee_no = b.consignee_no WHERE a.out_trade_no = ?';
+const __FETCH_ORDER_PRODUCT__ = 'SELECT a.stock_no, c.pid, c.type FROM tb_sku a, rel_order_sku b, tb_product c WHERE a.stock_no = b.stock_no AND a.product_id = c.pid AND b.out_trade_no = ? ';
 const __FETCH_ORDER_LIST__ = 'SELECT out_trade_no, user_id, consignee_no, createTime, payTime, totalFee, a.status, attach, remark ' +
     'FROM tb_order a, tb_user b WHERE b.3rd_session = ? AND a.user_id = b.uid AND a.createTime < ? ORDER BY a.createTime DESC limit ?';
 const __FETCH_A_ORDER__ = 'SELECT a.stock_no, a.amount, b.unit, b.attributes, c.name, c.pid ' +
@@ -55,6 +56,14 @@ const __SUBMIT_NEW_REFUND__ = 'UPDATE tb_refund SET refund_id = ?, status = ?, s
 const __CHANGE_REFUND_STATUS__ = 'UPDATE tb_refund SET complete = ?, status = ?, remark = ? WHERE out_refund_no = ?';
 const __FETCH_REFUND_INFO__ = 'SELECT * FROM tb_refund WHERE out_trade_no = ? ';
 const __CHECK_REFUND_STATUS__ = 'SELECT COUNT(*) AS number FROM tb_refund WHERE out_refund_no = ? AND status = 0';
+/**
+ *   卡券
+ */
+const __QUERY_PRODUCT_CARD__ = 'SELECT * FROM rel_product_card WHERE productId = ?';
+const __CHECK_ASSOCIATE__ = 'SELECT COUNT(*) AS number FROM rel_product_card WHERE productId = ?';
+const __ADD_PRODUCT_CARD__ = 'INSERT INTO rel_product_card SET ?';
+const __UPDATE_PRODUCT_CARD__ = 'UPDATE rel_product_card SET cardId = ? WHERE productId = ? ';
+const __CHECK_OPENID_CONSISTENCY__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE openid = ? AND 3rd_session = ?';
 
 module.exports = {
     __ADD_NEW_SKU_ATTRIBUTE__: __ADD_NEW_SKU_ATTRIBUTE__,
@@ -91,11 +100,17 @@ module.exports = {
     __SUBMIT_NEW_REFUND__: __SUBMIT_NEW_REFUND__,
     __CHANGE_REFUND_STATUS__: __CHANGE_REFUND_STATUS__,
     __FETCH_ORDER_DETAIL__: __FETCH_ORDER_DETAIL__,
+    __FETCH_ORDER_PRODUCT__: __FETCH_ORDER_PRODUCT__,
     __FETCH_ORDER_LIST__: __FETCH_ORDER_LIST__,
     __FETCH_A_ORDER__: __FETCH_A_ORDER__,
     __FETCH_A_ORDER_SKU__: __FETCH_A_ORDER_SKU__,
     __FETCH_PREPAY_ID__: __FETCH_PREPAY_ID__,
     __FETCH_ORDER_NOT_PAY_TIMEOUT__: __FETCH_ORDER_NOT_PAY_TIMEOUT__,
     __FETCH_REFUND_INFO__: __FETCH_REFUND_INFO__,
-    __CHECK_REFUND_STATUS__: __CHECK_REFUND_STATUS__
+    __CHECK_REFUND_STATUS__: __CHECK_REFUND_STATUS__,
+    __QUERY_PRODUCT_CARD__: __QUERY_PRODUCT_CARD__,
+    __CHECK_ASSOCIATE__: __CHECK_ASSOCIATE__,
+    __ADD_PRODUCT_CARD__: __ADD_PRODUCT_CARD__,
+    __UPDATE_PRODUCT_CARD__: __UPDATE_PRODUCT_CARD__,
+    __CHECK_OPENID_CONSISTENCY__: __CHECK_OPENID_CONSISTENCY__
 };

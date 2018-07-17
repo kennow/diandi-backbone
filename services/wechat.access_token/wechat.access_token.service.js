@@ -1,8 +1,10 @@
 const Q = require('q');
+const __SHA1__ = require('sha1');
 const __UTIL__ = require('util');
+const __MOMENT__ = require('moment');
 const __CONFIG__ = require('./wechat.access_token.config');
 const __HTTP_CLIENT__ = require('../http.client');
-// const __LOGGER__ = require('../log4js.service').getLogger('wechat.access_token.service.js');
+const __LOGGER__ = require('../log4js.service').getLogger('wechat.access_token.service.js');
 
 /**
  *      access_token是公众号的全局唯一接口调用凭据
@@ -28,7 +30,7 @@ function requestAccessToken() {
 
     __HTTP_CLIENT__
         .doHttpsGet(
-            __UTIL__.format(__CONFIG__.__API__, __CONFIG__.__APP_ID__, __CONFIG__.__APP_SECRET__),
+            __UTIL__.format(__CONFIG__.__API_ACCESS_TOKEN__, __CONFIG__.__APP_ID__, __CONFIG__.__APP_SECRET__),
             function (rawData) {
                 deferred.resolve(JSON.parse(rawData));
             }
@@ -37,8 +39,109 @@ function requestAccessToken() {
     return deferred.promise;
 }
 
+function requestJSAPITicket(request) {
+    const deferred = Q.defer();
+
+    __HTTP_CLIENT__
+        .doHttpsGet(
+            __UTIL__.format(__CONFIG__.__API_JSAPI_TICKET__, request.access_token),
+            function (rawData) {
+                console.log(JSON.parse(rawData));
+                deferred.resolve(JSON.parse(rawData));
+            }
+        );
+
+    return deferred.promise;
+}
+
+function requestCardAPITicket(request) {
+    const deferred = Q.defer();
+
+    __HTTP_CLIENT__
+        .doHttpsGet(
+            __UTIL__.format(__CONFIG__.__API_CARD_TICKET__, request.access_token),
+            function (rawData) {
+                console.log(JSON.parse(rawData));
+                deferred.resolve(JSON.parse(rawData));
+            }
+        );
+
+    return deferred.promise;
+}
+
+
+/**
+ * 随机字符串，由开发者设置传入，加强安全性（若不填写可能被重放请求）
+ * 随机字符串，不长于 32 位
+ * 推荐使用大小写字母和数字，不同添加请求的 nonce_str 须动态生成，若重复将会导致领取失败。
+ * @param length
+ * @returns {string}
+ */
+function getNonceStr(length) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const count = chars.length;
+    let i, nonceStr = '';
+    for (i = 0; i < length; i++) {
+        nonceStr += chars.substr(Math.floor(Math.random() * (count - 1) + 1), 1);
+    }
+    return nonceStr;
+}
+
+function concatSortArgs(args) {
+    let values = Object.values(args);
+    console.log(values);
+
+    values = values.sort();
+    let string = '';
+    values.forEach(function (value) {
+        string += value;
+    });
+    return string;
+}
+
+function signature(request) {
+    const deferred = Q.defer();
+
+    const nonceStr = getNonceStr(32);               //  随机字符串
+    const timestamp = __MOMENT__().format('X');     //  时间戳，东八区时间,UTC+8，单位为秒
+    let sortString = concatSortArgs({
+        openid: request.openid,
+        api_ticket: request.ticket,
+        timestamp: timestamp,
+        nonce_str: nonceStr,
+        card_id: request.card_id,
+    });
+    deferred.resolve({
+        card_id: request.card_id,
+        openid: request.openid,                 // 指定领取者的openid，只有该用户能领取。
+        timestamp: timestamp,                   // 必填，生成签名的时间戳
+        nonceStr: nonceStr,                     // 必填，生成签名的随机串
+        signature: __SHA1__(sortString)         // 必填，签名，见附录1
+    });
+
+    return deferred.promise;
+}
+
 module.exports = {
-    accessToken: requestAccessToken
+    accessToken: requestAccessToken,
+    jsAPITicket: requestJSAPITicket,
+    cardAPITicket: requestCardAPITicket,
+    signature: signature
 };
 
 // requestAccessToken().then(res => __LOGGER__.debug(res));
+
+// requestAccessToken()
+//     .then(requestCardAPITicket)
+//     .then(data => {
+//         return Q({
+//             openid: 'oX9I95fltsje2iLb0aQb-1W_NY1k',
+//             card_id: 'pWWirwTXfRL0Wbz5MLnvmq75xeqY',
+//             ticket: data.ticket
+//         });
+//     })
+//     .then(signature)
+//     .then(res => {
+//         'use strict';
+//         console.log(res);
+//     });
