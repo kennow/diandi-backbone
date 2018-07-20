@@ -39,6 +39,11 @@ function requestAccessToken() {
     return deferred.promise;
 }
 
+/**
+ *  获取 JASPI Ticket
+ * @param request
+ * @returns {*|C|promise}
+ */
 function requestJSAPITicket(request) {
     const deferred = Q.defer();
 
@@ -54,6 +59,11 @@ function requestJSAPITicket(request) {
     return deferred.promise;
 }
 
+/**
+ *  获取 卡券 Ticket
+ * @param request
+ * @returns {*|C|promise}
+ */
 function requestCardAPITicket(request) {
     const deferred = Q.defer();
 
@@ -87,9 +97,13 @@ function getNonceStr(length) {
     return nonceStr;
 }
 
+/**
+ *  按字典顺序排序后连接字符串
+ * @param args
+ * @returns {string}
+ */
 function concatSortArgs(args) {
     let values = Object.values(args);
-    console.log(values);
 
     values = values.sort();
     let string = '';
@@ -99,6 +113,11 @@ function concatSortArgs(args) {
     return string;
 }
 
+/**
+ *  签名 -- SHA1算法
+ * @param request
+ * @returns {*|C|promise}
+ */
 function signature(request) {
     const deferred = Q.defer();
 

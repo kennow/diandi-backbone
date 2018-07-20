@@ -49,6 +49,7 @@ const __FETCH_A_ORDER_SKU__ = 'SELECT a.*, b.name, c.value FROM rel_product_attr
     'WHERE a.out_trade_no = ? AND a.stock_no = b.stock_no AND b.product_id = c.pid)';
 const __FETCH_PREPAY_ID__ = 'SELECT prepayID FROM tb_order WHERE out_trade_no = ?';
 const __FETCH_ORDER_NOT_PAY_TIMEOUT__ = 'SELECT * FROM tb_order WHERE status = 0 AND TIMESTAMPDIFF(second, createTime, now()) > 1800';
+const __EVER_BOUGHT__ = 'SELECT  c.* FROM tb_order a, tb_user b, rel_order_sku c WHERE a.status = 1 AND b.3rd_session = ? AND c.stock_no = ? AND a.user_id = b.uid AND a.out_trade_no = c.out_trade_no';
 /**
  *   退款
  */
@@ -64,6 +65,8 @@ const __CHECK_ASSOCIATE__ = 'SELECT COUNT(*) AS number FROM rel_product_card WHE
 const __ADD_PRODUCT_CARD__ = 'INSERT INTO rel_product_card SET ?';
 const __UPDATE_PRODUCT_CARD__ = 'UPDATE rel_product_card SET cardId = ? WHERE productId = ? ';
 const __CHECK_OPENID_CONSISTENCY__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE openid = ? AND 3rd_session = ?';
+const __ADD_USER_CARD_RECORD__ = 'INSERT INTO tb_card SET ?';
+const __QUERY_USER_CARDS__ = 'SELECT cardid, code FROM tb_card WHERE out_trade_no in (%s)';
 
 module.exports = {
     __ADD_NEW_SKU_ATTRIBUTE__: __ADD_NEW_SKU_ATTRIBUTE__,
@@ -97,6 +100,7 @@ module.exports = {
     __ADD_REL_ORDER_SKU__: __ADD_REL_ORDER_SKU__,
     __CHANGE_ORDER_STATUS__: __CHANGE_ORDER_STATUS__,
     __UPDATE_PRODUCT_SALES__: __UPDATE_PRODUCT_SALES__,
+    __EVER_BOUGHT__: __EVER_BOUGHT__,
     __SUBMIT_NEW_REFUND__: __SUBMIT_NEW_REFUND__,
     __CHANGE_REFUND_STATUS__: __CHANGE_REFUND_STATUS__,
     __FETCH_ORDER_DETAIL__: __FETCH_ORDER_DETAIL__,
@@ -112,5 +116,7 @@ module.exports = {
     __CHECK_ASSOCIATE__: __CHECK_ASSOCIATE__,
     __ADD_PRODUCT_CARD__: __ADD_PRODUCT_CARD__,
     __UPDATE_PRODUCT_CARD__: __UPDATE_PRODUCT_CARD__,
-    __CHECK_OPENID_CONSISTENCY__: __CHECK_OPENID_CONSISTENCY__
+    __CHECK_OPENID_CONSISTENCY__: __CHECK_OPENID_CONSISTENCY__,
+    __ADD_USER_CARD_RECORD__: __ADD_USER_CARD_RECORD__,
+    __QUERY_USER_CARDS__: __QUERY_USER_CARDS__
 };

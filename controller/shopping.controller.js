@@ -1,5 +1,6 @@
 const Q = require('q');
 const __UTIL__ = require('util');
+const __MOMENT__ = require('moment');
 const __WX_PAY_HELPER__ = require('../services/wechat.pay/wechat.pay.helper');
 const __WX_PAY_SERVICE__ = require('../services/wechat.pay/wechat.pay.service');
 const __USER_DATABASE__ = require('../database/user.api');
@@ -502,6 +503,39 @@ function changeProductStatus(request, response) {
 }
 
 /**
+ * 检查用户是否已购买该商品
+ * @param request
+ * @param response
+ */
+function checkEverBought(request, response) {
+    __SHOPPING_DATABASE__
+        .checkEverBought(request.query)
+        .then(function (result) {
+            __LOGGER__.debug(result);
+            if (result.code === 0 && result.msg.length > 0 && result.msg[0].amount > 0) {
+                result.everBought = 1;
+            } else {
+                result.everBought = 0;
+            }
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+// checkEverBought({
+//     query: {
+//         session: '1fusEysDcTvEgt6KBAxEUExDsHM6kCMw',
+//         stock_no: 'JVGpxGHPS5HAACbYOym0myzwMldtoo2H'
+//     }
+// }, res => {
+//     'use strict';
+//     console.log(res);
+// });
+
+/**
  * 获取状态为已投放的所有卡券列表
  * @param request
  * @param response
@@ -656,6 +690,98 @@ function putCouponIntoCardHolder(request, response) {
         });
 }
 
+/**
+ * 在用户领取卡券至微信卡包后，记录用户的领取记录
+ * @param request
+ * @param response
+ */
+function recordUserCard(request, response) {
+    __SERVICE_WECHAT_ACCESS_TOKEN__
+        .accessToken()
+        .then(token => {
+            return Q({
+                access_token: token.access_token,
+                encrypt_code: request.body.encrypt_code
+            });
+        })
+        .then(__SERVICE_WECHAT_SHOPPING_CARD__.decryptCard)
+        .then(code => {
+            const deferred = Q.defer();
+
+            if (code.errcode === 0) {
+                deferred.resolve({
+                    session: request.body.session,
+                    cardid: request.body.cardid,
+                    code: code.code,
+                    openid: request.body.openid,
+                    timestamp: __MOMENT__(request.body.timestamp, 'X').format('YYYY-MM-DD HH:mm:ss'),
+                    out_trade_no: request.body.out_trade_no
+                });
+            } else {
+                deferred.reject('Code解码时发生错误');
+            }
+
+            return deferred.promise;
+        })
+        .then(__SHOPPING_DATABASE__.recordUserCard)
+        .then(result => {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ * 根据用户的订单号，查询相应的卡券列表
+ * @param request
+ * @param response
+ */
+function queryUserCards(request, response) {
+    let tradeList = '';
+
+    JSON.parse(request.body.tradeList).forEach(item => {
+        tradeList += ',"' + item + '"';
+    });
+    tradeList = tradeList.slice(1);
+
+    __SHOPPING_DATABASE__
+        .queryUserCards({
+            session: request.body.session,
+            tradeList: tradeList
+        })
+        .then(result => {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+// queryUserCards({
+//     body: {
+//         session: 'o6ieHVpjL2R8ENeEQ5xs9cr8ObDLx5ur',
+//         tradeList: JSON.stringify(['13297414012018071610083182225789', '13297414012018071809202654433464'])
+//     }
+// }, () => {
+// });
+
+// recordUserCard({
+//     body: {
+//         encrypt_code: 'nefwNaZkRG/Q5e8SHDK3gsi6q6OquuegeaNCoe6u0EY=',
+//         session: '7b8HiDEvCRzKihXtUIORejRRnUnoQMtu',
+//         cardid: 'pWWirwY_iHgLxsMdeP858iyD2744',
+//         openid: 'oX9I95Tz_AOX-oAdgAIYvE0lYDjc',
+//         timestamp: '1531876848',
+//         out_trade_no: '13297414012018071809202654433464'
+//     }
+// }, () => {
+// });
+
 // putCouponIntoCardHolder({
 //     out_trade_no: '13297414012018071614440696447168',
 //     session: 'nCuDTm5pe3Wl4gAAsn6jEQvm8GouXltg',
@@ -733,11 +859,14 @@ module.exports = {
     newProduct: newProduct,
     removeProduct: removeProduct,
     changeProductStatus: changeProductStatus,
+    checkEverBought: checkEverBought,
     fetchDispatchCardList: fetchDispatchCardList,
     queryCardDetail: queryCardDetail,
     queryProductCard: queryProductCard,
     associateProductCard: associateProductCard,
-    putCouponIntoCardHolder:putCouponIntoCardHolder
+    putCouponIntoCardHolder: putCouponIntoCardHolder,
+    recordUserCard: recordUserCard,
+    queryUserCards: queryUserCards
 };
 
 //fetchRefundInfo({

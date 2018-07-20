@@ -460,6 +460,17 @@ function constructCardSelfConsumeCell(request) {
     };
 }
 
+/**
+ * Code解码接口
+ * @param request
+ * @returns {{encrypt_code: *}}
+ */
+function constructDecryptCard(request) {
+    return {
+        encrypt_code: request.encrypt_code
+    };
+}
+
 module.exports = {
     __CARD_TYPE__: __CARD_TYPE__,
     __CODE_TYPE__: __CODE_TYPE__,
@@ -485,7 +496,8 @@ module.exports = {
     constructSetCardUnavailable: constructSetCardUnavailable,
     constructCardPayCell: constructCardPayCell,
     constructCardSelfConsumeCell: constructCardSelfConsumeCell,
-    constructConsumeCard: constructConsumeCard
+    constructConsumeCard: constructConsumeCard,
+    constructDecryptCard: constructDecryptCard
 };
 
 

@@ -37,6 +37,18 @@ router.get('/product/detail/:id', function (req, res, next) {
 });
 
 /**
+ *   是否已购买该商品
+ */
+router.get('/product/everBought', function (req, res, next) {
+    __LOGGER__.info('========================== EVER BOUGHT ==========================');
+    __LOGGER__.debug(req.query);
+    __CONTROLLER_SHOPPING__.checkEverBought(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
  *  查询订单
  */
 router.get('/order/:id', function (req, res, next) {
@@ -127,6 +139,30 @@ router.post('/card/holder', function (req, res, next) {
     __LOGGER__.info('========================== PUT INTO WECHAT CARD HOLDER ==========================');
     __LOGGER__.debug(req.body);
     __CONTROLLER_SHOPPING__.putCouponIntoCardHolder(req.body, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *   在用户领取卡券至微信卡包后，记录用户的领取记录
+ */
+router.post('/card/user', function (req, res, next) {
+    __LOGGER__.info('========================== RECORD USER CARD ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_SHOPPING__.recordUserCard(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *  对应指定订单列表，用户所购买的卡券列表
+ */
+router.post('/card/user/orders', function (req, res, next) {
+    __LOGGER__.info('========================== CARDS IN SPECIFIC ORDERS ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_SHOPPING__.queryUserCards(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });

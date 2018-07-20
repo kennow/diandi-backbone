@@ -440,12 +440,35 @@ function setCardSelfConsumeCell(request) {
     return deferred.promise;
 }
 
+/**
+ * Code解码接口
+ *  1.商家获取choos_card_info后，将card_id和encrypt_code字段通过解码接口，获取真实code
+ *  2.卡券内跳转外链的签名中会对code进行加密处理，通过调用解码接口获取真实code。
+ * @param request
+ * @returns {*|C|promise}
+ */
+function decryptCard(request) {
+    const deferred = Q.defer();
+
+    __HTTP_CLIENT__
+        .doHttpsPost(
+            __UTIL__.format(__API__.__DECRYPT_CARD__, request.access_token),
+            __STRUCTURE__.constructDecryptCard(request),
+            function (rawData) {
+                deferred.resolve(JSON.parse(rawData));
+            },
+            null
+        );
+
+    return deferred.promise;
+}
+
 module.exports = {
     batchQueryCardList: batchQueryCardList,
-    queryCardDetail: queryCardDetail
+    queryCardDetail: queryCardDetail,
+    decryptCard: decryptCard
 };
 
-//
 // __SERVICE_ACCESS_TOKEN__
 //     .accessToken()
 //     .then(request => {
@@ -683,6 +706,19 @@ module.exports = {
 //         });
 //     })
 //     .then(setCardSelfConsumeCell)
+//     .then(res => {
+//         console.log(res);
+//     });
+
+// __SERVICE_ACCESS_TOKEN__
+//     .accessToken()
+//     .then(request => {
+//         return Q({
+//             access_token: request.access_token,
+//             encrypt_code: 'nefwNaZkRG/Q5e8SHDK3gsi6q6OquuegeaNCoe6u0EY='
+//         });
+//     })
+//     .then(decryptCard)
 //     .then(res => {
 //         console.log(res);
 //     });

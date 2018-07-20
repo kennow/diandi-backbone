@@ -1,4 +1,5 @@
 const Q = require('q');
+const __UTIL__ = require('util');
 const __MOMENT__ = require('moment');
 const __HELPER__ = require('../utility/helper');
 const __MYSQL_API__ = require('./mysql.base');
@@ -1063,6 +1064,36 @@ function fetchOrderDetail(request) {
 }
 
 /**
+ * 确认用户是否已购买商品
+ * @param request
+ * @returns {*|C|promise}
+ */
+function checkEverBought(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            basicQuerySQL: __STATEMENT__.__EVER_BOUGHT__,
+            basicQueryParams: [
+                request.session,
+                request.stock_no
+            ]
+        })
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
  *   获取超时未支付的订单
  * @param request
  * @returns {*|C|promise}
@@ -1275,6 +1306,85 @@ function checkProductCard(request) {
     return deferred.promise;
 }
 
+function recordUserCard(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 新增一条记录
+             */
+            basicInsertSQL: __STATEMENT__.__ADD_USER_CARD_RECORD__,
+            basicInsertParams: {
+                cardid: request.cardid,
+                code: request.code,
+                openid: request.openid,
+                createTime: request.timestamp,
+                out_trade_no: request.out_trade_no
+            }
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicInsert)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 根据用户的订单号，查询相应的卡券列表
+ * @param request
+ * @returns {*|C|promise}
+ */
+function queryUserCards(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 查询用户的卡券列表
+             */
+            basicQuerySQL: __UTIL__.format(__STATEMENT__.__QUERY_USER_CARDS__, request.tradeList),
+            basicQueryParams: []
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     checkSession: checkSession,
     fetchProductList: fetchProductList,
@@ -1293,13 +1403,16 @@ module.exports = {
     fetchAOrder: fetchAOrder,
     fetchOrderDetail: fetchOrderDetail,
     fetchOrderNotPayTimeout: fetchOrderNotPayTimeout,
+    checkEverBought: checkEverBought,
     checkRefundPermission: checkRefundPermission,
     submitNewRefund: submitNewRefund,
     changeRefundStatus: changeRefundStatus,
     fetchRefundInfo: fetchRefundInfo,
     queryProductCard: queryProductCard,
     associateProductCard: associateProductCard,
-    checkProductCard: checkProductCard
+    checkProductCard: checkProductCard,
+    recordUserCard: recordUserCard,
+    queryUserCards: queryUserCards
 };
 
 //changeRefundStatus({
