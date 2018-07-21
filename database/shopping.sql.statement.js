@@ -65,8 +65,13 @@ const __CHECK_ASSOCIATE__ = 'SELECT COUNT(*) AS number FROM rel_product_card WHE
 const __ADD_PRODUCT_CARD__ = 'INSERT INTO rel_product_card SET ?';
 const __UPDATE_PRODUCT_CARD__ = 'UPDATE rel_product_card SET cardId = ? WHERE productId = ? ';
 const __CHECK_OPENID_CONSISTENCY__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE openid = ? AND 3rd_session = ?';
+const __CHECK_USER_CARD_RECORD__ = 'SELECT * FROM tb_card WHERE cardid = ? AND code = ?';
 const __ADD_USER_CARD_RECORD__ = 'INSERT INTO tb_card SET ?';
+const __UPDATE_USER_CARD_RECORD__ = 'UPDATE tb_card SET out_trade_no = ?, openid = ? WHERE cardid = ? AND code = ?';
+const __UPDATE_USER_CARD_RECORD_FROM_BACKBONE__ = 'UPDATE tb_card SET createTime = ?, toUserName = ?, fromUserName = ?, unionid = ?, isGiveByFriend = ?, friendUserName = ?, oldUserCardCode = ?, outerid = ?  WHERE cardid = ? AND code = ?';
 const __QUERY_USER_CARDS__ = 'SELECT cardid, code FROM tb_card WHERE out_trade_no in (%s)';
+const __USER_PAY_FROM_PAY_CELL__ = 'UPDATE tb_card SET payCellTime = ?, transid = ?, locationid = ?, fee = ?, originalFee = ? WHERE cardid = ? AND code = ?';
+const __USER_CONSUME_CARD__ = 'UPDATE tb_card SET consumeTime = ?, consumeSource = ?, staffOpenid = ?, transid = ? WHERE cardid = ? AND code = ?';
 
 module.exports = {
     __ADD_NEW_SKU_ATTRIBUTE__: __ADD_NEW_SKU_ATTRIBUTE__,
@@ -117,6 +122,11 @@ module.exports = {
     __ADD_PRODUCT_CARD__: __ADD_PRODUCT_CARD__,
     __UPDATE_PRODUCT_CARD__: __UPDATE_PRODUCT_CARD__,
     __CHECK_OPENID_CONSISTENCY__: __CHECK_OPENID_CONSISTENCY__,
+    __CHECK_USER_CARD_RECORD__: __CHECK_USER_CARD_RECORD__,
     __ADD_USER_CARD_RECORD__: __ADD_USER_CARD_RECORD__,
-    __QUERY_USER_CARDS__: __QUERY_USER_CARDS__
+    __UPDATE_USER_CARD_RECORD__: __UPDATE_USER_CARD_RECORD__,
+    __UPDATE_USER_CARD_RECORD_FROM_BACKBONE__: __UPDATE_USER_CARD_RECORD_FROM_BACKBONE__,
+    __QUERY_USER_CARDS__: __QUERY_USER_CARDS__,
+    __USER_PAY_FROM_PAY_CELL__: __USER_PAY_FROM_PAY_CELL__,
+    __USER_CONSUME_CARD__: __USER_CONSUME_CARD__
 };

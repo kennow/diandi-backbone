@@ -1254,7 +1254,7 @@ function associateProductCard(request) {
         .then(__MYSQL_API__.isRepeat)
         .then(
             __MYSQL_API__.basicInsert,
-            __MYSQL_API__.basicUpdate,
+            __MYSQL_API__.basicUpdate
         )
         .then(__MYSQL_API__.commitTransaction)
         .then(__MYSQL_API__.cleanup)
@@ -1306,6 +1306,11 @@ function checkProductCard(request) {
     return deferred.promise;
 }
 
+/**
+ * 在用户领取卡券后记录
+ * @param request
+ * @returns {*}
+ */
 function recordUserCard(request) {
     const deferred = Q.defer();
 
@@ -1319,7 +1324,15 @@ function recordUserCard(request) {
                 request.session
             ],
             /**
-             *  2. 新增一条记录
+             *  2. 判断记录是否已存在
+             */
+            isRepeatSQL: __STATEMENT__.__CHECK_USER_CARD_RECORD__,
+            isRepeatParams: [
+                request.cardid,
+                request.code
+            ],
+            /**
+             *  3. 不存在，新增一条记录
              */
             basicInsertSQL: __STATEMENT__.__ADD_USER_CARD_RECORD__,
             basicInsertParams: {
@@ -1328,11 +1341,26 @@ function recordUserCard(request) {
                 openid: request.openid,
                 createTime: request.timestamp,
                 out_trade_no: request.out_trade_no
-            }
+            },
+            /**
+             *  4. 存在，更新记录
+             */
+            basicUpdateSQL: __STATEMENT__.__UPDATE_USER_CARD_RECORD__,
+            basicUpdateParams: [
+                request.out_trade_no,
+                request.openid,
+                request.cardid,
+                request.code
+            ]
+
         })
         .then(__MYSQL_API__.beginTransaction)
         .then(__MYSQL_API__.checkSession)
-        .then(__MYSQL_API__.basicInsert)
+        .then(__MYSQL_API__.isRepeat)
+        .then(
+            __MYSQL_API__.basicInsert,
+            __MYSQL_API__.basicUpdate
+        )
         .then(__MYSQL_API__.commitTransaction)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
@@ -1385,6 +1413,155 @@ function queryUserCards(request) {
     return deferred.promise;
 }
 
+/**
+ * 领取卡券
+ * @param request
+ * @returns {*}
+ */
+function userGetCard(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 判断记录是否已存在
+             */
+            isRepeatSQL: __STATEMENT__.__CHECK_USER_CARD_RECORD__,
+            isRepeatParams: [
+                request.cardid,
+                request.usercardcode
+            ],
+            /**
+             *  3. 不存在，新增一条记录
+             */
+            basicInsertSQL: __STATEMENT__.__ADD_USER_CARD_RECORD__,
+            basicInsertParams: {
+                cardid: request.cardid,
+                code: request.usercardcode,
+                createTime: __MOMENT__(request.createtime, 'X').format('YYYY-MM-DD HH:mm:ss'),
+                toUserName: request.tousername,
+                fromUserName: request.fromusername,
+                unionid: request.unionid,
+                isGiveByFriend: request.isgivebyfriend,
+                friendUserName: request.friendusername,
+                oldUserCardCode: request.oldusercardcode,
+                outerid: request.outerid
+            },
+            /**
+             *  4. 存在，更新记录
+             */
+            basicUpdateSQL: __STATEMENT__.__UPDATE_USER_CARD_RECORD_FROM_BACKBONE__,
+            basicUpdateParams: [
+                __MOMENT__(request.createtime, 'X').format('YYYY-MM-DD HH:mm:ss'),
+                request.tousername,
+                request.fromusername,
+                request.unionid,
+                request.isgivebyfriend,
+                request.friendusername,
+                request.oldusercardcode,
+                request.outerid,
+                request.cardid,
+                request.usercardcode
+            ]
+
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.isRepeat)
+        .then(
+            __MYSQL_API__.basicInsert,
+            __MYSQL_API__.basicUpdate
+        )
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 快速买单
+ */
+function userPayFromPayCell(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  更新记录
+             */
+            basicUpdateSQL: __STATEMENT__.__USER_PAY_FROM_PAY_CELL__,
+            basicUpdateParams: [
+                __MOMENT__(request.createtime, 'X').format('YYYY-MM-DD HH:mm:ss'),
+                request.transid,
+                request.locationid,
+                request.fee,
+                request.originalfee,
+                request.cardid,
+                request.usercardcode
+            ]
+
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.basicUpdate)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 卡券核销
+ */
+function userConsumeCard(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  更新记录
+             */
+            basicUpdateSQL: __STATEMENT__.__USER_CONSUME_CARD__,
+            basicUpdateParams: [
+                __MOMENT__(request.createtime, 'X').format('YYYY-MM-DD HH:mm:ss'),
+                request.consumesource,
+                request.staffopenid,
+                request.transid,
+                request.cardid,
+                request.usercardcode
+            ]
+
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.basicUpdate)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     checkSession: checkSession,
     fetchProductList: fetchProductList,
@@ -1412,7 +1589,10 @@ module.exports = {
     associateProductCard: associateProductCard,
     checkProductCard: checkProductCard,
     recordUserCard: recordUserCard,
-    queryUserCards: queryUserCards
+    queryUserCards: queryUserCards,
+    userGetCard: userGetCard,
+    userPayFromPayCell: userPayFromPayCell,
+    userConsumeCard: userConsumeCard
 };
 
 //changeRefundStatus({

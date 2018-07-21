@@ -269,8 +269,10 @@ router.all('/notification', function (req, res, next) {
     __LOGGER__.info(req.params);
     __LOGGER__.info(req.body);
     __LOGGER__.info(req.query);
-    __LOGGER__.info(req.query.echostr);
-    res.send(req.query.echostr);
+    __CONTROLLER_SYSTEM__.receiveNotification(req, function (request) {
+        res.send('');
+        __LOGGER__.info('========================== END ==========================');
+    });
     __LOGGER__.info('========================== END ==========================');
 });
 

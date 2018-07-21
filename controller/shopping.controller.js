@@ -770,17 +770,17 @@ function queryUserCards(request, response) {
 // }, () => {
 // });
 
-// recordUserCard({
-//     body: {
-//         encrypt_code: 'nefwNaZkRG/Q5e8SHDK3gsi6q6OquuegeaNCoe6u0EY=',
-//         session: '7b8HiDEvCRzKihXtUIORejRRnUnoQMtu',
-//         cardid: 'pWWirwY_iHgLxsMdeP858iyD2744',
-//         openid: 'oX9I95Tz_AOX-oAdgAIYvE0lYDjc',
-//         timestamp: '1531876848',
-//         out_trade_no: '13297414012018071809202654433464'
-//     }
-// }, () => {
-// });
+//recordUserCard({
+//    body: {
+//        encrypt_code: 'nefwNaZkRG/Q5e8SHDK3gsi6q6OquuegeaNCoe6u0EY=',
+//        session: '7b8HiDEvCRzKihXtUIORejRRnUnoQMtu',
+//        cardid: 'pWWirwY_iHgLxsMdeP858iyD2744',
+//        openid: 'oX9I95Tz_AOX-oAdgAIYvE0lYDjc',
+//        timestamp: '1531876848',
+//        out_trade_no: '13297414012018071809202654433464'
+//    }
+//}, () => {
+//});
 
 // putCouponIntoCardHolder({
 //     out_trade_no: '13297414012018071614440696447168',

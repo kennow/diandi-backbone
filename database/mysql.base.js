@@ -43,7 +43,6 @@ let api =
                     errMsg: err
                 });
             } else {
-                __LOGGER__.debug(result);
                 if (result.length === 0 || result[0].number === 0) {
                     deferred.resolve({
                         connection: request.connection,

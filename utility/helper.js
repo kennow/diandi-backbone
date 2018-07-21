@@ -1,5 +1,6 @@
 const __UTIL__ = require('util');
 const __MOMENT__ = require('moment');
+
 /**
  * 产生随机字符串
  * @param length
@@ -24,6 +25,10 @@ function getTimestamp() {
     return parseInt(new Date().getTime() / 1000) + '';
 }
 
+/**
+ * 生产随机文件名
+ * @returns {*}
+ */
 function generateRandomFileName() {
     const chars = '0123456789';
     const count = chars.length;
