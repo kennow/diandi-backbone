@@ -185,7 +185,7 @@ function downloadBill(request) {
     // 生成POST Data
     const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructDownloadBillParams(request));
     __LOGGER__.debug(postData);
-    // 调用关闭订单API
+    // 调用下载历史交易清单API
     __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__DOWNLOAD_BILL__, postData, function (result) {
 
     }, null);
@@ -257,10 +257,10 @@ function Refund(request) {
     const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructRefundParams(request));
     __LOGGER__.debug(postData);
     const agentOptions = {
-        pfx: __FILE_SYSTEM__.readFileSync(__PATH__.join(__PATH__.resolve(__dirname, '..', '..'), 'credentials', 'wechat.pay', 'apiclient_cert.p12')),
+        pfx: __FILE_SYSTEM__.readFileSync(__PATH__.join(__PATH__.resolve(__dirname, '..', '..'), 'credentials', 'wechat.pay', __WX_PAY_CONFIG__.__WECHAT_PAY_API_CLIENT_CERT__)),
         passphrase: __WX_PAY_CONFIG__.__MCH_ID__
     };
-    // 调用关闭订单API
+    // 调用申请退款API
     __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__REFUND__, postData, function (rawData) {
         __LOGGER__.debug(rawData);
         __WX_PAY_DATA__
@@ -278,12 +278,88 @@ function Refund(request) {
     return deferred.promise;
 }
 
+/**
+ * 企业付款到银行卡
+ *      用于企业向微信用户银行卡付款
+ *      目前支持接口API的方式向指定微信用户的银行卡付款
+ * 接口调用规则：
+ * ◆ 单商户日限额——单日100w
+ * ◆ 单次限额——单次5w
+ * ◆ 单商户给同一银行卡单日限额——单日5w
+ * @param request
+ * @returns {*|C|promise}
+ */
+function payBank(request) {
+    const deferred = Q.defer();
+
+    // 生成POST Data
+    const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructPayBankParams(request));
+    __LOGGER__.debug(postData);
+    const agentOptions = {
+        pfx: __FILE_SYSTEM__.readFileSync(__PATH__.join(__PATH__.resolve(__dirname, '..', '..'), 'credentials', 'wechat.pay', __WX_PAY_CONFIG__.__WECHAT_PAY_API_CLIENT_CERT__)),
+        passphrase: __WX_PAY_CONFIG__.__MCH_ID__
+    };
+    // 调用关闭订单API
+    __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__PAY_BANK__, postData, function (rawData) {
+        __LOGGER__.debug(rawData);
+        // __WX_PAY_DATA__
+        //     .parseReturnRefund(rawData)             // 对返回结果进行解析【XML转JSON】
+        //     .then(function (result) {              // 确认无误后回传给 Controller
+        //         __LOGGER__.debug(result);
+        //         deferred.resolve(result);
+        //     })
+        //     .catch(function (err) {
+        //         __LOGGER__.error(err);
+        //         deferred.reject(err);
+        //     });
+    }, agentOptions);
+
+    return deferred.promise;
+}
+
+/**
+ *      获取RSA加密公钥API
+ *
+ *      注意：
+ *      请求需要双向证书
+ *      接口默认输出PKCS#1格式的公钥，商户需根据自己开发的语言选择公钥格式
+ *
+ *      使用方式：
+ *      1、 调用获取RSA公钥API获取RSA公钥，落地成本地文件，假设为public.pem
+ *      2、 确定public.pem文件的存放路径，同时修改代码中文件的输入路径，加载RSA公钥
+ *      3、 用标准的RSA加密库对敏感信息进行加密，选择RSA_PKCS1_OAEP_PADDING填充模式
+ *      （eg：Java的填充方式要选 " RSA/ECB/OAEPWITHSHA-1ANDMGF1PADDING"）
+ *      4、 得到进行rsa加密并转base64之后的密文
+ *      5、 将密文传给微信侧相应字段，如付款接口（enc_bank_no/enc_true_name）
+ *
+ * @param request
+ * @returns {*|C|promise}
+ */
+function getPublicKey(request) {
+    const deferred = Q.defer();
+
+    // 生成POST Data
+    const postData = __WX_PAY_HELPER__.convertToXml(__WX_PAY_DATA__.constructGetPublicKeyParams(request));
+    __LOGGER__.debug(postData);
+    const agentOptions = {
+        pfx: __FILE_SYSTEM__.readFileSync(__PATH__.join(__PATH__.resolve(__dirname, '..', '..'), 'credentials', 'wechat.pay', __WX_PAY_CONFIG__.__WECHAT_PAY_API_CLIENT_CERT__)),
+        passphrase: __WX_PAY_CONFIG__.__MCH_ID__
+    };
+    // 调用获取RSA加密公钥API
+    __HTTP_CLIENT__.doHttpsPost(__WX_PAY_API__.__GET_PUBLIC_KEY__, postData, function (rawData) {
+        __LOGGER__.debug(rawData);
+    }, agentOptions);
+
+    return deferred.promise;
+}
+
 module.exports = {
     unifiedOrder: unifiedOrder,
     repay: repay,
     closeOrder: closeOrder,
     queryOrder: queryOrder,
     Refund: Refund,
+    payBank: payBank,
     handlePayResultNotification: handlePayResultNotification,
     handleRefundResultNotification: handleRefundResultNotification
 };
@@ -317,3 +393,14 @@ module.exports = {
 // downloadBill({});
 
 //downloadFundFlow({});
+
+// Refund({
+//     out_trade_no: '13297414012018052214015068882433',
+//     out_refund_no: '13297414012018052214115944426193',
+//     total_fee: 1,
+//     refund_fee: 1
+// });
+
+// payBank({});
+
+// getPublicKey({});

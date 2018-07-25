@@ -7,6 +7,8 @@ const __DOWNLOAD_BILL__ = 'https://api.mch.weixin.qq.com/pay/downloadbill';
 const __DOWNLOAD_FUND_FLOW__ = 'https://api.mch.weixin.qq.com/pay/downloadfundflow';
 const __REPORT__ = 'https://api.mch.weixin.qq.com/payitil/report';
 const __COMMENT_QUERY__ = 'https://api.mch.weixin.qq.com/billcommentsp/batchquerycomment';
+const __PAY_BANK__ = 'https://api.mch.weixin.qq.com/mmpaysptrans/pay_bank';
+const __GET_PUBLIC_KEY__ = 'https://fraud.mch.weixin.qq.com/risk/getpublickey';
 
 module.exports = {
     __UNIFIED_ORDER__: __UNIFIED_ORDER__,
@@ -17,5 +19,7 @@ module.exports = {
     __DOWNLOAD_BILL__: __DOWNLOAD_BILL__,
     __DOWNLOAD_FUND_FLOW__: __DOWNLOAD_FUND_FLOW__,
     __REPORT__: __REPORT__,
-    __COMMENT_QUERY__: __COMMENT_QUERY__
+    __COMMENT_QUERY__: __COMMENT_QUERY__,
+    __PAY_BANK__: __PAY_BANK__,
+    __GET_PUBLIC_KEY__: __GET_PUBLIC_KEY__
 };

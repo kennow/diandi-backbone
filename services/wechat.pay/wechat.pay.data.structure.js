@@ -268,7 +268,7 @@ function constructUnifiedOrderParams(request) {
         device_info: request.device_info || 'MINI-PROGRAM',         //  自定义参数，可以为终端设备号(门店号或收银设备ID)
         nonce_str: __HELPER__.getNonceStr(32),                      //  随机字符串
         sign_type: request.sign_type || 'MD5',                      //  签名类型，默认为MD5，支持HMAC-SHA256和MD5
-        body: request.body.substr(0,32),                            //  商品简单描述  String(128)
+        body: request.body.substr(0, 32),                            //  商品简单描述  String(128)
         detail: request.detail || '',                               //  商品详细描述
         attach: request.attach || '',                               //  附加数据，在查询API和支付通知中原样返回
         out_trade_no: request.out_trade_no,                         //  商户系统内部订单号
@@ -390,6 +390,40 @@ function constructRefundParams(request) {
     return params;
 }
 
+function constructPayBankParams(request) {
+    const params = {
+        mch_id: __WX_PAY_CONFIG__.__MCH_ID__,                       //  微信支付分配的商户号
+        partner_trade_no: request.partner_trade_no,                 //  商户订单号，需保持唯一（只允许数字[0~9]或字母[A~Z]和[a~z]，最短8位，最长32位）
+        nonce_str: __HELPER__.getNonceStr(32),                      //  随机字符串
+        enc_bank_no: request.enc_bank_no,                           //  收款方银行卡号（采用标准RSA算法，公钥由微信侧提供）
+        enc_true_name: request.enc_true_name,                       //  收款方用户名（采用标准RSA算法，公钥由微信侧提供）
+        bank_code: request.bank_code,                               //  银行卡所在开户行编号
+        amount: request.amount,                                     //  付款金额：RMB分（支付总额，不含手续费） 注：大于0的整数
+        desc: request.desc || '',                                   //  企业付款到银行卡付款说明,即订单备注（UTF8编码，允许100个字符以内）
+    };
+    // 生成签名
+    params.sign = __WX_PAY_HELPER__.makeSign(params, __WX_PAY_CONFIG__.__KEY__);
+
+    return params;
+}
+
+/**
+ * 获取RSA加密公钥
+ * @param request
+ * @returns {{mch_id: string, nonce_str: string, sign_type: string}}
+ */
+function constructGetPublicKeyParams(request) {
+    const params = {
+        mch_id: __WX_PAY_CONFIG__.__MCH_ID__,                       //  微信支付分配的商户号
+        nonce_str: __HELPER__.getNonceStr(32),                      //  随机字符串
+        sign_type: request.sign_type || 'MD5',                      //  签名类型，默认为MD5，支持HMAC-SHA256和MD5
+    };
+    // 生成签名
+    params.sign = __WX_PAY_HELPER__.makeSign(params, __WX_PAY_CONFIG__.__KEY__);
+
+    return params;
+}
+
 module.exports = {
     parseReturnUnifiedOrder: parseReturnUnifiedOrder,
     parseReturnCloseOrder: parseReturnCloseOrder,
@@ -402,5 +436,7 @@ module.exports = {
     constructQueryOrderParams: constructQueryOrderParams,
     constructDownloadBillParams: constructDownloadBillParams,
     constructDownladFundFlowParams: constructDownladFundFlowParams,
-    constructRefundParams: constructRefundParams
+    constructRefundParams: constructRefundParams,
+    constructPayBankParams: constructPayBankParams,
+    constructGetPublicKeyParams: constructGetPublicKeyParams
 };
