@@ -72,6 +72,7 @@ const __UPDATE_USER_CARD_RECORD_FROM_BACKBONE__ = 'UPDATE tb_card SET createTime
 const __QUERY_USER_CARDS__ = 'SELECT cardid, code FROM tb_card WHERE out_trade_no in (%s)';
 const __USER_PAY_FROM_PAY_CELL__ = 'UPDATE tb_card SET payCellTime = ?, transid = ?, locationid = ?, fee = ?, originalFee = ? WHERE cardid = ? AND code = ?';
 const __USER_CONSUME_CARD__ = 'UPDATE tb_card SET consumeTime = ?, consumeSource = ?, staffOpenid = ?, transid = ? WHERE cardid = ? AND code = ?';
+const __EVER_GET_CARD__ = 'SELECT d.cardid, c.* FROM tb_order a, tb_user b, rel_order_sku c, tb_card d WHERE a.status = 1 AND b.3rd_session = ? AND c.stock_no = ? AND a.user_id = b.uid AND a.out_trade_no = c.out_trade_no AND c.out_trade_no = d.out_trade_no';
 
 module.exports = {
     __ADD_NEW_SKU_ATTRIBUTE__: __ADD_NEW_SKU_ATTRIBUTE__,
@@ -128,5 +129,6 @@ module.exports = {
     __UPDATE_USER_CARD_RECORD_FROM_BACKBONE__: __UPDATE_USER_CARD_RECORD_FROM_BACKBONE__,
     __QUERY_USER_CARDS__: __QUERY_USER_CARDS__,
     __USER_PAY_FROM_PAY_CELL__: __USER_PAY_FROM_PAY_CELL__,
-    __USER_CONSUME_CARD__: __USER_CONSUME_CARD__
+    __USER_CONSUME_CARD__: __USER_CONSUME_CARD__,
+    __EVER_GET_CARD__: __EVER_GET_CARD__
 };

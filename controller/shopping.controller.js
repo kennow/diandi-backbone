@@ -512,11 +512,6 @@ function checkEverBought(request, response) {
         .checkEverBought(request.query)
         .then(function (result) {
             __LOGGER__.debug(result);
-            if (result.code === 0 && result.msg.length > 0 && result.msg[0].amount > 0) {
-                result.everBought = 1;
-            } else {
-                result.everBought = 0;
-            }
             response(result);
         })
         .catch(function (exception) {
@@ -527,7 +522,7 @@ function checkEverBought(request, response) {
 
 // checkEverBought({
 //     query: {
-//         session: '1fusEysDcTvEgt6KBAxEUExDsHM6kCMw',
+//         session: 'LGoYDvgNwbubZhDzfIPTLX5lAqPLmSSb',
 //         stock_no: 'JVGpxGHPS5HAACbYOym0myzwMldtoo2H'
 //     }
 // }, res => {

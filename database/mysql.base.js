@@ -308,8 +308,6 @@ let api =
         batchQuery: function (request) {
             const deferred = Q.defer();
 
-            __LOGGER__.debug(request.params.batchQuerySQL[request.params.batchQueryIndex]);
-            __LOGGER__.debug(request.params.batchQueryParams[request.params.batchQueryIndex]);
             request.connection.query(
                 request.params.batchQuerySQL[request.params.batchQueryIndex],
                 request.params.batchQueryParams[request.params.batchQueryIndex],

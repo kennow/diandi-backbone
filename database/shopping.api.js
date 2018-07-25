@@ -1073,13 +1073,21 @@ function checkEverBought(request) {
 
     __MYSQL_API__
         .setUpConnection({
-            basicQuerySQL: __STATEMENT__.__EVER_BOUGHT__,
-            basicQueryParams: [
-                request.session,
-                request.stock_no
+            batchQueryIndex: 0,                             //  索引
+            batchQueryTag: [                                //  标签
+                'order',
+                'card'
+            ],
+            batchQuerySQL: [                                //  执行语句
+                __STATEMENT__.__EVER_BOUGHT__,
+                __STATEMENT__.__EVER_GET_CARD__
+            ],
+            batchQueryParams: [                             //  对应参数
+                [request.session, request.stock_no],
+                [request.session, request.stock_no]
             ]
         })
-        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.inAll)
         .then(__MYSQL_API__.cleanup)
         .then(function (result) {
             deferred.resolve(result);
