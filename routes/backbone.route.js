@@ -262,7 +262,7 @@ router.get('/', function (req, res, next) {
 });
 
 /**
- *      接收来自微信的消息通知
+ *      接收来自微信卡券的消息通知
  */
 router.all('/notification', function (req, res, next) {
     __LOGGER__.info('========================== RECEIVE NOTIFICATION ==========================');

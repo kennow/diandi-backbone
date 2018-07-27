@@ -1,7 +1,9 @@
 const Q = require('q');
 const __SHA1__ = require('sha1');
 const __UTIL__ = require('util');
+const __PATH__ = require('path');
 const __MOMENT__ = require('moment');
+const __FILE_SYSTEM__ = require('fs');
 const __CONFIG__ = require('./wechat.access_token.config');
 const __HTTP_CLIENT__ = require('../http.client');
 const __LOGGER__ = require('../log4js.service').getLogger('wechat.access_token.service.js');
@@ -32,12 +34,51 @@ function requestAccessToken() {
         .doHttpsGet(
             __UTIL__.format(__CONFIG__.__API_ACCESS_TOKEN__, __CONFIG__.__APP_ID__, __CONFIG__.__APP_SECRET__),
             function (rawData) {
-                deferred.resolve(JSON.parse(rawData));
+                let token = JSON.parse(rawData);
+                if (token.hasOwnProperty('expires_in')) {
+                    //  计算过期时间
+                    token.expires_in = Date.now() + (token.expires_in - 300) * 1000;
+                    // __LOGGER__.debug(token.expires_in);
+                    __LOGGER__.debug('AccessToken 将于以下时间后过期 ==> ' + __MOMENT__(new Date(token.expires_in)).format('YYYY-MM-DD HH:mm:ss'));
+                    //  写入json文件
+                    __FILE_SYSTEM__.writeFileSync(__PATH__.join(__dirname, 'wechat.access_token.json'), JSON.stringify(token));
+                    deferred.resolve(token);
+                } else {
+                    deferred.reject(rawData);
+                }
             }
         );
 
     return deferred.promise;
 }
+
+// requestAccessToken();
+
+/**
+ * 被动刷新access_token的接口
+ * 这样便于业务服务器在API调用获知access_token已超时的情况下，可以触发access_token的刷新流程
+ * @returns {*|promise|C}
+ */
+function accessToken() {
+    const deferred = Q.defer();
+
+    let token = JSON.parse(__FILE_SYSTEM__.readFileSync(__PATH__.join(__dirname, 'wechat.access_token.json')));
+    if (token.expires_in < Date.now()) {
+        requestAccessToken()
+            .then(result => {
+                deferred.resolve(result);
+            })
+            .catch(exception => {
+                deferred.reject(exception);
+            });
+    } else {
+        deferred.resolve(token);
+    }
+
+    return deferred.promise;
+}
+
+// accessToken().then(res => console.log(res));
 
 /**
  *  获取 JASPI Ticket
@@ -142,7 +183,7 @@ function signature(request) {
 }
 
 module.exports = {
-    accessToken: requestAccessToken,
+    accessToken: accessToken,
     jsAPITicket: requestJSAPITicket,
     cardAPITicket: requestCardAPITicket,
     signature: signature

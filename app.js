@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 
+const platformRouter = require('./routes/platform.route');
 const shoppingRouter = require('./routes/shopping.route');
 const userRouter = require('./routes/user.route');
 const backboneRouter = require('./routes/backbone.route');
@@ -133,6 +134,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 /**
  * Middleware functions are executed sequentially, therefore the order of middleware inclusion is important.
  */
+app.use('/platform', platformRouter);
 app.use('/shopping', shoppingRouter);
 app.use('/user', userRouter);
 app.use('/backbone', backboneRouter);
