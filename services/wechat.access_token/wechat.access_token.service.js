@@ -37,7 +37,7 @@ function requestAccessToken() {
                 let token = JSON.parse(rawData);
                 if (token.hasOwnProperty('expires_in')) {
                     //  计算过期时间
-                    token.expires_in = Date.now() + (token.expires_in - 300) * 1000;
+                    token.expires_in = Date.now() + (token.expires_in - 600) * 1000;
                     // __LOGGER__.debug(token.expires_in);
                     __LOGGER__.debug('AccessToken 将于以下时间后过期 ==> ' + __MOMENT__(new Date(token.expires_in)).format('YYYY-MM-DD HH:mm:ss'));
                     //  写入json文件
