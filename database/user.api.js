@@ -29,7 +29,7 @@ function wechatMiniProgramLogin(request) {
             /**
              *  2.1 如果不存在，新增
              */
-            basicInsertSQL: __STATEMENT__.__ADD_MINI_PROGRAM_USER__,
+            basicInsertSQL: __STATEMENT__.__ADD_USER__,
             basicInsertParams: [{
                 'openid': request.openid,
                 'session_key': request.session_key,
@@ -38,7 +38,7 @@ function wechatMiniProgramLogin(request) {
             /**
              *  2.2 如果存在，更新用户表
              */
-            basicUpdateSQL: __STATEMENT__.__UPDATE_MINI_PROGRAM_USER__,
+            basicUpdateSQL: __STATEMENT__.__UPDATE_USER__,
             basicUpdateParams: [
                 {
                     'openid': request.openid,
@@ -59,6 +59,74 @@ function wechatMiniProgramLogin(request) {
         .then(function () {
             // request.nonceStr = nonceStr;                  //  记录自定义登录态
             deferred.resolve(nonceStr);                      //  回传
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (err) {
+                deferred.reject(err);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 保存微信用户的user_info
+ * @param request
+ * @returns {*|promise|C}
+ */
+function saveWechatUserInfo(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 根据 openid 查询用户是否存在
+             */
+            isRepeatSQL: __STATEMENT__.__IS_WECHAT_USER_REPEAT__,
+            isRepeatParams: [
+                request.openid
+            ],
+            /**
+             *  2.1 如果不存在，新增
+             */
+            basicInsertSQL: __STATEMENT__.__SAVE_USER_INFO__,
+            basicInsertParams: [{
+                'openid': request.openid,
+                'nickname': request.nickname,
+                'sex': request.sex,
+                'headimgurl': request.headimgurl,
+                'country': request.country,
+                'province': request.province,
+                'city': request.city,
+                'unionid': request.unionid
+            }],
+            /**
+             *  2.2 如果存在，更新用户表
+             */
+            basicUpdateSQL: __STATEMENT__.__UPDATE_USER_INFO__,
+            basicUpdateParams: [
+                {
+                    'nickname': request.nickname,
+                    'sex': request.sex,
+                    'headimgurl': request.headimgurl,
+                    'country': request.country,
+                    'province': request.province,
+                    'city': request.city,
+                    'unionid': request.unionid
+                },
+                request.openid
+            ]
+        })
+        .then(__MYSQL_API__.beginTransaction)               //  启动事务
+        .then(__MYSQL_API__.isRepeat)                       //  openid 是否已存在
+        .then(
+            __MYSQL_API__.basicInsert,                      //  不存在，新增
+            __MYSQL_API__.basicUpdate                       //  存在，更新
+        )
+        .then(__MYSQL_API__.commitTransaction)              //  提交事务
+        .then(__MYSQL_API__.cleanup)                        //  清理
+        .then(function () {
+            deferred.resolve(request);                      //  透传参数
         })
         .catch(function (request) {
             __MYSQL_API__.onRejectWithRollback(request, function (err) {
@@ -995,6 +1063,7 @@ function addRoleAction(request) {
 module.exports = {
     // 登录
     wechatMiniProgramLogin: wechatMiniProgramLogin,
+    saveWechatUserInfo: saveWechatUserInfo,
     checkIdentity: checkIdentity,
     checkMobile: checkMobile,
     fetchUserOpenId: fetchUserOpenId,

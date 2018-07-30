@@ -55,7 +55,7 @@ function constructComponentTokenParams(request) {
         component_appid: request.component_appid || __CONFIG__.__APP_ID__,
         component_appsecret: request.component_appsecret || __CONFIG__.__APP_SECRET__,
         component_verify_ticket: request.componentVerifyTicket
-    }
+    };
 }
 
 /**
@@ -78,7 +78,7 @@ function constructAuthorizationParams(request) {
     return {
         component_appid: request.component_appid || __CONFIG__.__APP_ID__,
         authorization_code: request.authorization_code
-    }
+    };
 }
 
 /**
@@ -91,7 +91,7 @@ function constructRefreshAuthorizerToken(request) {
         component_appid: request.component_appid || __CONFIG__.__APP_ID__,
         authorizer_appid: request.authorizer_appid,
         authorizer_refresh_token: request.authorizer_refresh_token
-    }
+    };
 }
 
 /**
@@ -103,7 +103,7 @@ function constructAuthorizerInfoParams(request) {
     return {
         component_appid: request.component_appid || __CONFIG__.__APP_ID__,
         authorizer_appid: request.authorizer_appid
-    }
+    };
 }
 
 /**
@@ -116,7 +116,7 @@ function constructGetAuthorizerOptionParams(request) {
         component_appid: request.component_appid || __CONFIG__.__APP_ID__,
         authorizer_appid: request.authorizer_appid,
         option_name: request.option_name
-    }
+    };
 }
 
 /**
@@ -130,7 +130,7 @@ function constructSetAuthorizerOptionParams(request) {
         authorizer_appid: request.authorizer_appid,
         option_name: request.option_name,
         option_value: request.option_value
-    }
+    };
 }
 
 /**
@@ -138,10 +138,30 @@ function constructSetAuthorizerOptionParams(request) {
  * @param request
  * @returns {{component_appid: string}}
  */
-function constructClearComponentQuota(request) {
+function constructClearComponentQuotaParams(request) {
     return {
         component_appid: request.component_appid || __CONFIG__.__APP_ID__
-    }
+    };
+}
+
+/**
+ * 通过code换取access_token
+ * @param request
+ * @returns {{appid: *, code, grant_type: string, component_appid: string, component_access_token: *}}
+ */
+function constructAuthorizerAccessTokenParams(request) {
+    return {
+        //  公众号的appid
+        appid: request.appid,
+        //  填写第一步获取的code参数
+        code: request.code,
+        //  填authorization_code
+        grant_type: 'authorization_code',
+        //  服务开发方的appid
+        component_appid: request.component_appid || __CONFIG__.__APP_ID__,
+        //  服务开发方的access_token
+        component_access_token: request.component_access_token
+    };
 }
 
 module.exports = {
@@ -153,5 +173,6 @@ module.exports = {
     constructAuthorizerInfoParams: constructAuthorizerInfoParams,
     constructGetAuthorizerOptionParams: constructGetAuthorizerOptionParams,
     constructSetAuthorizerOptionParams: constructSetAuthorizerOptionParams,
-    constructClearComponentQuota: constructClearComponentQuota
+    constructClearComponentQuotaParams: constructClearComponentQuotaParams,
+    constructAuthorizerAccessTokenParams: constructAuthorizerAccessTokenParams
 };

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-// const __FILE_SYSTEM__ = require('fs');
-// const __PATH__ = require('path');
+const __FILE_SYSTEM__ = require('fs');
+const __PATH__ = require('path');
 const __PLATFORM__ = require('../controller/platform.controller');
 const __LOGGER__ = require('../services/log4js.service').getLogger('backbone.route.js');
 
@@ -29,6 +29,17 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('backbone.rou
 //     __LOGGER__.info('========================== END ==========================');
 // });
 
+router.all('/code', function (req, res, next) {
+    __LOGGER__.info('========================== CODE ==========================');
+    __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.params);
+    __LOGGER__.debug(req.query);
+    __PLATFORM__.receiveAuthorizerCodeNotification(req, function (request) {
+        res.end('success');
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
 router.all('/license', function (req, res, next) {
     __LOGGER__.info('========================== LICENSE ==========================');
     __LOGGER__.debug(req.body);
@@ -38,7 +49,14 @@ router.all('/license', function (req, res, next) {
         res.end('success');
         __LOGGER__.info('========================== END ==========================');
     });
+});
 
+router.all('/:appid/notification', function (req, res, next) {
+    __LOGGER__.info('========================== AUTHORIZER NOTIFICATION ==========================');
+    __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.params);
+    __LOGGER__.debug(req.query);
+    __LOGGER__.info('========================== END ==========================');
 });
 
 module.exports = router;

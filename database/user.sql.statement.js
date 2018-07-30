@@ -4,15 +4,23 @@
 const __CHECK_SESSION__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE 3rd_session  = ?';
 const __CHECK_MOBILE__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE phone  = ?';
 const __IS_OPENID_REPEAT__ = 'SELECT COUNT(*) AS number FROM tb_user WHERE openid = ?';
-const __ADD_MINI_PROGRAM_USER__ = 'INSERT INTO tb_user SET ?';
-const __UPDATE_MINI_PROGRAM_USER__ = 'UPDATE tb_user SET ? WHERE openid = ?';
+const __IS_WECHAT_USER_REPEAT__ = 'SELECT COUNT(*) AS number FROM tb_wechat WHERE openid = ?';
+const __ADD_USER__ = 'INSERT INTO tb_user SET ?';
+const __UPDATE_USER__ = 'UPDATE tb_user SET ? WHERE openid = ?';
 /**
  *  用户
  */
+const __USER_TYPE__ = {
+    MINI_PROGRAM: 1,            //  莆素小程序登录用户
+    MANAGER: 2,                 //  管理员
+    OPEN_PLATFORM: 3            //  使用开放平台的登录用户
+};
 const __FETCH_USER_SESSION__ = 'SELECT 3rd_session FROM tb_user WHERE phone = ?';
 const __FETCH_USER_INFO__ = 'SELECT * FROM tb_user WHERE 3rd_session = ?';
 const __CHECK_PERMISSION__ = 'SELECT COUNT(*) AS number FROM tb_user a, tb_role b, rel_role_action c WHERE c.module = ? AND c.action = ? AND a.3rd_session = ? AND a.role = b.rid AND b.rid = c.role_id';
 const __FETCH_SPECIFIC_WECHAT__ = 'SELECT nickname, sex, headimgurl FROM tb_wechat a, tb_user b WHERE a.openid = b.openid AND b.uid = ?';
+const __SAVE_USER_INFO__ = 'INSERT INTO tb_wechat SET ?';
+const __UPDATE_USER_INFO__ = 'UPDATE tb_wechat SET ? WHERE openid = ?';
 /**
  *  管理员
  */
@@ -70,6 +78,7 @@ const __SUBMIT_REFUND__ = 'INSERT INTO tb_refund SET ?';
 const __ADD_REL_REFUND_SKU__ = 'INSERT INTO rel_refund_sku SET ?';
 
 module.exports = {
+    __USER_TYPE__: __USER_TYPE__,
     __CHECK_SESSION__: __CHECK_SESSION__,
     __CHECK_MOBILE__: __CHECK_MOBILE__,
     __FETCH_USER_INFO__: __FETCH_USER_INFO__,
@@ -88,8 +97,11 @@ module.exports = {
     __FETCH_MY_CONSIGNEE__: __FETCH_MY_CONSIGNEE__,
     __FETCH_SPECIFIC_CONSIGNEE__: __FETCH_SPECIFIC_CONSIGNEE__,
     __IS_OPENID_REPEAT__: __IS_OPENID_REPEAT__,
-    __ADD_MINI_PROGRAM_USER__: __ADD_MINI_PROGRAM_USER__,
-    __UPDATE_MINI_PROGRAM_USER__: __UPDATE_MINI_PROGRAM_USER__,
+    __IS_WECHAT_USER_REPEAT__: __IS_WECHAT_USER_REPEAT__,
+    __ADD_USER__: __ADD_USER__,
+    __UPDATE_USER__: __UPDATE_USER__,
+    __SAVE_USER_INFO__: __SAVE_USER_INFO__,
+    __UPDATE_USER_INFO__: __UPDATE_USER_INFO__,
     __CHECK_CART__: __CHECK_CART__,
     __JOIN_TO_CART__: __JOIN_TO_CART__,
     __ADD_CART__: __ADD_CART__,

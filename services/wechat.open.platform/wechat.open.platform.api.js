@@ -35,5 +35,8 @@ module.exports = {
     __GET_AUTHORIZER_OPTION__: __GET_AUTHORIZER_OPTION__,
     __SET_AUTHORIZER_OPTION__: __SET_AUTHORIZER_OPTION__,
     __CLEAR_QUOTA__: __CLEAR_QUOTA__,
-    __CODE__: __CODE__
+    __CODE__: __CODE__,
+    __ACCESS_TOKEN__: __ACCESS_TOKEN__,
+    __REFRESH_TOKEN__: __REFRESH_TOKEN__,
+    __USER_INFO__: __USER_INFO__
 };

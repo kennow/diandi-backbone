@@ -147,7 +147,7 @@ function createPreAuthCode(request) {
             deferred.resolve({
                 component_access_token: request.component_access_token,
                 pre_authorization_code: JSON.parse(rawData).pre_auth_code
-            })
+            });
         }, null);
 
     return deferred.promise;
@@ -307,7 +307,7 @@ function clearComponentQuota(request) {
     const deferred = Q.defer();
 
     // 生成POST Data
-    const postData = __WX_OPEN_STRUCTURE__.constructClearComponentQuota(request);
+    const postData = __WX_OPEN_STRUCTURE__.constructClearComponentQuotaParams(request);
     __LOGGER__.debug(postData);
 
     __HTTP_CLIENT__.doHttpsPost(
@@ -321,7 +321,7 @@ function clearComponentQuota(request) {
 }
 
 /**
- * 请求CODE
+ * 生成获取授权公众号的CODE请求链接
  *
  * 在确保微信公众账号拥有授权作用域（scope参数）的权限的前提下
  * （一般而言，已微信认证的服务号拥有snsapi_base和snsapi_userinfo）
@@ -333,31 +333,104 @@ function clearComponentQuota(request) {
  * @returns {*}
  */
 function authorizerCode(request) {
+    return __UTIL__.format(__WX_OPEN_API__.__CODE__,
+        request.appid,
+        'http://official.pusudo.cn',
+        'snsapi_userinfo',
+        'snsapi_userinfo',
+        __WX_OPEN_CONFIG__.__APP_ID__);
+}
+
+// console.log(authorizerCode({appid: 'wx7770629fee66dd93'}));
+
+/**
+ * 通过code换取access_token
+ * @param request
+ * @returns {*|promise|C}
+ */
+function authorizerAccessToken(request) {
     const deferred = Q.defer();
 
     __HTTP_CLIENT__.doHttpsGet(
-        __UTIL__.format(__WX_OPEN_API__.__CODE__,
+        __UTIL__.format(__WX_OPEN_API__.__ACCESS_TOKEN__,
             request.appid,
-            'http://www.pusudo.cn',
-            'voice',
-            'TEST',
-            __WX_OPEN_CONFIG__.__APP_ID__),
+            request.code,
+            __WX_OPEN_CONFIG__.__APP_ID__,
+            request.component_access_token),
         function (rawData) {
-            __LOGGER__.debug(rawData);
+            let code = JSON.parse(rawData);
+            if (code.hasOwnProperty('errcode')) {
+                deferred.reject(code.errmsg);
+            } else {
+                deferred.resolve(code);
+            }
         });
 
     return deferred.promise;
 }
 
-//authorizerCode({
-//    appid: 'wx4328d9d4893f7a2f'
-//}).then(res => {
-//})
+/**
+ * 刷新access_token（如果需要）
+ * 由于access_token拥有较短的有效期，当access_token超时后，可以使用refresh_token进行刷新，refresh_token拥有较长的有效期（30天）
+ * 当refresh_token失效的后，需要用户重新授权
+ * @param request
+ * @returns {*|promise|C}
+ */
+function refreshAuthorizerAccessToken(request) {
+    const deferred = Q.defer();
+
+    __HTTP_CLIENT__.doHttpsGet(
+        __UTIL__.format(__WX_OPEN_API__.__REFRESH_TOKEN__,
+            request.appid,
+            __WX_OPEN_CONFIG__.__APP_ID__,
+            request.component_access_token,
+            request.refreshToken
+        ),
+        function (rawData) {
+            let code = JSON.parse(rawData);
+            if (code.hasOwnProperty('errcode')) {
+                deferred.reject(code.errmsg);
+            } else {
+                deferred.resolve(code);
+            }
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 通过网页授权access_token获取用户基本信息（需授权作用域为snsapi_userinfo）
+ * @param request
+ * @returns {*|promise|C}
+ */
+function authorizerUserInfo(request) {
+    const deferred = Q.defer();
+
+    __HTTP_CLIENT__.doHttpsGet(
+        __UTIL__.format(__WX_OPEN_API__.__USER_INFO__,
+            request.accessToken,
+            request.openid),
+        function (rawData) {
+            let userInfo = JSON.parse(rawData);
+            if (userInfo.hasOwnProperty('errcode')) {
+                deferred.reject(userInfo.errmsg);
+            } else {
+                deferred.resolve(userInfo);
+            }
+        });
+
+    return deferred.promise;
+}
 
 module.exports = {
     recordComponentVerifyTicket: recordComponentVerifyTicket,
     recordAuthorizationCode: recordAuthorizationCode,
-    createPreAuthCode: createPreAuthCode
+    componentVerifyTicket: componentVerifyTicket,
+    componentToken: componentToken,
+    createPreAuthCode: createPreAuthCode,
+    authorizerAccessToken: authorizerAccessToken,
+    refreshAuthorizerAccessToken: refreshAuthorizerAccessToken,
+    authorizerUserInfo: authorizerUserInfo
 };
 
 //componentVerifyTicket()

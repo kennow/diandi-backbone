@@ -1,8 +1,20 @@
+const Q = require('q');
+const __MOMENT__ = require('moment');
 const __WX_OPEN_SERVICE__ = require('../services/wechat.open.platform/wechat.open.platform.service');
 const __WX_OPEN_STRUCTURE__ = require('../services/wechat.open.platform/wechat.open.platform.structure');
 const __WX_OPEN_HELPER__ = require('../services/wechat.open.platform/wechat.open.platform.helper');
+const __PLATFORM__ = require('../database/platform.api');
+const __USER__ = require('../database/user.api');
 const __LOGGER__ = require('../services/log4js.service').getLogger('platform.controller.js');
 
+/**
+ * 收到授权事件
+ * 1. 微信每隔十分钟向服务商发送 Component Verify Ticket
+ * 2. 自媒体或商家向服务商授权后收到的授权结果通知
+ * 接收地址是 授权事件接收URL https://www.pusudo.cn/platform/license
+ * @param request
+ * @param response
+ */
 function receiveAuthorizationNotification(request, response) {
     __WX_OPEN_HELPER__
         .decryptMessage(
@@ -25,9 +37,148 @@ function receiveAuthorizationNotification(request, response) {
         });
 }
 
+/**
+ * 代公众号实现网站授权
+ * 用户通过服务商向自媒体或者商家授权后，收到的授权事件通知
+ * 接收地址是 公众号开发域名 official.pusudo.cn
+ * @param request
+ * @param response
+ */
+function receiveAuthorizerCodeNotification(request, response) {
+    __WX_OPEN_SERVICE__
+        .componentVerifyTicket()
+        .then(__WX_OPEN_SERVICE__.componentToken)
+        .then(token => {
+            return Q({
+                appid: request.query.appid,
+                code: request.query.code,
+                component_access_token: token.component_access_token
+            });
+        })
+        .then(__WX_OPEN_SERVICE__.authorizerAccessToken)
+        .then(params => {
+            __LOGGER__.debug(params);
+            return Q({
+                appid: request.query.appid,
+                accessToken: params.access_token,
+                expiresIn: __MOMENT__(new Date(Date.now() + (params.expires_in - 600) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
+                refreshToken: params.refresh_token,
+                openid: params.openid,
+                scope: params.scope
+            });
+        })
+        .then(__PLATFORM__.addAuthorizer)
+        .then(user => {
+            __LOGGER__.debug(user);
+            switch (user.scope) {
+                case 'snsapi_base':
+                    __PLATFORM__
+                        .wechatOpenPlatformLogin(user)
+                        .then(result => {
+                            __LOGGER__.debug(result);
+                            response(result);
+                        });
+                    break;
+                case 'snsapi_userinfo':
+                    __WX_OPEN_SERVICE__
+                        .authorizerUserInfo(user)
+                        .then(__USER__.saveWechatUserInfo)
+                        .then(__PLATFORM__.wechatOpenPlatformLogin)
+                        .then(result => {
+                            __LOGGER__.debug(result);
+                            response(result);
+                        });
+                    break;
+                default:
+                    break;
+            }
+
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+        });
+}
+
+/**
+ * 获取授权方的access_token
+ * @param request
+ * @param response
+ */
+function fetchAuthorizerAccessToken(request, response) {
+    __PLATFORM__
+        .fetchAuthorizerAccessToken(request)
+        .then(result => {
+            __LOGGER__.debug(result);
+            if (result.code === 0 && result.msg.length > 0) {
+                if (parseInt(__MOMENT__(result.msg[0].expiresIn).format('X')) < parseInt(__MOMENT__(new Date().getTime()).format('X'))) {
+                    // 如果授权方的access token 已过期，尝试刷新access token
+                    // TODO: 如果refresh token 也过期，应提示用户重新登录
+                    __WX_OPEN_SERVICE__
+                        .componentVerifyTicket()
+                        .then(__WX_OPEN_SERVICE__.componentToken)                   //  获取component 的 access token
+                        .then(componentToken => {
+                            return Q({
+                                appid: result.msg[0].appid,
+                                component_access_token: componentToken.component_access_token,
+                                refreshToken: result.msg[0].refreshToken
+                            });
+                        })
+                        .then(__WX_OPEN_SERVICE__.refreshAuthorizerAccessToken)     //  刷新授权方的 access token
+                        .then(authorizerToken => {
+                            return Q({
+                                appid: result.msg[0].appid,
+                                accessToken: authorizerToken.access_token,
+                                expiresIn: __MOMENT__(new Date(Date.now() + (authorizerToken.expires_in - 600) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
+                                refreshToken: authorizerToken.refresh_token,
+                                openid: authorizerToken.openid,
+                                scope: authorizerToken.scope
+                            });
+                        })
+                        .then(__PLATFORM__.addAuthorizer)   //  记录或者更新授权
+                        .then(data => {
+                            response(data);     //  返回刷新后的access token
+                        })
+                        .catch(error => {
+                            __LOGGER__.error(error);
+                            response(error);
+                        });
+                } else {
+                    //  未过期，直接返回 access token
+                    response(result.msg[0]);
+                }
+            } else {
+                response('未获得授权');      //  查询返回数组为空
+            }
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+            response(error);
+        });
+}
+
 module.exports = {
-    receiveAuthorizationNotification: receiveAuthorizationNotification
+    receiveAuthorizationNotification: receiveAuthorizationNotification,
+    receiveAuthorizerCodeNotification: receiveAuthorizerCodeNotification,
+    fetchAuthorizerAccessToken: fetchAuthorizerAccessToken
 };
+
+// fetchAuthorizerAccessToken({
+//     appid: 'wx7770629fee66dd93'
+// }, (result) => {
+//     'use strict';
+//     __LOGGER__.warn(result);
+// });
+
+// receiveAuthorizerCodeNotification({
+//     query: {
+//         code: '011sBWMO1ZWpC11ShqLO1MkeNO1sBWMW',
+//         state: 'snsapi_userinfo',
+//         appid: 'wx7770629fee66dd93'
+//     }
+// }, (session) => {
+//     'use strict';
+//     console.log(session);
+// });
 
 //receiveAuthorizationNotification({
 //    body: {
