@@ -11,7 +11,7 @@ const __LOGGER__ = require('../log4js.service').getLogger('wechat.open.platform.
  * @param request
  * @returns {*}
  */
-function parseComponentVerifyTicket(request) {
+function parseLicenseMessage(request) {
     const deferred = Q.defer();
 
     __XML_PARSER__(request, function (err, result) {
@@ -29,6 +29,7 @@ function parseComponentVerifyTicket(request) {
                 case 'component_verify_ticket':
                     data.componentVerifyTicket = result.xml.ComponentVerifyTicket[0];
                     break;
+                case 'authorized':
                 case 'updateauthorized':
                     data.authorizerAppid = result.xml.AuthorizerAppid[0];
                     data.authorizationCode = result.xml.AuthorizationCode[0];
@@ -164,8 +165,24 @@ function constructAuthorizerAccessTokenParams(request) {
     };
 }
 
+/**
+ * 拉取当前所有已授权的帐号基本信息
+ * @param request
+ * @returns {{component_appid: string, offset: number, count: number}}
+ */
+function constructGetAuthorizerListParams(request) {
+    return {
+        //  是	第三方平台APPID
+        component_appid: request.component_appid || __CONFIG__.__APP_ID__,
+        //  是	偏移位置/起始位置
+        offset: request.offset || 0,
+        //	是	拉取数量，最大为500
+        count: request.count || 100
+    };
+}
+
 module.exports = {
-    parseComponentVerifyTicket: parseComponentVerifyTicket,
+    parseLicenseMessage: parseLicenseMessage,
     constructComponentTokenParams: constructComponentTokenParams,
     constructPreAuthCodeParams: constructPreAuthCodeParams,
     constructAuthorizationParams: constructAuthorizationParams,
@@ -174,5 +191,6 @@ module.exports = {
     constructGetAuthorizerOptionParams: constructGetAuthorizerOptionParams,
     constructSetAuthorizerOptionParams: constructSetAuthorizerOptionParams,
     constructClearComponentQuotaParams: constructClearComponentQuotaParams,
-    constructAuthorizerAccessTokenParams: constructAuthorizerAccessTokenParams
+    constructAuthorizerAccessTokenParams: constructAuthorizerAccessTokenParams,
+    constructGetAuthorizerListParams: constructGetAuthorizerListParams
 };

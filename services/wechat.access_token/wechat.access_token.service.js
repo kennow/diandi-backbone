@@ -61,9 +61,20 @@ function requestAccessToken() {
  */
 function accessToken() {
     const deferred = Q.defer();
+    let isTokenFileAvailable = false;
+    let token;
+    let tokenFilePath = __PATH__.join(__dirname, 'wechat.access_token.json');
 
-    let token = JSON.parse(__FILE_SYSTEM__.readFileSync(__PATH__.join(__dirname, 'wechat.access_token.json')));
-    if (token.expires_in < Date.now()) {
+    if (__FILE_SYSTEM__.existsSync(tokenFilePath)) {
+        token = JSON.parse(__FILE_SYSTEM__.readFileSync(tokenFilePath));
+        if (token.hasOwnProperty('expires_in') && token.hasOwnProperty('access_token')) {
+            __LOGGER__.debug('过期时间：' + __MOMENT__(token.expires_in).format('YYYY-MM-DD HH:mm:ss'));
+            __LOGGER__.debug('请求时间：' + __MOMENT__(Date.now()).format('YYYY-MM-DD HH:mm:ss'));
+            isTokenFileAvailable = true;
+        }
+    }
+
+    if (!isTokenFileAvailable || token.expires_in < Date.now()) {
         requestAccessToken()
             .then(result => {
                 deferred.resolve(result);

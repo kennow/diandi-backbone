@@ -22,12 +22,10 @@ const __LOGGER__ = require('../log4js.service').getLogger('wechat.open.platform.
 function recordComponentVerifyTicket(request) {
     const deferred = Q.defer();
 
-    if (request.hasOwnProperty('infoType') && request.infoType === 'component_verify_ticket') {
-        __FILE_SYSTEM__.writeFileSync(
-            __PATH__.join(__dirname, 'component.verify.ticket.json'),
-            JSON.stringify(request)
-        );
-    }
+    __FILE_SYSTEM__.writeFileSync(
+        __PATH__.join(__dirname, 'component.verify.ticket.json'),
+        JSON.stringify(request)
+    );
     deferred.resolve(request);  //  透传参数
 
     return deferred.promise;
@@ -40,28 +38,6 @@ function componentVerifyTicket() {
 }
 
 //componentVerifyTicket().then(res => {console.log(res)});
-
-/**
- * 记录授权码
- *
- * 授权后回调URI，得到授权码（authorization_code）和过期时间
- * @param request
- * @returns {*}
- */
-function recordAuthorizationCode(request) {
-    const deferred = Q.defer();
-
-    if (request.hasOwnProperty('infoType') &&
-        (request.infoType === 'updateauthorized' || request.infoType === 'authorized')) {
-        __FILE_SYSTEM__.writeFileSync(
-            __PATH__.join(__dirname, 'authorization.code.json'),
-            JSON.stringify(request)
-        );
-    }
-    deferred.resolve(request);  //  透传参数
-
-    return deferred.promise;
-}
 
 /**
  * 获取第三方平台component_access_token
@@ -85,7 +61,7 @@ function requestComponentToken(request) {
         let token = JSON.parse(rawData);
         if (token.hasOwnProperty('expires_in')) {
             //  计算过期时间
-            token.expires_in = Date.now() + (token.expires_in - 600) * 1000;
+            token.expires_in = Date.now() + (token.expires_in - 1800) * 1000;
             // __LOGGER__.debug(token.expires_in);
             __LOGGER__.debug('Component Access Token 将于以下时间后过期 ==> ' + __MOMENT__(new Date(token.expires_in)).format('YYYY-MM-DD HH:mm:ss'));
             //  写入json文件
@@ -108,9 +84,19 @@ function requestComponentToken(request) {
  */
 function componentToken(request) {
     const deferred = Q.defer();
+    let isTokenFileAvailable = false;
+    let token;
 
-    let token = JSON.parse(__FILE_SYSTEM__.readFileSync(__PATH__.join(__dirname, 'component.access.token.json')));
-    if (token.expires_in < Date.now()) {
+    if (__FILE_SYSTEM__.existsSync(__PATH__.join(__dirname, 'component.access.token.json'))) {
+        token = JSON.parse(__FILE_SYSTEM__.readFileSync(__PATH__.join(__dirname, 'component.access.token.json')));
+        if (token.hasOwnProperty('expires_in') && token.hasOwnProperty('component_access_token')) {
+            __LOGGER__.debug('过期时间：' + __MOMENT__(token.expires_in).format('YYYY-MM-DD HH:mm:ss'));
+            __LOGGER__.debug('请求时间：' + __MOMENT__(Date.now()).format('YYYY-MM-DD HH:mm:ss'));
+            isTokenFileAvailable = true;
+        }
+    }
+
+    if (!isTokenFileAvailable || token.expires_in < Date.now()) {
         requestComponentToken(request)
             .then(result => {
                 deferred.resolve(result);
@@ -144,10 +130,16 @@ function createPreAuthCode(request) {
         __UTIL__.format(__WX_OPEN_API__.__CREATE_PRE_AUTH_CODE__, request.component_access_token),
         postData,
         function (rawData) {
-            deferred.resolve({
-                component_access_token: request.component_access_token,
-                pre_authorization_code: JSON.parse(rawData).pre_auth_code
-            });
+            let preAuthCode = JSON.parse(rawData);
+            if (preAuthCode.hasOwnProperty('errcode')) {
+                deferred.reject(preAuthCode.errmsg);
+            } else {
+                deferred.resolve({
+                    component_access_token: request.component_access_token,
+                    pre_authorization_code: preAuthCode.pre_auth_code
+                });
+            }
+
         }, null);
 
     return deferred.promise;
@@ -177,7 +169,7 @@ function createPreAuthCode(request) {
  * @param request
  * @returns {*}
  */
-function requestAuthorization(request) {
+function requestAuthorizerToken(request) {
     const deferred = Q.defer();
 
     // 生成POST Data
@@ -190,6 +182,7 @@ function requestAuthorization(request) {
         postData,
         function (rawData) {
             __LOGGER__.debug(rawData);
+            deferred.resolve(JSON.parse(rawData));
         }, null);
 
     return deferred.promise;
@@ -216,6 +209,7 @@ function refreshAuthorizerToken(request) {
         postData,
         function (rawData) {
             __LOGGER__.debug(rawData);
+            deferred.resolve(JSON.parse(rawData));
         }, null);
 
     return deferred.promise;
@@ -332,23 +326,25 @@ function clearComponentQuota(request) {
  * @param request
  * @returns {*}
  */
-function authorizerCode(request) {
+function userToAuthorizerCode(request) {
     return __UTIL__.format(__WX_OPEN_API__.__CODE__,
         request.appid,
         'http://official.pusudo.cn',
-        'snsapi_userinfo',
-        'snsapi_userinfo',
+        // 'snsapi_userinfo',
+        // 'snsapi_userinfo',
+        'snsapi_base',
+        'snsapi_base',
         __WX_OPEN_CONFIG__.__APP_ID__);
 }
 
-// console.log(authorizerCode({appid: 'wx7770629fee66dd93'}));
+// console.log(userToAuthorizerCode({appid: 'wx7770629fee66dd93'}));
 
 /**
  * 通过code换取access_token
  * @param request
  * @returns {*|promise|C}
  */
-function authorizerAccessToken(request) {
+function authorizerToUserAccessToken(request) {
     const deferred = Q.defer();
 
     __HTTP_CLIENT__.doHttpsGet(
@@ -376,7 +372,7 @@ function authorizerAccessToken(request) {
  * @param request
  * @returns {*|promise|C}
  */
-function refreshAuthorizerAccessToken(request) {
+function refreshAuthorizerToUserAccessToken(request) {
     const deferred = Q.defer();
 
     __HTTP_CLIENT__.doHttpsGet(
@@ -422,14 +418,37 @@ function authorizerUserInfo(request) {
     return deferred.promise;
 }
 
+/**
+ * 拉取当前所有已授权的帐号基本信息
+ * @param request
+ * @returns {*|promise|C}
+ */
+function getAuthorizerList(request) {
+    const deferred = Q.defer();
+
+    // 生成POST Data
+    const postData = __WX_OPEN_STRUCTURE__.constructGetAuthorizerListParams(request);
+    __LOGGER__.debug(postData);
+
+    __HTTP_CLIENT__.doHttpsPost(
+        __UTIL__.format(__WX_OPEN_API__.__GET_AUTHORIZER_LIST__, request.component_access_token),
+        postData,
+        function (rawData) {
+            __LOGGER__.debug(rawData);
+        }, null);
+
+    return deferred.promise;
+}
+
 module.exports = {
     recordComponentVerifyTicket: recordComponentVerifyTicket,
-    recordAuthorizationCode: recordAuthorizationCode,
     componentVerifyTicket: componentVerifyTicket,
     componentToken: componentToken,
     createPreAuthCode: createPreAuthCode,
-    authorizerAccessToken: authorizerAccessToken,
-    refreshAuthorizerAccessToken: refreshAuthorizerAccessToken,
+    requestAuthorizerToken: requestAuthorizerToken,
+    refreshAuthorizerToken: refreshAuthorizerToken,
+    authorizerToUserAccessToken: authorizerToUserAccessToken,
+    refreshAuthorizerToUserAccessToken: refreshAuthorizerToUserAccessToken,
     authorizerUserInfo: authorizerUserInfo
 };
 
@@ -461,18 +480,24 @@ module.exports = {
 //        __LOGGER__.debug(res);
 //    });
 
-//componentVerifyTicket()
-//    .then(componentToken)
-//    .then(createPreAuthCode)
-//    .then(res => {
-//        __LOGGER__.debug(res);
-//        __LOGGER__.debug(__UTIL__.format(
-//            __WX_OPEN_API__.__BIND_COMPONENT__,
-//            __WX_OPEN_CONFIG__.__APP_ID__,
-//            res.pre_authorization_code,
-//            'http://www.pusudo.cn'
-//        ));
-//    });
+// componentVerifyTicket()
+//     .then(componentToken)
+//     .then(createPreAuthCode)
+//     .then(res => {
+//         __LOGGER__.debug(res);
+//         __LOGGER__.debug(__UTIL__.format(
+//             __WX_OPEN_API__.__BIND_COMPONENT__,
+//             3,
+//             __WX_OPEN_CONFIG__.__APP_ID__,
+//             res.pre_authorization_code,
+//             'http://www.pusudo.cn',
+//             // 'wx1133464776a7a161'
+//             'wx7770629fee66dd93'
+//         ));
+//     })
+//     .catch(err => {
+//         __LOGGER__.error(err);
+//     });
 
 //componentVerifyTicket()
 //    .then(componentToken)
@@ -481,7 +506,7 @@ module.exports = {
 //        __LOGGER__.debug(res);
 //        return Q(res);
 //    })
-//    .then(requestAuthorization)
+//    .then(requestAuthorizerToken)
 //    .then(res => {
 //        __LOGGER__.debug(res);
 //    });
@@ -508,3 +533,9 @@ module.exports = {
 //        __LOGGER__.debug(res);
 //    });
 
+// componentVerifyTicket()
+//    .then(componentToken)
+//    .then(getAuthorizerList)
+//    .then(res => {
+//        __LOGGER__.debug(res);
+//    });

@@ -36,7 +36,8 @@ function deleteMenu(request) {
 }
 
 module.exports = {
-    createMenu: createMenu
+    createMenu: createMenu,
+    deleteMenu: deleteMenu
 };
 
 // __SERVICE_ACCESS_TOKEN__
@@ -58,6 +59,13 @@ module.exports = {
 //         });
 //     })
 //     .then(createMenu)
+//     .then(res => {
+//         console.log(res);
+//     });
+
+// deleteMenu({
+//     access_token: '12_kjS_g5rT4nkSVe6XyOyEJNId5EkQ9SEfOv7hQhaWC1UmsQ4FHEBjTIYgITfr8EgL3qlozfe7Wkj5DD54fRMajQ3wX1hMQP6OLR9DpkeUTyw'
+// })
 //     .then(res => {
 //         console.log(res);
 //     });

@@ -32,13 +32,15 @@ function addAuthorizer(request) {
                 appid: request.appid,
                 accessToken: request.accessToken,
                 expiresIn: request.expiresIn,
-                refreshToken: request.refreshToken
+                refreshToken: request.refreshToken,
+                funcInfo: request.funcInfo
             }],
             basicUpdateSQL: __STATEMENT__.__REFRESH_AUTHORIZER__,
             basicUpdateParams: [
                 request.accessToken,
                 request.expiresIn,
                 request.refreshToken,
+                request.funcInfo,
                 request.appid
             ]
         })
@@ -80,9 +82,11 @@ function wechatOpenPlatformLogin(request) {
              */
             basicInsertSQL: __USER_STATEMENT__.__ADD_USER__,
             basicInsertParams: [{
+                'appid': request.appid,
                 'openid': request.openid,
                 '3rd_session': nonceStr,
-                'role': __USER_STATEMENT__.__USER_TYPE__.OPEN_PLATFORM
+                'role': __USER_STATEMENT__.__USER_TYPE__.OPEN_PLATFORM,
+                'expires_in': request.expiresIn
             }],
             /**
              *  2.2 如果存在，更新用户表
@@ -90,9 +94,10 @@ function wechatOpenPlatformLogin(request) {
             basicUpdateSQL: __USER_STATEMENT__.__UPDATE_USER__,
             basicUpdateParams: [
                 {
-                    'openid': request.openid,
+                    'appid': request.appid,
                     '3rd_session': nonceStr,
-                    'role': __USER_STATEMENT__.__USER_TYPE__.OPEN_PLATFORM
+                    'role': __USER_STATEMENT__.__USER_TYPE__.OPEN_PLATFORM,
+                    'expires_in': request.expiresIn
                 },
                 request.openid
             ]

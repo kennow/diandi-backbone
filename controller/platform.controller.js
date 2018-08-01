@@ -3,6 +3,7 @@ const __MOMENT__ = require('moment');
 const __WX_OPEN_SERVICE__ = require('../services/wechat.open.platform/wechat.open.platform.service');
 const __WX_OPEN_STRUCTURE__ = require('../services/wechat.open.platform/wechat.open.platform.structure');
 const __WX_OPEN_HELPER__ = require('../services/wechat.open.platform/wechat.open.platform.helper');
+const __WX_OFFICIAL_SERVICE__ = require('../services/wechat.official.account/wechat.official.account.service');
 const __PLATFORM__ = require('../database/platform.api');
 const __USER__ = require('../database/user.api');
 const __LOGGER__ = require('../services/log4js.service').getLogger('platform.controller.js');
@@ -15,7 +16,7 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('platform.con
  * @param request
  * @param response
  */
-function receiveAuthorizationNotification(request, response) {
+function receiveLicenseNotification(request, response) {
     __WX_OPEN_HELPER__
         .decryptMessage(
             request.query.msg_signature,
@@ -23,9 +24,48 @@ function receiveAuthorizationNotification(request, response) {
             request.query.nonce,
             request.body.xml.encrypt
         )
-        .then(__WX_OPEN_STRUCTURE__.parseComponentVerifyTicket)
-        .then(__WX_OPEN_SERVICE__.recordComponentVerifyTicket)
-        .then(__WX_OPEN_SERVICE__.recordAuthorizationCode)
+        .then(__WX_OPEN_STRUCTURE__.parseLicenseMessage)
+        .then(message => {
+            __LOGGER__.debug(message);
+            if (message.hasOwnProperty('infoType') && message.infoType === 'component_verify_ticket') {
+                //  在第三方平台创建审核通过后，微信服务器会向其“授权事件接收URL”每隔10分钟定时推送component_verify_ticket
+                return __WX_OPEN_SERVICE__.recordComponentVerifyTicket(message);
+            } else if (message.hasOwnProperty('infoType') &&
+                (message.infoType === 'updateauthorized' || message.infoType === 'authorized')) {
+                //  当公众号对第三方平台进行授权、取消授权、更新授权后，微信服务器会向第三方平台方的授权事件接收URL
+                // （创建第三方平台时填写）推送相关通知
+                return __WX_OPEN_SERVICE__.componentVerifyTicket()
+                    .then(__WX_OPEN_SERVICE__.componentToken)
+                    .then(res => {
+                        // 获取component access token 结合用户的授权code
+                        // 向微信服务器获取授权方的信息
+                        res.authorization_code = message.authorizationCode;
+                        return Q(res);
+                    })
+                    .then(__WX_OPEN_SERVICE__.requestAuthorizerToken)
+                    .then(authorizerToken => {
+                        if (authorizerToken.hasOwnProperty('authorization_info')) {
+                            //  公众号授权给开发者的权限集列表
+                            let funcInfo = '';
+                            if (authorizerToken.authorization_info.func_info.length > 0) {
+                                authorizerToken.authorization_info.func_info.map(item => {
+                                    funcInfo += ',' + item.funcscope_category.id;
+                                });
+                                funcInfo = funcInfo.substr(1);
+                            }
+                            //  准备下记录返回token等信息
+                            return Q({
+                                appid: authorizerToken.authorization_info.authorizer_appid,
+                                accessToken: authorizerToken.authorization_info.authorizer_access_token,
+                                expiresIn: __MOMENT__(new Date(Date.now() + (authorizerToken.authorization_info.expires_in - 1800) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
+                                refreshToken: authorizerToken.authorization_info.authorizer_refresh_token,
+                                funcInfo: funcInfo
+                            });
+                        }
+                    })
+                    .then(__PLATFORM__.addAuthorizer);
+            }
+        })
         .then(result => {
             __LOGGER__.debug(result);
         })
@@ -55,19 +95,17 @@ function receiveAuthorizerCodeNotification(request, response) {
                 component_access_token: token.component_access_token
             });
         })
-        .then(__WX_OPEN_SERVICE__.authorizerAccessToken)
+        .then(__WX_OPEN_SERVICE__.authorizerToUserAccessToken)
         .then(params => {
-            __LOGGER__.debug(params);
             return Q({
                 appid: request.query.appid,
                 accessToken: params.access_token,
-                expiresIn: __MOMENT__(new Date(Date.now() + (params.expires_in - 600) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
+                expiresIn: __MOMENT__(new Date(Date.now() + (params.expires_in - 1800) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
                 refreshToken: params.refresh_token,
                 openid: params.openid,
                 scope: params.scope
             });
         })
-        .then(__PLATFORM__.addAuthorizer)
         .then(user => {
             __LOGGER__.debug(user);
             switch (user.scope) {
@@ -83,6 +121,9 @@ function receiveAuthorizerCodeNotification(request, response) {
                     __WX_OPEN_SERVICE__
                         .authorizerUserInfo(user)
                         .then(__USER__.saveWechatUserInfo)
+                        .then(() => {
+                            return Q(user);
+                        })
                         .then(__PLATFORM__.wechatOpenPlatformLogin)
                         .then(result => {
                             __LOGGER__.debug(result);
@@ -96,15 +137,17 @@ function receiveAuthorizerCodeNotification(request, response) {
         })
         .catch(error => {
             __LOGGER__.error(error);
+            response(error);
         });
 }
 
 /**
  * 获取授权方的access_token
  * @param request
- * @param response
  */
-function fetchAuthorizerAccessToken(request, response) {
+function fetchAuthorizerAccessToken(request) {
+    const deferred = Q.defer();
+
     __PLATFORM__
         .fetchAuthorizerAccessToken(request)
         .then(result => {
@@ -112,66 +155,92 @@ function fetchAuthorizerAccessToken(request, response) {
             if (result.code === 0 && result.msg.length > 0) {
                 if (parseInt(__MOMENT__(result.msg[0].expiresIn).format('X')) < parseInt(__MOMENT__(new Date().getTime()).format('X'))) {
                     // 如果授权方的access token 已过期，尝试刷新access token
-                    // TODO: 如果refresh token 也过期，应提示用户重新登录
                     __WX_OPEN_SERVICE__
                         .componentVerifyTicket()
-                        .then(__WX_OPEN_SERVICE__.componentToken)                   //  获取component 的 access token
+                        .then(__WX_OPEN_SERVICE__.componentToken)               //  获取component 的 access token
                         .then(componentToken => {
                             return Q({
-                                appid: result.msg[0].appid,
-                                component_access_token: componentToken.component_access_token,
-                                refreshToken: result.msg[0].refreshToken
+                                authorizer_appid: result.msg[0].appid,
+                                authorizer_refresh_token: result.msg[0].refreshToken,
+                                component_access_token: componentToken.component_access_token
                             });
                         })
-                        .then(__WX_OPEN_SERVICE__.refreshAuthorizerAccessToken)     //  刷新授权方的 access token
+                        .then(__WX_OPEN_SERVICE__.refreshAuthorizerToken)       //  刷新授权方的 access token
                         .then(authorizerToken => {
                             return Q({
                                 appid: result.msg[0].appid,
-                                accessToken: authorizerToken.access_token,
+                                accessToken: authorizerToken.authorizer_access_token,
                                 expiresIn: __MOMENT__(new Date(Date.now() + (authorizerToken.expires_in - 600) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
-                                refreshToken: authorizerToken.refresh_token,
-                                openid: authorizerToken.openid,
-                                scope: authorizerToken.scope
+                                refreshToken: authorizerToken.authorizer_refresh_token,
+                                funcInfo: result.msg[0].funcInfo
                             });
                         })
                         .then(__PLATFORM__.addAuthorizer)   //  记录或者更新授权
                         .then(data => {
-                            response(data);     //  返回刷新后的access token
+                            deferred.resolve(data);         //  返回刷新后的access token
                         })
-                        .catch(error => {
+                        .catch(error => {                   //  异常处理
                             __LOGGER__.error(error);
-                            response(error);
+                            deferred.reject(error);
                         });
                 } else {
-                    //  未过期，直接返回 access token
-                    response(result.msg[0]);
+                    deferred.resolve(result.msg[0]);        //  未过期，直接返回 access token
                 }
             } else {
-                response('未获得授权');      //  查询返回数组为空
+                deferred.reject('未获得授权');              //  查询返回数组为空
             }
         })
         .catch(error => {
             __LOGGER__.error(error);
-            response(error);
+            deferred.reject(error);
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 自定义菜单
+ *  --  代授权方处理菜单
+ * @param request
+ */
+function deleteMenu(request) {
+    fetchAuthorizerAccessToken(request)
+        .then(token => {
+            __LOGGER__.debug(token);
+            return Q({
+                access_token: token.accessToken
+            });
+        })
+        .then(__WX_OFFICIAL_SERVICE__.deleteMenu)
+        .then(result => {
+            __LOGGER__.debug(result);
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
         });
 }
 
 module.exports = {
-    receiveAuthorizationNotification: receiveAuthorizationNotification,
+    receiveLicenseNotification: receiveLicenseNotification,
     receiveAuthorizerCodeNotification: receiveAuthorizerCodeNotification,
     fetchAuthorizerAccessToken: fetchAuthorizerAccessToken
 };
 
+// deleteMenu(
+//     {
+//         appid: 'wx7770629fee66dd93'
+//     }
+// );
+
 // fetchAuthorizerAccessToken({
 //     appid: 'wx7770629fee66dd93'
-// }, (result) => {
-//     'use strict';
-//     __LOGGER__.warn(result);
+// }).then(res => {
+//     __LOGGER__.warn(res);
 // });
 
 // receiveAuthorizerCodeNotification({
 //     query: {
-//         code: '011sBWMO1ZWpC11ShqLO1MkeNO1sBWMW',
+//         code: '021NohB31ztu0O1AR4B313MrB31NohBE',
 //         state: 'snsapi_userinfo',
 //         appid: 'wx7770629fee66dd93'
 //     }
@@ -180,7 +249,18 @@ module.exports = {
 //     console.log(session);
 // });
 
-//receiveAuthorizationNotification({
+// { appId: 'wx4328d9d4893f7a2f',
+//     createTime: 1533024535,
+//     infoType: 'updateauthorized',
+//     authorizerAppid: 'wx7770629fee66dd93',
+//     authorizationCode:
+//     'queryauthcode@@@amkk0vhHOe290Y89dnNEUeRgKvNzhe9hmf0cAJ_B7QHd4h0cdSkhD8IiOedp88XvO8WZd1cPeEsCrYRc4f7t4g',
+//         authorizationCodeExpiredTime: '1533028135',
+//     preAuthCode:
+//     'preauthcode@@@RNaXpBjzVAKXZU0KPVV3CWBkH8NmL_qRVNv-X_kty-3p9XAz1xnGqXkbpfAGYc6S' }
+
+
+//receiveLicenseNotification({
 //    body: {
 //        xml: {
 //            appid: 'wx4328d9d4893f7a2f',
@@ -197,19 +277,19 @@ module.exports = {
 //}, () => {
 //});
 
-//receiveAuthorizationNotification({
-//    body: {
-//        xml: {
-//            appid: 'wx4328d9d4893f7a2f',
-//            encrypt: 'lRbeiMGknSn7wm8P9jojunfd9T1EttIItHSVqkX7ET1dfMGEy6hbaWDQgyBdk/tAYXPcjHoiXe+VrpNDGIS95FGSJF8h3CUpse45zwPzF5Xd00MpdkAEVueZaRWWVnn8oDqWLxEBtZhm3Pma/eHIdtZi9ybXtVg5a+BwKrxvjr1051eenKuUdwyBAfKDMyeIz6qBezQoO/p/C6I5k4i4AXRLNO679ZDmhyinUeCAC8pAmhkanPA2lpUKOQL2H5a+ELpzE4oLUvMKRBzVZsoDEG8qzCE4L2HsiFy8yy0l7xbOWCQJEYvV2nluTj3qfAKjwJfqHaR52KK2QmMtt7hRrKoUVz36w5kUgUfSyrlRFEtS9/Is10SADcjOJpWbYMlJWg9WChrEE+/BCB0hCRgaJH338VFa/ibVB/My9K8gRFsTSmwuK9Lr5bkO+C6gVmTbf+GGxCf512rqBzIc9SDyrE+ULhtJLZc3WWvhx6Tik0m3aWYAjh9Aey2C1oiftbxBKQe7FIsAqD9BS6QdnPChRpvvX7hZHbZxGEHmP0XZ66QIZ+YT9tAUlWBxQboEKA1+86OGzRLxj+NZdRRnCnup9DE1c7SwAjdcG/cQ5cm6+PXyd0j8Zpa2qlG7/l3WnDVQo41jP0cmmWNHtbl9hlDIe8nloOHSpdhO/EV8jE/QNZvdomd9s8ppff6e1YiT5lzjZQ/4VvgcFVz1jQfZV9DxGqOMMOrM6JqKSG+rnIx1WdOlovdoiKwuzaYan4VMbxexPt+e+aESxXQqqfvvLziFh0LqwQJMOMMvimzE5g/Aa7w='
-//        }
-//    },
-//    query: {
-//        signature: 'e79f8fe1578975d9baf90e53a41bf42ce440d7be',
-//        timestamp: '1532698982',
-//        nonce: '936592860',
-//        encrypt_type: 'aes',
-//        msg_signature: 'a4532e223b8c1ed1268231999f54c3ffe7470272'
-//    }
-//}, () => {
-//});
+// receiveLicenseNotification({
+//     body: {
+//         xml: {
+//             appid: 'wx4328d9d4893f7a2f',
+//             encrypt: 'vu40uXA9SpYksKNKaUdij1pU5HuiAjSUnoZeTRnlnF4OxKJGD63wU1t27gSp4ObWJYCserb7L/KXNSCjWC7CX+1yiAMGvC2x0jKdouXHZjcbi2PIQesN+GzJwdrOAwTc4vhj+L0NoKrfSWJDqps6XP79sMBU4eNr3thEfN0AfOUufy4MQIzF64qFbfeQUaS4r6EAf5BSq877lZMX6MJaW+zKQK2kv4mNIn5w1yIRGtT+uAYdC02j/38eX8P97DmKqVz7qdZmtkXqGqeioFr2TrxYyqYbaHrTbKPo1WeoVkjXMa8aw+03DvxxWiOdfN+1/cPkqkn7uJ2sSUVUAwuAcLCrql9pb7m9N81iKPNIJAPZ0Yfj44N55DZo60BfoyHyQOCMCMJIzj4kpQSrLTEkW6mjrLKluVSpq+2HmQsJgLZN9ow/rxpsMpNg/8NeR3PKXGEAt4iaVIpofQndLoM7HdI6sChDPQBUrJw33HeJCfuBTITijwBNovUc2CO6a4XyPqdvPhJpZEzfxM9sFe5x9j0ISitM2szZ4GMa6mY6JCEKWijqZOQI1iY2cUO1O5AzoQKP1ywHffvAEeybq1YFHpOzC8ADjGoJDhCUu/sah+tAG+dGpwnashQRSC0mgli6HVJJhAOp955LuokLwW/BG8vGqlZRs76tcoFml+qBu+yAsx/vScxdmdLoWZL2hh3B6PCvqHgiQr9r0yiS4C12lF+CIeW8DVrYIJGpdVQV/8hVMHWghhEe7zBedL2dEhesRLr9czsMqydmGV3JDFUnUHRfFPtr+8cEB7spctZfZes='
+//         }
+//     },
+//     query: {
+//         signature: 'ac9c87ced177bd8e9f62e91b29e0399bc4502390',
+//         timestamp: '1533083907',
+//         nonce: '2062957577',
+//         encrypt_type: 'aes',
+//         msg_signature: '3e4c7d5b8ae629d8fa6deecffb2bfbde3f24bf6a'
+//     }
+// }, () => {
+// });

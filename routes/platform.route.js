@@ -45,7 +45,7 @@ router.all('/license', function (req, res, next) {
     __LOGGER__.debug(req.body);
     __LOGGER__.debug(req.params);
     __LOGGER__.debug(req.query);
-    __PLATFORM__.receiveAuthorizationNotification(req, function (request) {
+    __PLATFORM__.receiveLicenseNotification(req, function (request) {
         res.end('success');
         __LOGGER__.info('========================== END ==========================');
     });
