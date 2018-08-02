@@ -17,7 +17,7 @@ function doHttpsGet(url, callback) {
             data += chunk;
         });
         response.on('end', function () {
-            __LOGGER__.debug('=====  返回结果：' + data);
+            // __LOGGER__.debug('=====  返回结果：' + data);
             callback(data);
             __LOGGER__.info('===== 结束【doHttpsGet】 =====');
         });
@@ -39,13 +39,24 @@ function doHttpGet(url, callback) {
             data += chunk;
         });
         response.on('end', function () {
-            __LOGGER__.debug('=====  返回结果：' + data);
+            // __LOGGER__.debug('=====  返回结果：' + data);
             callback(data);
             __LOGGER__.info('===== 结束【doHttpsGet】 =====');
         });
     }).on('error', function (error) {
         __LOGGER__.error(error);
     });
+}
+
+/**
+ * 将请求URL转化为HTTPS协议
+ * @param url
+ * @param callback
+ */
+function transferToHttpsGet(url, callback) {
+    const tmp = __URL_PARSER__.parse(url);
+    const newUrl = 'https://' + tmp.hostname + tmp.path;
+    doHttpsGet(newUrl, callback);
 }
 
 /**
@@ -136,5 +147,6 @@ module.exports = {
     doHttpGet: doHttpGet,
     doHttpsGet: doHttpsGet,
     doHttpPost: doHttpPost,
-    doHttpsPost: doHttpsPost
+    doHttpsPost: doHttpsPost,
+    transferToHttpsGet: transferToHttpsGet
 };

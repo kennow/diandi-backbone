@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const __LOGGER__ = require('../services/log4js.service').getLogger('aliyun.oss.route.js');
+const __LOGGER__ = require('../services/log4js.service').getLogger('store.route.js');
 const __STORE__ = require('../controller/store.controller');
 const multiparty = require('connect-multiparty');
 const __MULTI_PARTY_MIDDLEWARE__ = multiparty();
@@ -68,6 +68,25 @@ router.post('/video', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });
+});
+
+/**
+ *  公众号文章
+ */
+router.get('/official/material/:media_id', function (req, res, next) {
+    __LOGGER__.info('========================== OFFICIAL ACCOUNT MATERIAL ==========================');
+    __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.params);
+
+    __STORE__.fetchOfficialAccountMaterial(req, function (request) {
+        res.format({
+            'text/html': function () {
+                res.send(request);
+            }
+        });
+        __LOGGER__.info('========================== END ==========================');
+    });
+
 });
 
 module.exports = router;

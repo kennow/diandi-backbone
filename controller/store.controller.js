@@ -1,6 +1,9 @@
 const Q = require('q');
 const fs = require('fs');
 const __ALIYUN_OSS_SERVICE__ = require('../services/aliyun.oss/aliyun.oss.service');
+const __ACCESS_TOKEN_SERVICE__ = require('../services/wechat.access_token/wechat.access_token.service');
+const __OFFICIAL_ACCOUNT_SERVICE__ = require('../services/wechat.official.account/wechat.official.account.service');
+const __HTTP_CLIENT__ = require('../services/http.client');
 const __USER_DATABASE__ = require('../database/user.api');
 const __SHOPPING_DATABASE__ = require('../database/shopping.api');
 const __HELPER__ = require('../utility/helper');
@@ -129,12 +132,46 @@ function downloadFile(request, response) {
         });
 }
 
+/**
+ * 获取公众号的永久素材
+ * @param request
+ * @param response
+ */
+function fetchOfficialAccountMaterial(request, response) {
+    __ACCESS_TOKEN_SERVICE__
+        .accessToken()
+        .then(token => {
+            return Q({
+                access_token: token.access_token,
+                media_id: request.params.media_id
+            });
+        })
+        .then(__OFFICIAL_ACCOUNT_SERVICE__.getMaterial)
+        .then(material => {
+            // __LOGGER__.debug(material);
+            __HTTP_CLIENT__.transferToHttpsGet(material.news_item[0].url, rawData => {
+                response(rawData);
+            });
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+        });
+}
+
 module.exports = {
     fetchSTSToken: fetchSTSToken,
     downloadFile: downloadFile,
     uploadFile: uploadFile,
-    multipartUpload: multipartUpload
+    multipartUpload: multipartUpload,
+    fetchOfficialAccountMaterial: fetchOfficialAccountMaterial
 };
+
+// fetchOfficialAccountMaterial({
+//     params: {
+//         media_id: 'n584HX_l4p6cYQBacvvsy-bt8K3nMEeVPJ9KVIevOvk'
+//     }
+// }, () => {
+// });
 
 // multipartUpload({
 //     body: {

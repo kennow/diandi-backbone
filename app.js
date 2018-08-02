@@ -9,7 +9,7 @@ const platformRouter = require('./routes/platform.route');
 const shoppingRouter = require('./routes/shopping.route');
 const userRouter = require('./routes/user.route');
 const backboneRouter = require('./routes/backbone.route');
-const aliyunOssRouter = require('./routes/aliyun.oss.route');
+const storeRouter = require('./routes/store.route');
 /**
  * The app object has methods for
  * Routing HTTP requests; see for example, app.METHOD and app.param.
@@ -138,7 +138,7 @@ app.use('/platform', platformRouter);
 app.use('/shopping', shoppingRouter);
 app.use('/user', userRouter);
 app.use('/backbone', backboneRouter);
-app.use('/oss', aliyunOssRouter);
+app.use('/oss', storeRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
