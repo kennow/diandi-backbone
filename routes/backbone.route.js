@@ -20,6 +20,15 @@ router.get('/product/list', function (req, res, next) {
     });
 });
 
+router.get('/product/partial', function (req, res, next) {
+    __LOGGER__.info('========================== Product List( Partial ) ==========================');
+    __LOGGER__.debug(req.query);
+    __CONTROLLER_SHOPPING__.fetchPartialProductList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
 /**
  *    上传商品微缩图
  */
@@ -274,6 +283,19 @@ router.all('/notification', function (req, res, next) {
         __LOGGER__.info('========================== END ==========================');
     });
     __LOGGER__.info('========================== END ==========================');
+});
+
+/**
+ *      获取商户列表
+ */
+router.get('/business/list', function (req, res, next) {
+    __LOGGER__.info('========================== 获取商户列表 ==========================');
+    __LOGGER__.info(req.query);
+
+    __CONTROLLER_SHOPPING__.fetchBusinessList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
 });
 
 module.exports = router;

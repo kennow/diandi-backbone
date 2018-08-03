@@ -11,7 +11,7 @@ const __SERVICE_WECHAT_SHOPPING_CARD__ = require('../services/wechat.shopping.ca
 const __STRUCTURE__ = require('../services/wechat.shopping.card/wechat.shopping.card.structure');
 
 /**
- *   获取商品列表
+ *      获取商品列表
  *
  * @param request
  * @param response
@@ -39,6 +39,34 @@ function fetchProductList(request, response) {
 //     'use strict';
 //     console.log(res.msg.product);
 //     console.log(res.msg.gallery);
+// });
+
+/**
+ *      获取部分商品列表
+ *
+ * @param request
+ * @param response
+ */
+function fetchPartialProductList(request, response) {
+    __SHOPPING_DATABASE__
+        .fetchPartialProductList(request.query)
+        .then(function (result) {
+            response(result);
+        })
+        .catch(function (exception) {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+// fetchPartialProductList({
+//     query: {
+//         session: 'yVOCw3GSn7XjH45up9mGclQ43XjYCZ1k',
+//         amount: 5,
+//     }
+// }, result => {
+//     'use strict';
+//     console.log(result);
 // });
 
 /**
@@ -757,6 +785,25 @@ function queryUserCards(request, response) {
         });
 }
 
+/**
+ * 获取商户列表
+ * @param request
+ * @param response
+ */
+function fetchBusinessList(request, response) {
+    __SHOPPING_DATABASE__
+        .fetchBusinessList({
+            session: request.query.session
+        })
+        .then(result => {
+            response(result);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
 // queryUserCards({
 //     body: {
 //         session: 'o6ieHVpjL2R8ENeEQ5xs9cr8ObDLx5ur',
@@ -846,6 +893,7 @@ module.exports = {
     fetchOrderNotPayTimeout: fetchOrderNotPayTimeout,
     receivePayResultNotification: receivePayResultNotification,
     fetchProductList: fetchProductList,
+    fetchPartialProductList: fetchPartialProductList,
     fetchProductDetail: fetchProductDetail,
     refund: refund,
     receiveRefundResultNotification: receiveRefundResultNotification,
@@ -861,7 +909,8 @@ module.exports = {
     associateProductCard: associateProductCard,
     putCouponIntoCardHolder: putCouponIntoCardHolder,
     recordUserCard: recordUserCard,
-    queryUserCards: queryUserCards
+    queryUserCards: queryUserCards,
+    fetchBusinessList: fetchBusinessList
 };
 
 //fetchRefundInfo({

@@ -869,6 +869,46 @@ function fetchProductList(request) {
 }
 
 /**
+ *
+ * @param request
+ * @returns {*|C|promise}
+ */
+function fetchPartialProductList(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 查询商品
+             */
+            basicQuerySQL: __STATEMENT__.__FETCH_PARTIAL_PRODUCT__,
+            basicQueryParams: [
+                parseInt(request.amount)
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
  *   获取商品详情
  *
  * @param request
@@ -1570,9 +1610,48 @@ function userConsumeCard(request) {
     return deferred.promise;
 }
 
+/**
+ * 获取商户列表
+ * @param request
+ * @returns {*|C|promise}
+ */
+function fetchBusinessList(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检查登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 查询商户列表
+             */
+            basicQuerySQL: __STATEMENT__.__FETCH_BUSINESS_LIST__,
+            basicQueryParams: []
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     checkSession: checkSession,
     fetchProductList: fetchProductList,
+    fetchPartialProductList: fetchPartialProductList,
     fetchProductDetail: fetchProductDetail,
     addNewStockAttribute: addNewStockAttribute,
     addNewStockValue: addNewStockValue,
@@ -1600,7 +1679,8 @@ module.exports = {
     queryUserCards: queryUserCards,
     userGetCard: userGetCard,
     userPayFromPayCell: userPayFromPayCell,
-    userConsumeCard: userConsumeCard
+    userConsumeCard: userConsumeCard,
+    fetchBusinessList: fetchBusinessList
 };
 
 //changeRefundStatus({

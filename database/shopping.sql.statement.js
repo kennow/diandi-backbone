@@ -12,6 +12,7 @@ const __ADD_REL_PRODUCT_ATTR_VALUE__ = 'INSERT INTO rel_product_attribute_value 
 const __ADD_REL_PRODUCT_GALLERY__ = 'INSERT INTO rel_product_gallery SET ?';
 const __FETCH_PRODUCT_FULL__ = 'SELECT * FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?';
 const __FETCH_PRODUCT_PART__ = 'SELECT * FROM tb_product WHERE status = 0 AND createTime < ? ORDER BY createTime DESC LIMIT ?';
+const __FETCH_PARTIAL_PRODUCT__ = 'SELECT pid, name, type FROM tb_product ORDER BY createTime DESC LIMIT 1,?';
 const __FETCH_PRODUCT_DETAILS__ = 'SELECT name, description, sales, type FROM tb_product WHERE pid = ?';
 const __FETCH_PRODUCT_THUMBNAILS__ = 'SELECT a.productid, b.name FROM rel_product_gallery a, tb_gallery b WHERE a.productid in (SELECT foo.pid FROM (SELECT pid FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?) as foo) AND a.type = 0 AND a.imageid = b.imageid';
 const __FETCH_PRODUCT_STANDARDS__ = 'SELECT b.*, c.vid, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.pid = ? AND a.aid = b.aid AND a.vid = c.vid';
@@ -73,6 +74,10 @@ const __QUERY_USER_CARDS__ = 'SELECT cardid, code FROM tb_card WHERE out_trade_n
 const __USER_PAY_FROM_PAY_CELL__ = 'UPDATE tb_card SET payCellTime = ?, transid = ?, locationid = ?, fee = ?, originalFee = ? WHERE cardid = ? AND code = ?';
 const __USER_CONSUME_CARD__ = 'UPDATE tb_card SET consumeTime = ?, consumeSource = ?, staffOpenid = ?, transid = ? WHERE cardid = ? AND code = ?';
 const __EVER_GET_CARD__ = 'SELECT d.cardid, c.* FROM tb_order a, tb_user b, rel_order_sku c, tb_card d WHERE a.status = 1 AND b.3rd_session = ? AND c.stock_no = ? AND a.user_id = b.uid AND a.out_trade_no = c.out_trade_no AND c.out_trade_no = d.out_trade_no';
+/**
+ *   商户
+ */
+const __FETCH_BUSINESS_LIST__ = 'SELECT * FROM tb_business';
 
 module.exports = {
     __ADD_NEW_SKU_ATTRIBUTE__: __ADD_NEW_SKU_ATTRIBUTE__,
@@ -86,6 +91,7 @@ module.exports = {
     __ADD_REL_PRODUCT_GALLERY__: __ADD_REL_PRODUCT_GALLERY__,
     __FETCH_PRODUCT_FULL__: __FETCH_PRODUCT_FULL__,
     __FETCH_PRODUCT_PART__: __FETCH_PRODUCT_PART__,
+    __FETCH_PARTIAL_PRODUCT__: __FETCH_PARTIAL_PRODUCT__,
     __FETCH_PRODUCT_DETAILS__: __FETCH_PRODUCT_DETAILS__,
     __FETCH_PRODUCT_THUMBNAILS__: __FETCH_PRODUCT_THUMBNAILS__,
     __FETCH_PRODUCT_STANDARDS__: __FETCH_PRODUCT_STANDARDS__,
@@ -130,5 +136,6 @@ module.exports = {
     __QUERY_USER_CARDS__: __QUERY_USER_CARDS__,
     __USER_PAY_FROM_PAY_CELL__: __USER_PAY_FROM_PAY_CELL__,
     __USER_CONSUME_CARD__: __USER_CONSUME_CARD__,
-    __EVER_GET_CARD__: __EVER_GET_CARD__
+    __EVER_GET_CARD__: __EVER_GET_CARD__,
+    __FETCH_BUSINESS_LIST__: __FETCH_BUSINESS_LIST__
 };
