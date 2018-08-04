@@ -96,6 +96,7 @@ function getMaterial(request) {
 module.exports = {
     createMenu: createMenu,
     deleteMenu: deleteMenu,
+    getMaterialList: getMaterialList,
     getMaterial: getMaterial
 };
 
@@ -129,24 +130,29 @@ module.exports = {
 //         console.log(res);
 //     });
 
-// __SERVICE_ACCESS_TOKEN__
-//     .accessToken()
-//     .then(request => {
-//         'use strict';
-//         return Q({
-//             access_token: request.access_token,
-//             offset: 9
-//         });
-//     })
-//     .then(getMaterialList)
-//     .then(res => {
-//         'use strict';
-//         console.log(res.item[0].content.news_item[0].title);
-//     })
-//     .catch(error => {
-//         'use strict';
-//         console.error(error);
-//     });
+//__SERVICE_ACCESS_TOKEN__
+//    .accessToken()
+//    .then(request => {
+//        'use strict';
+//        return Q({
+//            access_token: request.access_token,
+//            offset: 5,
+//            count: 5
+//        });
+//    })
+//    .then(getMaterialList)
+//    .then(res => {
+//        'use strict';
+//        //console.log(res.item[0].content.news_item[0].title);
+//        res.item.map(item => {
+//            console.log(item.content.news_item[0].title);
+//        });
+//        console.log(res.item);
+//    })
+//    .catch(error => {
+//        'use strict';
+//        console.error(error);
+//    });
 
 // __SERVICE_ACCESS_TOKEN__
 //     .accessToken()

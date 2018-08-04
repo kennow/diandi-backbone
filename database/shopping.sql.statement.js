@@ -12,7 +12,7 @@ const __ADD_REL_PRODUCT_ATTR_VALUE__ = 'INSERT INTO rel_product_attribute_value 
 const __ADD_REL_PRODUCT_GALLERY__ = 'INSERT INTO rel_product_gallery SET ?';
 const __FETCH_PRODUCT_FULL__ = 'SELECT * FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?';
 const __FETCH_PRODUCT_PART__ = 'SELECT * FROM tb_product WHERE status = 0 AND createTime < ? ORDER BY createTime DESC LIMIT ?';
-const __FETCH_PARTIAL_PRODUCT__ = 'SELECT pid, name, type FROM tb_product ORDER BY createTime DESC LIMIT 1,?';
+const __FETCH_PARTIAL_PRODUCT__ = 'SELECT pid, name, type FROM tb_product ORDER BY createTime DESC LIMIT ?,?';
 const __FETCH_PRODUCT_DETAILS__ = 'SELECT name, description, sales, type FROM tb_product WHERE pid = ?';
 const __FETCH_PRODUCT_THUMBNAILS__ = 'SELECT a.productid, b.name FROM rel_product_gallery a, tb_gallery b WHERE a.productid in (SELECT foo.pid FROM (SELECT pid FROM tb_product WHERE createTime < ? ORDER BY createTime DESC LIMIT ?) as foo) AND a.type = 0 AND a.imageid = b.imageid';
 const __FETCH_PRODUCT_STANDARDS__ = 'SELECT b.*, c.vid, c.value FROM rel_product_attribute_value a, tb_sku_attribute b, tb_sku_value c WHERE a.pid = ? AND a.aid = b.aid AND a.vid = c.vid';
@@ -78,6 +78,17 @@ const __EVER_GET_CARD__ = 'SELECT d.cardid, c.* FROM tb_order a, tb_user b, rel_
  *   商户
  */
 const __FETCH_BUSINESS_LIST__ = 'SELECT * FROM tb_business';
+const __FETCH_BUSINESS__ = 'SELECT * FROM tb_business WHERE bid = ?';
+const __FETCH_REL_BUSINESS_PRODUCT__ = 'SELECT * FROM rel_business_product WHERE businessId = ?';
+const __FETCH_REL_BUSINESS_MATERIAL__ = 'SELECT * FROM rel_business_material WHERE businessId = ?';
+const __ADD_BUSINESS__ = 'INSERT INTO tb_business SET ?';
+const __UPDATE_BUSINESS__ = 'UPDATE tb_business SET ? WHERE bid = ?';
+const __ADD_REL_BUSINESS_PRODUCT__ = 'INSERT INTO rel_business_product SET ?';
+const __ADD_REL_BUSINESS_MATERIAL__ = 'INSERT INTO rel_business_material SET ?';
+const __REMOVE_BUSINESS__ = 'DELETE FROM tb_business WHERE bid = ?';
+const __REMOVE_REL_BUSINESS_PRODUCT__ = 'DELETE FROM rel_business_product WHERE businessId = ?';
+const __REMOVE_REL_BUSINESS_MATERIAL__ = 'DELETE FROM rel_business_material WHERE businessId = ?';
+const __UPDATE_BUSINESS_STATUS__ = 'UPDATE tb_business SET status = ? WHERE bid = ?';
 
 module.exports = {
     __ADD_NEW_SKU_ATTRIBUTE__: __ADD_NEW_SKU_ATTRIBUTE__,
@@ -127,6 +138,7 @@ module.exports = {
     __QUERY_PRODUCT_CARD__: __QUERY_PRODUCT_CARD__,
     __CHECK_ASSOCIATE__: __CHECK_ASSOCIATE__,
     __ADD_PRODUCT_CARD__: __ADD_PRODUCT_CARD__,
+    __UPDATE_BUSINESS__: __UPDATE_BUSINESS__,
     __UPDATE_PRODUCT_CARD__: __UPDATE_PRODUCT_CARD__,
     __CHECK_OPENID_CONSISTENCY__: __CHECK_OPENID_CONSISTENCY__,
     __CHECK_USER_CARD_RECORD__: __CHECK_USER_CARD_RECORD__,
@@ -137,5 +149,15 @@ module.exports = {
     __USER_PAY_FROM_PAY_CELL__: __USER_PAY_FROM_PAY_CELL__,
     __USER_CONSUME_CARD__: __USER_CONSUME_CARD__,
     __EVER_GET_CARD__: __EVER_GET_CARD__,
-    __FETCH_BUSINESS_LIST__: __FETCH_BUSINESS_LIST__
+    __FETCH_BUSINESS_LIST__: __FETCH_BUSINESS_LIST__,
+    __FETCH_BUSINESS__: __FETCH_BUSINESS__,
+    __FETCH_REL_BUSINESS_PRODUCT__: __FETCH_REL_BUSINESS_PRODUCT__,
+    __FETCH_REL_BUSINESS_MATERIAL__: __FETCH_REL_BUSINESS_MATERIAL__,
+    __ADD_BUSINESS__: __ADD_BUSINESS__,
+    __ADD_REL_BUSINESS_PRODUCT__: __ADD_REL_BUSINESS_PRODUCT__,
+    __ADD_REL_BUSINESS_MATERIAL__: __ADD_REL_BUSINESS_MATERIAL__,
+    __REMOVE_BUSINESS__: __REMOVE_BUSINESS__,
+    __REMOVE_REL_BUSINESS_PRODUCT__: __REMOVE_REL_BUSINESS_PRODUCT__,
+    __REMOVE_REL_BUSINESS_MATERIAL__: __REMOVE_REL_BUSINESS_MATERIAL__,
+    __UPDATE_BUSINESS_STATUS__: __UPDATE_BUSINESS_STATUS__
 };

@@ -890,6 +890,7 @@ function fetchPartialProductList(request) {
              */
             basicQuerySQL: __STATEMENT__.__FETCH_PARTIAL_PRODUCT__,
             basicQueryParams: [
+                parseInt(request.offset),
                 parseInt(request.amount)
             ]
         })
@@ -1648,6 +1649,324 @@ function fetchBusinessList(request) {
     return deferred.promise;
 }
 
+/**
+ * 查询商户
+ * @param request
+ * @returns {*}
+ */
+function fetchBusinessDetail(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检查登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 查询商户信息
+             */
+            batchQueryIndex: 0,                             //  索引
+            batchQueryTag: [                                //  标签
+                'business',
+                'product',
+                'material'
+            ],
+            batchQuerySQL: [                                //  执行语句
+                __STATEMENT__.__FETCH_BUSINESS__,
+                __STATEMENT__.__FETCH_REL_BUSINESS_PRODUCT__,
+                __STATEMENT__.__FETCH_REL_BUSINESS_MATERIAL__
+            ],
+            batchQueryParams: [                             //  对应参数
+                [request.bid],
+                [request.bid],
+                [request.bid]
+            ]
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.inAll)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 添加商户
+ *
+ * @param request
+ * @returns {*}
+ */
+function addBusiness(request) {
+    const deferred = Q.defer();
+    const businessId = __HELPER__.getNonceStr(32);
+    const business = JSON.parse(request.business);
+
+    let
+        params = {
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 新增商户及相关联系
+             */
+            oneStepIndex: 0,
+            oneStepSQLs: [],
+            oneStepParams: []
+        };
+
+    /**
+     *  表 tb_business
+     */
+    params.oneStepSQLs.push(__STATEMENT__.__ADD_BUSINESS__);
+    params.oneStepParams.push({
+        bid: businessId,
+        name: business.name,
+        latitude: business.latitude,
+        longitude: business.longitude,
+        type: business.type,
+        shopHours: business.shopHours,
+        phone: business.phone,
+        address: business.address,
+        consumptionPerPerson: business.consumptionPerPerson,
+        remark: business.remark
+    });
+
+    /**
+     *  表 rel_business_product
+     */
+    if (business.associatedProductPid && business.associatedProductPid !== '') {
+        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_BUSINESS_PRODUCT__);
+        params.oneStepParams.push({
+            businessId: businessId,
+            productId: business.associatedProductPid
+        });
+    }
+
+    /**
+     *  表 rel_business_material
+     */
+    if (business.associatedMaterialId && business.associatedMaterialId !== '') {
+        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_BUSINESS_MATERIAL__);
+        params.oneStepParams.push({
+            businessId: businessId,
+            mediaId: business.associatedMaterialId
+        });
+    }
+
+    __MYSQL_API__
+        .setUpConnection(params)
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.executeInOrder)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 编辑商户
+ * @param request
+ * @returns {*}
+ */
+function updateBusiness(request) {
+    const deferred = Q.defer();
+    const business = JSON.parse(request.business);
+
+    let
+        params = {
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 新增商户及相关联系
+             */
+            oneStepIndex: 0,
+            oneStepSQLs: [],
+            oneStepParams: []
+        };
+
+    /**
+     *  表 tb_business
+     */
+    params.oneStepSQLs.push(__STATEMENT__.__UPDATE_BUSINESS__);
+    params.oneStepParams.push([{
+        name: business.name,
+        latitude: business.latitude,
+        longitude: business.longitude,
+        type: business.type,
+        shopHours: business.shopHours,
+        phone: business.phone,
+        address: business.address,
+        consumptionPerPerson: business.consumptionPerPerson,
+        remark: business.remark
+    },
+        business.bid
+    ]);
+
+    /**
+     *  表 rel_business_product
+     */
+    params.oneStepSQLs.push(__STATEMENT__.__REMOVE_REL_BUSINESS_PRODUCT__);
+    params.oneStepParams.push([business.bid]);
+    if (business.associatedProductPid && business.associatedProductPid !== '') {
+        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_BUSINESS_PRODUCT__);
+        params.oneStepParams.push({
+            businessId: business.bid,
+            productId: business.associatedProductPid
+        });
+    }
+
+    /**
+     *  表 rel_business_material
+     */
+    params.oneStepSQLs.push(__STATEMENT__.__REMOVE_REL_BUSINESS_MATERIAL__);
+    params.oneStepParams.push([business.bid]);
+    if (business.associatedMaterialId && business.associatedMaterialId !== '') {
+        params.oneStepSQLs.push(__STATEMENT__.__ADD_REL_BUSINESS_MATERIAL__);
+        params.oneStepParams.push({
+            businessId: business.bid,
+            mediaId: business.associatedMaterialId
+        });
+    }
+
+    __MYSQL_API__
+        .setUpConnection(params)
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.executeInOrder)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 移除商户
+ * @param request
+ * @returns {*}
+ */
+function deleteBusiness(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 新增商户及相关联系
+             */
+            oneStepIndex: 0,
+            oneStepSQLs: [
+                __STATEMENT__.__REMOVE_REL_BUSINESS_PRODUCT__,
+                __STATEMENT__.__REMOVE_REL_BUSINESS_MATERIAL__,
+                __STATEMENT__.__REMOVE_BUSINESS__
+            ],
+            oneStepParams: [
+                [request.bid],
+                [request.bid],
+                [request.bid]
+            ]
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.executeInOrder)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 修改商户状态
+ * @param request
+ * @returns {*}
+ */
+function changeBusinessStatus(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 修改状态
+             */
+            basicUpdateSQL: __STATEMENT__.__UPDATE_BUSINESS_STATUS__,
+            basicUpdateParams: [
+                request.status, request.bid
+            ]
+        })
+        .then(__MYSQL_API__.beginTransaction)
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicUpdate)
+        .then(__MYSQL_API__.commitTransaction)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onRejectWithRollback(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
 module.exports = {
     checkSession: checkSession,
     fetchProductList: fetchProductList,
@@ -1680,7 +1999,12 @@ module.exports = {
     userGetCard: userGetCard,
     userPayFromPayCell: userPayFromPayCell,
     userConsumeCard: userConsumeCard,
-    fetchBusinessList: fetchBusinessList
+    fetchBusinessList: fetchBusinessList,
+    fetchBusinessDetail: fetchBusinessDetail,
+    addBusiness: addBusiness,
+    updateBusiness: updateBusiness,
+    deleteBusiness: deleteBusiness,
+    changeBusinessStatus: changeBusinessStatus
 };
 
 //changeRefundStatus({
@@ -1839,3 +2163,15 @@ module.exports = {
 // }, function (result) {
 //     __LOGGER__.info(result);
 // });
+
+//addBusiness(
+//    {
+//        session: 'yVOCw3GSn7XjH45up9mGclQ43XjYCZ1k',
+//        business: '{"type":"32","name":"瓜博士","address":"莆田市城厢区学园中街吉祥如意楼瓜博士（安福妈祖文化研究院旁）","longitude":119.017532,"latitude":25.4478,"shopHours":"11:00-14:00 ；17:00-03:00","phone":"0594-2568777","comsuptionPerPersion":"￥60+","remark":"福利一：吃货队粉丝享受全场菜金5折>的特权；（酒水锅底饮料除外，仅限堂食）\\n\\n福利二：享受吃多少送多少的特权（送的充值金额可在下次消费时无门槛抵用）\\n\\n活动时间：8月4号 -8月11号，福利一福利二不可同享","associatedProductPid":"ZQ1IkvOcxbKP8ZqxsfBByfA6DlT8djJy","associatedMaterialId":"n584HX_l4p6cYQBacvvsyynyglNzjRVWMs9vOmDVt6U"}'
+//    }
+//);
+
+//deleteBusiness({
+//    session: 'yVOCw3GSn7XjH45up9mGclQ43XjYCZ1k',
+//    bid: 'Kklf1QVo4jEmF0J8PKsk9zSuLWbDiAYX'
+//});

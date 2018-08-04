@@ -40,15 +40,15 @@ function uploadFile(request, response) {
     const ossFileName = __HELPER__.generateRandomFileName() + tmpFile.name.substr(tmpFile.name.lastIndexOf('.'));
     __LOGGER__.debug(ossFileName);
     __ALIYUN_OSS_SERVICE__.setUpClient({
-        options: {
-            retransmission: 0,
-            filePath: tmpFile.path,
-            fileName: ossFileName,
-            fileSize: tmpFile.size,
-            targetFolder: request.body.folder || 'backbone',
-            redoFn: __ALIYUN_OSS_SERVICE__.putStream
-        }
-    })
+            options: {
+                retransmission: 0,
+                filePath: tmpFile.path,
+                fileName: ossFileName,
+                fileSize: tmpFile.size,
+                targetFolder: request.body.folder || 'backbone',
+                redoFn: __ALIYUN_OSS_SERVICE__.putStream
+            }
+        })
         .then(__ALIYUN_OSS_SERVICE__.retransmission)
         .then(request => {
             return Q({
@@ -79,15 +79,15 @@ function multipartUpload(request, response) {
     const ossFileName = __HELPER__.generateRandomFileName() + tmpFile.name.substr(tmpFile.name.lastIndexOf('.'));
     __LOGGER__.debug(ossFileName);
     __ALIYUN_OSS_SERVICE__.setUpClient({
-        options: {
-            retransmission: 0,
-            filePath: tmpFile.path,
-            fileName: ossFileName,
-            fileSize: tmpFile.size,
-            targetFolder: request.body.folder || 'backbone/video',
-            redoFn: __ALIYUN_OSS_SERVICE__.multipartUpload
-        }
-    })
+            options: {
+                retransmission: 0,
+                filePath: tmpFile.path,
+                fileName: ossFileName,
+                fileSize: tmpFile.size,
+                targetFolder: request.body.folder || 'backbone/video',
+                redoFn: __ALIYUN_OSS_SERVICE__.multipartUpload
+            }
+        })
         .then(__ALIYUN_OSS_SERVICE__.retransmission)
         .then(request => {
             __LOGGER__.debug(request);
@@ -133,6 +133,34 @@ function downloadFile(request, response) {
 }
 
 /**
+ * 获取公众号文章列表
+ * @param request
+ * @param response
+ */
+function fetchOfficialAccountMaterialList(request, response) {
+    __ACCESS_TOKEN_SERVICE__
+        .accessToken()
+        .then(token => {
+            return Q({
+                access_token: token.access_token,
+                offset: request.offset,
+                count: request.count
+            });
+        })
+        .then(__OFFICIAL_ACCOUNT_SERVICE__.getMaterialList)
+        .then(res => {
+            res.item.map(item => {
+                __LOGGER__.debug(item.content.news_item[0].title);
+            });
+            response(res.item);
+        })
+        .catch(error => {
+            'use strict';
+            __LOGGER__.error(error);
+        });
+}
+
+/**
  * 获取公众号的永久素材
  * @param request
  * @param response
@@ -155,6 +183,7 @@ function fetchOfficialAccountMaterial(request, response) {
         })
         .catch(error => {
             __LOGGER__.error(error);
+            response(error)
         });
 }
 
@@ -163,6 +192,7 @@ module.exports = {
     downloadFile: downloadFile,
     uploadFile: uploadFile,
     multipartUpload: multipartUpload,
+    fetchOfficialAccountMaterialList: fetchOfficialAccountMaterialList,
     fetchOfficialAccountMaterial: fetchOfficialAccountMaterial
 };
 

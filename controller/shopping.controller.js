@@ -59,15 +59,19 @@ function fetchPartialProductList(request, response) {
         });
 }
 
-// fetchPartialProductList({
-//     query: {
-//         session: 'yVOCw3GSn7XjH45up9mGclQ43XjYCZ1k',
-//         amount: 5,
-//     }
-// }, result => {
-//     'use strict';
-//     console.log(result);
-// });
+//fetchPartialProductList({
+//    query: {
+//        session: 'yVOCw3GSn7XjH45up9mGclQ43XjYCZ1k',
+//        offset: 5,
+//        amount: 5
+//    }
+//}, result => {
+//    'use strict';
+//    //console.log(result);
+//    result.msg.map(item => {
+//        console.log(decodeURIComponent(item.name));
+//    })
+//});
 
 /**
  *   获取商品详情
@@ -804,6 +808,112 @@ function fetchBusinessList(request, response) {
         });
 }
 
+/**
+ * 获取商户信息
+ * @param request
+ * @param response
+ */
+function fetchBusinessDetail(request, response) {
+    __SHOPPING_DATABASE__
+        .fetchBusinessDetail({
+            session: request.query.session,
+            bid: request.query.bid
+        })
+        .then(result => {
+            response(result);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+//fetchBusinessDetail({
+//    query: {
+//        session: 'yVOCw3GSn7XjH45up9mGclQ43XjYCZ1k',
+//        bid: 'IcsqXKApo7Kx4ekQohcZDcLhI3rV0r0G'
+//    }
+//}, (result) => {
+//    'use strict';
+//    __LOGGER__.debug(result);
+//});
+
+/**
+ * 添加商户
+ * @param request
+ * @param response
+ */
+function addBusiness(request, response) {
+    __SHOPPING_DATABASE__
+        .addBusiness(request.body)
+        .then(result => {
+            response(result);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ * 编辑商户
+ * @param request
+ * @param response
+ */
+function editBusiness(request, response) {
+    __SHOPPING_DATABASE__
+        .updateBusiness(request.body)
+        .then(result => {
+            response(result);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ * 移除商户
+ * @param request
+ * @param response
+ */
+function deleteBusiness(request, response) {
+    __SHOPPING_DATABASE__
+        .deleteBusiness(request.query)
+        .then(result => {
+            response(result);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
+ * 修改商户状态
+ * @param request
+ * @param response
+ */
+function changeBusinessStatus(request, response) {
+    __SHOPPING_DATABASE__
+        .changeBusinessStatus(request.body)
+        .then(result => {
+            response(result);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+//addBusiness({
+//    body: {
+//        session: 'yVOCw3GSn7XjH45up9mGclQ43XjYCZ1k',
+//        business: '{"type":"32","name":"瓜博士","address":"莆田市城厢区学园中街吉祥如意楼瓜博士（安福妈祖文化研究院旁）","longitude":119.017532,"latitude":25.4478,"shopHours":"11:00-14:00 ；17:00-03:00","phone":"0594-2568777","comsuptionPerPersion":"￥60+","remark":"福利一：吃货队粉丝享受全场菜金5折>的特权；（酒水锅底饮料除外，仅限堂食）\\n\\n福利二：享受吃多少送多少的特权（送的充值金额可在下次消费时无门槛抵用）\\n\\n活动时间：8月4号 -8月11号，福利一福利二不可同享","associatedProductPid":"","associatedMaterialId":""}'
+//    }
+//}, () => {
+//});
+
 // queryUserCards({
 //     body: {
 //         session: 'o6ieHVpjL2R8ENeEQ5xs9cr8ObDLx5ur',
@@ -910,7 +1020,12 @@ module.exports = {
     putCouponIntoCardHolder: putCouponIntoCardHolder,
     recordUserCard: recordUserCard,
     queryUserCards: queryUserCards,
-    fetchBusinessList: fetchBusinessList
+    fetchBusinessList: fetchBusinessList,
+    fetchBusinessDetail: fetchBusinessDetail,
+    addBusiness: addBusiness,
+    editBusiness: editBusiness,
+    deleteBusiness: deleteBusiness,
+    changeBusinessStatus: changeBusinessStatus
 };
 
 //fetchRefundInfo({
@@ -1026,3 +1141,23 @@ module.exports = {
 //}, function (result) {
 //    __LOGGER__.debug(result);
 //});
+
+//changeBusinessStatus({
+//    body: {
+//        session: 'yVOCw3GSn7XjH45up9mGclQ43XjYCZ1k',
+//        status: 1,
+//        bid: 'cnXTviQSBc5KjslME6OH47RCP7bdbKeH'
+//    }
+//}, () => {
+//    'use strict';
+//});
+
+//editBusiness({
+//    body: {
+//        session: 'yVOCw3GSn7XjH45up9mGclQ43XjYCZ1k',
+//        business: '{"bid":"IcsqXKApo7Kx4ekQohcZDcLhI3rV0r0G","type":32,"name":"瓜博士","address":"莆田市城厢区学园中街吉祥如意楼瓜博士（安福妈祖文化研究院旁）","longitude":119.0175323,"latitude":25.4477997,"shopHours":"11:00-14:00 ；17:00-03:00","phone":"0594-2568777","consumptionPerPerson":"￥60+","remark":"福利一：吃货队粉丝享受全场菜金5折的特权；（酒水锅底饮料除外，仅限堂食）\\n\\n福利二：享受吃多少送多少的特权（送的充值金额可在下次消费>时无门槛抵用）\\n\\n活动时间：8月4号 -8月11号，福利一福利二不可同享","associatedProductPid":"ZQ1IkvOcxbKP8ZqxsfBByfA6DlT8djJy","associatedMaterialId":"n584HX_l4p6cYQBacvvsyynyglNzjRVWMs9vOmDVt6U"}'
+//    }
+//}, result => {
+//    'use strict';
+//    console.log(result);
+//})

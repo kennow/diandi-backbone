@@ -289,10 +289,94 @@ router.all('/notification', function (req, res, next) {
  *      获取商户列表
  */
 router.get('/business/list', function (req, res, next) {
-    __LOGGER__.info('========================== 获取商户列表 ==========================');
+    __LOGGER__.info('========================== BUSINESS LIST ==========================');
     __LOGGER__.info(req.query);
 
     __CONTROLLER_SHOPPING__.fetchBusinessList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      获取商户信息
+ */
+router.get('/business/detail', function (req, res, next) {
+    __LOGGER__.info('========================== BUSINESS DETAIL ==========================');
+    __LOGGER__.info(req.query);
+
+    __CONTROLLER_SHOPPING__.fetchBusinessDetail(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      获取商户关联软文列表
+ */
+router.get('/official/list/material', function (req, res, next) {
+    __LOGGER__.info('========================== OFFICIAL ACCOUNT MATERIAL LIST ==========================');
+    __LOGGER__.debug(req.query);
+
+    __CONTROLLER_STORE__.fetchOfficialAccountMaterialList(req.query, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+
+});
+
+/**
+ *      添加商户
+ */
+router.post('/business', function (req, res, next) {
+    __LOGGER__.info('========================== ADD BUSINESS ==========================');
+    __LOGGER__.info(req.body);
+
+    __CONTROLLER_SHOPPING__.addBusiness(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      编辑商户
+ */
+router.put('/business', function (req, res, next) {
+    __LOGGER__.info('========================== EDIT BUSINESS ==========================');
+    __LOGGER__.debug(req.params);
+    __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.query);
+
+    __CONTROLLER_SHOPPING__.editBusiness(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+
+/**
+ *      移除商户
+ */
+router.delete('/business', function (req, res, next) {
+    __LOGGER__.info('========================== REMOVE BUSINESS ==========================');
+    __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.params);
+    __LOGGER__.debug(req.query);
+
+    __CONTROLLER_SHOPPING__.deleteBusiness(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      修改商户状态
+ */
+router.post('/business/status', function (req, res, next) {
+    __LOGGER__.info('========================== CHANGE BUSINESS STATUS ==========================');
+    __LOGGER__.info(req.body);
+
+    __CONTROLLER_SHOPPING__.changeBusinessStatus(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });

@@ -124,7 +124,7 @@ function doHttpPost(host, port, data, callback) {
             'Content-Length': Buffer.byteLength(postData)
         }
     };
-    __LOGGER__.info('=====  doHttpPost ==> options: ' + JSON.stringify(options));
+    //__LOGGER__.info('=====  doHttpPost ==> options: ' + JSON.stringify(options));
     const req = __HTTP__.request(options, function (res) {
         let data = '';
         res.on('data', function (chunk) {
