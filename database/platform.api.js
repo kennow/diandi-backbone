@@ -85,7 +85,7 @@ function wechatOpenPlatformLogin(request) {
                 'appid': request.appid,
                 'openid': request.openid,
                 '3rd_session': nonceStr,
-                'role': __USER_STATEMENT__.__USER_TYPE__.OPEN_PLATFORM,
+                'role': request.role,
                 'expires_in': request.expiresIn
             }],
             /**
@@ -96,7 +96,7 @@ function wechatOpenPlatformLogin(request) {
                 {
                     'appid': request.appid,
                     '3rd_session': nonceStr,
-                    'role': __USER_STATEMENT__.__USER_TYPE__.OPEN_PLATFORM,
+                    'role': request.role,
                     'expires_in': request.expiresIn
                 },
                 request.openid

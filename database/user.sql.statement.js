@@ -13,7 +13,8 @@ const __UPDATE_USER__ = 'UPDATE tb_user SET ? WHERE openid = ?';
 const __USER_TYPE__ = {
     MINI_PROGRAM: 1,            //  莆素小程序登录用户
     MANAGER: 2,                 //  管理员
-    OPEN_PLATFORM: 3            //  使用开放平台的登录用户
+    OPEN_PLATFORM: 3,           //  使用第三方平台登录商家或自媒体的用户
+    WEBSITE: 4                  //  莆素网站登录用户
 };
 const __FETCH_USER_SESSION__ = 'SELECT 3rd_session FROM tb_user WHERE phone = ?';
 const __FETCH_USER_INFO__ = 'SELECT * FROM tb_user WHERE 3rd_session = ?';

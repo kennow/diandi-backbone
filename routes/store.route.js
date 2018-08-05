@@ -71,7 +71,7 @@ router.post('/video', __MULTI_PARTY_MIDDLEWARE__, function (req, res, next) {
 });
 
 /**
- *  公众号文章
+ *  公众号 -- 图文素材
  */
 router.get('/official/material/:media_id', function (req, res, next) {
     __LOGGER__.info('========================== OFFICIAL ACCOUNT MATERIAL ==========================');
@@ -79,6 +79,25 @@ router.get('/official/material/:media_id', function (req, res, next) {
     __LOGGER__.debug(req.params);
 
     __STORE__.fetchOfficialAccountMaterial(req, function (request) {
+        res.json(request);
+        //res.format({
+        //    'text/html': function () {
+        //        res.send(request);
+        //    }
+        //});
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *  公众号 -- 文章详情
+ */
+router.get('/official/news', function (req, res, next) {
+    __LOGGER__.info('========================== OFFICIAL ACCOUNT NEWS ==========================');
+    __LOGGER__.debug(req.query);
+    __LOGGER__.debug(req.params);
+
+    __STORE__.fetchOfficialAccountNews(req, function (request) {
         res.format({
             'text/html': function () {
                 res.send(request);
@@ -87,5 +106,6 @@ router.get('/official/material/:media_id', function (req, res, next) {
         __LOGGER__.info('========================== END ==========================');
     });
 });
+
 
 module.exports = router;

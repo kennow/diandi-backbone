@@ -4,8 +4,11 @@ const __WX_OPEN_SERVICE__ = require('../services/wechat.open.platform/wechat.ope
 const __WX_OPEN_STRUCTURE__ = require('../services/wechat.open.platform/wechat.open.platform.structure');
 const __WX_OPEN_HELPER__ = require('../services/wechat.open.platform/wechat.open.platform.helper');
 const __WX_OFFICIAL_SERVICE__ = require('../services/wechat.official.account/wechat.official.account.service');
+const __WX_WEBSITE_CONFIG__ = require('../services/wechat.website/wechat.website.config');
+const __WX_WEBSITE_SERVICE__ = require('../services/wechat.website/wechat.website.service');
 const __PLATFORM__ = require('../database/platform.api');
 const __USER__ = require('../database/user.api');
+const __USER_STATEMENT__ = require('../database/user.sql.statement');
 const __LOGGER__ = require('../services/log4js.service').getLogger('platform.controller.js');
 
 /**
@@ -107,6 +110,7 @@ function receiveAuthorizerCodeNotification(request, response) {
             });
         })
         .then(user => {
+            user.role = __USER_STATEMENT__.__USER_TYPE__.OPEN_PLATFORM;
             __LOGGER__.debug(user);
             switch (user.scope) {
                 case 'snsapi_base':
@@ -134,6 +138,42 @@ function receiveAuthorizerCodeNotification(request, response) {
                     break;
             }
 
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+            response(error);
+        });
+}
+
+/**
+ * 用户授权登录开放平台下的网站时，收到的回调信息
+ * @param request
+ * @param response
+ */
+function receiveWechatLoginCodeNotification(request, response) {
+    let user;
+
+    __WX_WEBSITE_SERVICE__
+        .requestAccessToken({           //  通过 code 获取 access token
+            code: request.query.code
+        })
+        .then(token => {
+            user = token;
+            user.expiresIn = __MOMENT__(new Date(Date.now() + (token.expires_in - 1800) * 1000)).format('YYYY-MM-DD HH:mm:ss');
+            user.appid = __WX_WEBSITE_CONFIG__.__APP_ID_WEBSITE__;
+            user.role = __USER_STATEMENT__.__USER_TYPE__.WEBSITE;
+            console.log(user);
+            return Q(user);
+        })
+        .then(__PLATFORM__.wechatOpenPlatformLogin)     //  记录微信登录
+        .then(() => {
+            return Q(user);
+        })
+        .then(__WX_WEBSITE_SERVICE__.requestUserInfo)   //  获取登录用户信息
+        .then(__USER__.saveWechatUserInfo)              //  记录
+        .then(result => {
+            __LOGGER__.debug(result);
+            response(result);
         })
         .catch(error => {
             __LOGGER__.error(error);
@@ -223,6 +263,7 @@ function deleteMenu(request) {
 module.exports = {
     receiveLicenseNotification: receiveLicenseNotification,
     receiveAuthorizerCodeNotification: receiveAuthorizerCodeNotification,
+    receiveWechatLoginCodeNotification: receiveWechatLoginCodeNotification,
     fetchAuthorizerAccessToken: fetchAuthorizerAccessToken
 };
 
@@ -293,3 +334,10 @@ module.exports = {
 //     }
 // }, () => {
 // });
+
+//receiveWechatLoginCodeNotification({
+//    query: {
+//        code: '061XW7H21Z1b6P1SenF21WQoH21XW7HU'
+//    }
+//}, () => {
+//});

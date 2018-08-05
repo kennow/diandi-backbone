@@ -1650,6 +1650,44 @@ function fetchBusinessList(request) {
 }
 
 /**
+ * 获取所有已上线的商户列表
+ * @param request
+ * @returns {*}
+ */
+function fetchOnlineBusinessList(request) {
+    const deferred = Q.defer();
+
+    __MYSQL_API__
+        .setUpConnection({
+            /**
+             *  1. 检查登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 查询商户列表
+             */
+            basicQuerySQL: __STATEMENT__.__FETCH_ONLINE_BUSINESS_LIST__,
+            basicQueryParams: []
+        })
+        .then(__MYSQL_API__.checkSession)
+        .then(__MYSQL_API__.basicQuery)
+        .then(__MYSQL_API__.cleanup)
+        .then(function (result) {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL_API__.onReject(request, function (response) {
+                deferred.reject(response);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
  * 查询商户
  * @param request
  * @returns {*}
@@ -2000,6 +2038,7 @@ module.exports = {
     userPayFromPayCell: userPayFromPayCell,
     userConsumeCard: userConsumeCard,
     fetchBusinessList: fetchBusinessList,
+    fetchOnlineBusinessList: fetchOnlineBusinessList,
     fetchBusinessDetail: fetchBusinessDetail,
     addBusiness: addBusiness,
     updateBusiness: updateBusiness,

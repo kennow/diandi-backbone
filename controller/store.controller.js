@@ -177,14 +177,26 @@ function fetchOfficialAccountMaterial(request, response) {
         .then(__OFFICIAL_ACCOUNT_SERVICE__.getMaterial)
         .then(material => {
             // __LOGGER__.debug(material);
-            __HTTP_CLIENT__.transferToHttpsGet(material.news_item[0].url, rawData => {
-                response(rawData);
-            });
+            //__HTTP_CLIENT__.transferToHttpsGet(material.news_item[0].url, rawData => {
+            //    response(rawData);
+            //});
+            response(material);
         })
         .catch(error => {
             __LOGGER__.error(error);
             response(error)
         });
+}
+
+/**
+ * 获取公众号的永久素材内的某文章详情
+ * @param request
+ * @param response
+ */
+function fetchOfficialAccountNews(request, response) {
+    __HTTP_CLIENT__.transferToHttpsGet(decodeURIComponent(request.query.url), rawData => {
+        response(rawData);
+    });
 }
 
 module.exports = {
@@ -193,7 +205,8 @@ module.exports = {
     uploadFile: uploadFile,
     multipartUpload: multipartUpload,
     fetchOfficialAccountMaterialList: fetchOfficialAccountMaterialList,
-    fetchOfficialAccountMaterial: fetchOfficialAccountMaterial
+    fetchOfficialAccountMaterial: fetchOfficialAccountMaterial,
+    fetchOfficialAccountNews:fetchOfficialAccountNews
 };
 
 // fetchOfficialAccountMaterial({

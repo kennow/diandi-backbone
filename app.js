@@ -134,11 +134,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 /**
  * Middleware functions are executed sequentially, therefore the order of middleware inclusion is important.
  */
-app.use('/platform', platformRouter);
-app.use('/shopping', shoppingRouter);
-app.use('/user', userRouter);
-app.use('/backbone', backboneRouter);
-app.use('/oss', storeRouter);
+app.use('/platform', platformRouter);           //  开放平台
+app.use('/shopping', shoppingRouter);           //  电商
+app.use('/user', userRouter);                   //  用户
+app.use('/backbone', backboneRouter);           //  后台
+app.use('/oss', storeRouter);                   //  存储
+//app.use('/', platformRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

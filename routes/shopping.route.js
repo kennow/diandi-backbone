@@ -168,4 +168,17 @@ router.post('/card/user/orders', function (req, res, next) {
     });
 });
 
+/**
+ *      获取在线商户列表
+ */
+router.get('/business/online', function (req, res, next) {
+    __LOGGER__.info('========================== BUSINESS ONLINE LIST ==========================');
+    __LOGGER__.info(req.query);
+
+    __CONTROLLER_SHOPPING__.fetchOnlineBusinessList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
 module.exports = router;

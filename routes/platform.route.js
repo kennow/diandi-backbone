@@ -29,6 +29,25 @@ const __LOGGER__ = require('../services/log4js.service').getLogger('backbone.rou
 //     __LOGGER__.info('========================== END ==========================');
 // });
 
+/**
+ * 用户授权登录开放平台中的网站时，收到的回调通知
+ * 接收 CODE
+ */
+router.all('/website', function (req, res, next) {
+    __LOGGER__.info('========================== CODE ==========================');
+    __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.params);
+    __LOGGER__.debug(req.query);
+    __PLATFORM__.receiveWechatLoginCodeNotification(req, function (request) {
+        res.end('success');
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ * 代公众号实现网站授权
+ * 当用户向公众号授权进行微信登录等操作时，收到的回调通知
+ */
 router.all('/code', function (req, res, next) {
     __LOGGER__.info('========================== CODE ==========================');
     __LOGGER__.debug(req.body);
@@ -40,6 +59,9 @@ router.all('/code', function (req, res, next) {
     });
 });
 
+/**
+ * 自媒体及商家向第三方平台进行授权时，收到的回调通知
+ */
 router.all('/license', function (req, res, next) {
     __LOGGER__.info('========================== LICENSE ==========================');
     __LOGGER__.debug(req.body);
@@ -51,6 +73,9 @@ router.all('/license', function (req, res, next) {
     });
 });
 
+/**
+ * 计划：代自媒体及商家实现消息管理，收到的回调通知
+ */
 router.all('/:appid/notification', function (req, res, next) {
     __LOGGER__.info('========================== AUTHORIZER NOTIFICATION ==========================');
     __LOGGER__.debug(req.body);

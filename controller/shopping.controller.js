@@ -809,6 +809,25 @@ function fetchBusinessList(request, response) {
 }
 
 /**
+ * 获取在线商户列表
+ * @param request
+ * @param response
+ */
+function fetchOnlineBusinessList(request, response) {
+    __SHOPPING_DATABASE__
+        .fetchOnlineBusinessList({
+            session: request.query.session
+        })
+        .then(result => {
+            response(result);
+        })
+        .catch(exception => {
+            __LOGGER__.error(exception);
+            response(exception);
+        });
+}
+
+/**
  * 获取商户信息
  * @param request
  * @param response
@@ -1021,6 +1040,7 @@ module.exports = {
     recordUserCard: recordUserCard,
     queryUserCards: queryUserCards,
     fetchBusinessList: fetchBusinessList,
+    fetchOnlineBusinessList: fetchOnlineBusinessList,
     fetchBusinessDetail: fetchBusinessDetail,
     addBusiness: addBusiness,
     editBusiness: editBusiness,

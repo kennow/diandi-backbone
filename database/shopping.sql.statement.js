@@ -78,6 +78,7 @@ const __EVER_GET_CARD__ = 'SELECT d.cardid, c.* FROM tb_order a, tb_user b, rel_
  *   商户
  */
 const __FETCH_BUSINESS_LIST__ = 'SELECT * FROM tb_business';
+const __FETCH_ONLINE_BUSINESS_LIST__ = 'SELECT c.*, d.mediaId FROM (SELECT a.*, b.productId FROM tb_business a LEFT JOIN rel_business_product b ON a.bid = b.businessId WHERE a.status = 1) AS c LEFT JOIN rel_business_material d ON c.bid = d.businessId';
 const __FETCH_BUSINESS__ = 'SELECT * FROM tb_business WHERE bid = ?';
 const __FETCH_REL_BUSINESS_PRODUCT__ = 'SELECT * FROM rel_business_product WHERE businessId = ?';
 const __FETCH_REL_BUSINESS_MATERIAL__ = 'SELECT * FROM rel_business_material WHERE businessId = ?';
@@ -150,6 +151,7 @@ module.exports = {
     __USER_CONSUME_CARD__: __USER_CONSUME_CARD__,
     __EVER_GET_CARD__: __EVER_GET_CARD__,
     __FETCH_BUSINESS_LIST__: __FETCH_BUSINESS_LIST__,
+    __FETCH_ONLINE_BUSINESS_LIST__: __FETCH_ONLINE_BUSINESS_LIST__,
     __FETCH_BUSINESS__: __FETCH_BUSINESS__,
     __FETCH_REL_BUSINESS_PRODUCT__: __FETCH_REL_BUSINESS_PRODUCT__,
     __FETCH_REL_BUSINESS_MATERIAL__: __FETCH_REL_BUSINESS_MATERIAL__,
