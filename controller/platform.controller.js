@@ -48,6 +48,31 @@ function authorizerLogin(request) {
 }
 
 /**
+ * 公众号管理员扫描二维码授权给第三方平台
+ * 主动通知后端保存授权信息
+ * @param request
+ * @param response
+ */
+function authorizerLoginWrapper(request, response) {
+    authorizerLogin({
+        authorizationCode: request.query.auth_code
+    })
+        .then(authorizer => {
+            authorizer.session = request.params.session;
+            return Q(authorizer);
+        })
+        .then(__PLATFORM__.authorizerAndUser)
+        .then(result => {
+            __LOGGER__.debug(result);
+            response('授权成功');
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+            response('该公众号已经绑定过');
+        });
+}
+
+/**
  * 收到授权事件
  * 1. 微信每隔十分钟向服务商发送 Component Verify Ticket
  * 2. 自媒体或商家向服务商授权后收到的授权结果通知
@@ -84,25 +109,6 @@ function receiveLicenseNotification(request, response) {
         })
         .finally(() => {
             response('success');
-        });
-}
-
-function authorizerLoginWrapper(request, response) {
-    authorizerLogin({
-        authorizationCode: request.query.auth_code
-    })
-        .then(authorizer => {
-            authorizer.session = request.params.session;
-            return Q(authorizer);
-        })
-        .then(__PLATFORM__.authorizerAndUser)
-        .then(result => {
-            __LOGGER__.debug(result);
-            response(result);
-        })
-        .catch(error => {
-            __LOGGER__.error(error);
-            response('该公众号已经绑定过');
         });
 }
 
@@ -286,6 +292,7 @@ function fetchComponentLoginPageUrl(request, response) {
         })
         .catch(err => {
             __LOGGER__.error(err);
+            response(err);
         });
 }
 
