@@ -146,6 +146,25 @@ function createPreAuthCode(request) {
 }
 
 /**
+ * 引入用户进入授权页
+ *
+ * 第三方平台方可以在自己的网站中放置“微信公众号授权”或者“小程序授权”的入口，或生成授权链接放置在移动网页中，引导公众号和小程序管理员进入授权页。
+ * @param request
+ * @returns {*}
+ */
+function generateComponentLoginPageUrl(request) {
+    return Q(__UTIL__.format(
+        __WX_OPEN_API__.__BIND_COMPONENT_AUTHORITY_PAGE__,
+        __WX_OPEN_CONFIG__.__APP_ID__,
+        request.pre_authorization_code,
+        encodeURIComponent('https://www.pusudo.cn/platform/wechat/authorizer/' + request.session),
+        1
+        // 'wx1133464776a7a161'
+        // 'wx7770629fee66dd93'
+    ));
+}
+
+/**
  * 该API用于使用授权码换取授权公众号或小程序的授权信息
  * 并换取authorizer_access_token和authorizer_refresh_token
  *
@@ -445,6 +464,7 @@ module.exports = {
     componentVerifyTicket: componentVerifyTicket,
     componentToken: componentToken,
     createPreAuthCode: createPreAuthCode,
+    generateComponentLoginPageUrl: generateComponentLoginPageUrl,
     requestAuthorizerToken: requestAuthorizerToken,
     refreshAuthorizerToken: refreshAuthorizerToken,
     authorizerToUserAccessToken: authorizerToUserAccessToken,
@@ -486,11 +506,30 @@ module.exports = {
 //     .then(res => {
 //         __LOGGER__.debug(res);
 //         __LOGGER__.debug(__UTIL__.format(
+//             __WX_OPEN_API__.__BIND_COMPONENT_AUTHORITY_PAGE__,
+//             __WX_OPEN_CONFIG__.__APP_ID__,
+//             res.pre_authorization_code,
+//             'https://www.pusudo.cn',
+//             3
+//             // 'wx1133464776a7a161'
+//             // 'wx7770629fee66dd93'
+//         ));
+//     })
+//     .catch(err => {
+//         __LOGGER__.error(err);
+//     });
+
+// componentVerifyTicket()
+//     .then(componentToken)
+//     .then(createPreAuthCode)
+//     .then(res => {
+//         __LOGGER__.debug(res);
+//         __LOGGER__.debug(__UTIL__.format(
 //             __WX_OPEN_API__.__BIND_COMPONENT__,
 //             3,
 //             __WX_OPEN_CONFIG__.__APP_ID__,
 //             res.pre_authorization_code,
-//             'http://www.pusudo.cn',
+//             encodeURIComponent('https://www.pusudo.cn/platform/wechat/authorizer/login'),
 //             // 'wx1133464776a7a161'
 //             'wx7770629fee66dd93'
 //         ));

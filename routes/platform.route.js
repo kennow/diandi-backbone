@@ -39,7 +39,8 @@ router.all('/website', function (req, res, next) {
     __LOGGER__.debug(req.params);
     __LOGGER__.debug(req.query);
     __PLATFORM__.receiveWechatLoginCodeNotification(req, function (request) {
-        res.end('success');
+        // res.end('success');
+        res.redirect('https://backbone.pusudo.cn/login?s=' + request);
         __LOGGER__.info('========================== END ==========================');
     });
 });
@@ -83,5 +84,38 @@ router.all('/:appid/notification', function (req, res, next) {
     __LOGGER__.debug(req.query);
     __LOGGER__.info('========================== END ==========================');
 });
+
+/**
+ *  进入授权页
+ */
+router.get('/authority/wechat', function (req, res, next) {
+    __LOGGER__.info('========================== GO TO AUTHORITY PAGE ==========================');
+    __LOGGER__.debug(req.body);
+    __LOGGER__.debug(req.params);
+    __LOGGER__.debug(req.query);
+    __PLATFORM__.fetchComponentLoginPageUrl(req, function (request) {
+        // render the authority page
+        res.locals.message = '绑定微信公众号，把店铺和微信打通';
+        res.locals.loginPage = request;
+        res.render('authority');
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *  管理员扫描二维码进行授权后主动通知后端
+ */
+router.get('/wechat/authorizer/:session', function (req, res, next) {
+    __LOGGER__.info('========================== WECHAT AUTHORIZER LOGIN ==========================');
+    __LOGGER__.debug(req.params);
+    __LOGGER__.debug(req.query);
+    if (req.query.hasOwnProperty('auth_code')) {
+        __PLATFORM__.authorizerLoginWrapper(req, function (request) {
+            res.json(request);
+            __LOGGER__.info('========================== END ==========================');
+        });
+    }
+});
+
 
 module.exports = router;

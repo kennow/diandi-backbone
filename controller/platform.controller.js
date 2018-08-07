@@ -12,6 +12,42 @@ const __USER_STATEMENT__ = require('../database/user.sql.statement');
 const __LOGGER__ = require('../services/log4js.service').getLogger('platform.controller.js');
 
 /**
+ * 公众号或小程序授权成功
+ * @param request
+ * @returns {Promise.<TResult>}
+ */
+function authorizerLogin(request) {
+    return __WX_OPEN_SERVICE__.componentVerifyTicket()
+        .then(__WX_OPEN_SERVICE__.componentToken)
+        .then(res => {
+            // 获取component access token 结合用户的授权code
+            // 向微信服务器获取授权方的信息
+            res.authorization_code = request.authorizationCode;
+            return Q(res);
+        })
+        .then(__WX_OPEN_SERVICE__.requestAuthorizerToken)
+        .then(authorizerToken => {
+            //  公众号授权给开发者的权限集列表
+            let funcInfo = '';
+            if (authorizerToken.authorization_info.func_info.length > 0) {
+                authorizerToken.authorization_info.func_info.map(item => {
+                    funcInfo += ',' + item.funcscope_category.id;
+                });
+                funcInfo = funcInfo.substr(1);
+            }
+            //  准备下记录返回token等信息
+            return Q({
+                appid: authorizerToken.authorization_info.authorizer_appid,
+                accessToken: authorizerToken.authorization_info.authorizer_access_token,
+                expiresIn: __MOMENT__(new Date(Date.now() + (authorizerToken.authorization_info.expires_in - 1800) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
+                refreshToken: authorizerToken.authorization_info.authorizer_refresh_token,
+                funcInfo: funcInfo
+            });
+        })
+        .then(__PLATFORM__.addAuthorizer);
+}
+
+/**
  * 收到授权事件
  * 1. 微信每隔十分钟向服务商发送 Component Verify Ticket
  * 2. 自媒体或商家向服务商授权后收到的授权结果通知
@@ -37,36 +73,7 @@ function receiveLicenseNotification(request, response) {
                 (message.infoType === 'updateauthorized' || message.infoType === 'authorized')) {
                 //  当公众号对第三方平台进行授权、取消授权、更新授权后，微信服务器会向第三方平台方的授权事件接收URL
                 // （创建第三方平台时填写）推送相关通知
-                return __WX_OPEN_SERVICE__.componentVerifyTicket()
-                    .then(__WX_OPEN_SERVICE__.componentToken)
-                    .then(res => {
-                        // 获取component access token 结合用户的授权code
-                        // 向微信服务器获取授权方的信息
-                        res.authorization_code = message.authorizationCode;
-                        return Q(res);
-                    })
-                    .then(__WX_OPEN_SERVICE__.requestAuthorizerToken)
-                    .then(authorizerToken => {
-                        if (authorizerToken.hasOwnProperty('authorization_info')) {
-                            //  公众号授权给开发者的权限集列表
-                            let funcInfo = '';
-                            if (authorizerToken.authorization_info.func_info.length > 0) {
-                                authorizerToken.authorization_info.func_info.map(item => {
-                                    funcInfo += ',' + item.funcscope_category.id;
-                                });
-                                funcInfo = funcInfo.substr(1);
-                            }
-                            //  准备下记录返回token等信息
-                            return Q({
-                                appid: authorizerToken.authorization_info.authorizer_appid,
-                                accessToken: authorizerToken.authorization_info.authorizer_access_token,
-                                expiresIn: __MOMENT__(new Date(Date.now() + (authorizerToken.authorization_info.expires_in - 1800) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
-                                refreshToken: authorizerToken.authorization_info.authorizer_refresh_token,
-                                funcInfo: funcInfo
-                            });
-                        }
-                    })
-                    .then(__PLATFORM__.addAuthorizer);
+                return authorizerLogin(message);
             }
         })
         .then(result => {
@@ -80,6 +87,25 @@ function receiveLicenseNotification(request, response) {
         });
 }
 
+function authorizerLoginWrapper(request, response) {
+    authorizerLogin({
+        authorizationCode: request.query.auth_code
+    })
+        .then(authorizer => {
+            authorizer.session = request.params.session;
+            return Q(authorizer);
+        })
+        .then(__PLATFORM__.authorizerAndUser)
+        .then(result => {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+            response('该公众号已经绑定过');
+        });
+}
+
 /**
  * 代公众号实现网站授权
  * 用户通过服务商向自媒体或者商家授权后，收到的授权事件通知
@@ -88,61 +114,65 @@ function receiveLicenseNotification(request, response) {
  * @param response
  */
 function receiveAuthorizerCodeNotification(request, response) {
-    __WX_OPEN_SERVICE__
-        .componentVerifyTicket()
-        .then(__WX_OPEN_SERVICE__.componentToken)
-        .then(token => {
-            return Q({
-                appid: request.query.appid,
-                code: request.query.code,
-                component_access_token: token.component_access_token
-            });
-        })
-        .then(__WX_OPEN_SERVICE__.authorizerToUserAccessToken)
-        .then(params => {
-            return Q({
-                appid: request.query.appid,
-                accessToken: params.access_token,
-                expiresIn: __MOMENT__(new Date(Date.now() + (params.expires_in - 1800) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
-                refreshToken: params.refresh_token,
-                openid: params.openid,
-                scope: params.scope
-            });
-        })
-        .then(user => {
-            user.role = __USER_STATEMENT__.__USER_TYPE__.OPEN_PLATFORM;
-            __LOGGER__.debug(user);
-            switch (user.scope) {
-                case 'snsapi_base':
-                    __PLATFORM__
-                        .wechatOpenPlatformLogin(user)
-                        .then(result => {
-                            __LOGGER__.debug(result);
-                            response(result);
-                        });
-                    break;
-                case 'snsapi_userinfo':
-                    __WX_OPEN_SERVICE__
-                        .authorizerUserInfo(user)
-                        .then(__USER__.saveWechatUserInfo)
-                        .then(() => {
-                            return Q(user);
-                        })
-                        .then(__PLATFORM__.wechatOpenPlatformLogin)
-                        .then(result => {
-                            __LOGGER__.debug(result);
-                            response(result);
-                        });
-                    break;
-                default:
-                    break;
-            }
+    if (request.query.hasOwnProperty('appid') && request.query.hasOwnProperty('code')) {
+        __WX_OPEN_SERVICE__
+            .componentVerifyTicket()
+            .then(__WX_OPEN_SERVICE__.componentToken)
+            .then(token => {
+                return Q({
+                    appid: request.query.appid,
+                    code: request.query.code,
+                    component_access_token: token.component_access_token
+                });
+            })
+            .then(__WX_OPEN_SERVICE__.authorizerToUserAccessToken)
+            .then(params => {
+                return Q({
+                    appid: request.query.appid,
+                    accessToken: params.access_token,
+                    expiresIn: __MOMENT__(new Date(Date.now() + (params.expires_in - 1800) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
+                    refreshToken: params.refresh_token,
+                    openid: params.openid,
+                    scope: params.scope
+                });
+            })
+            .then(user => {
+                user.role = __USER_STATEMENT__.__USER_TYPE__.OPEN_PLATFORM;
+                __LOGGER__.debug(user);
+                switch (user.scope) {
+                    case 'snsapi_base':
+                        __PLATFORM__
+                            .wechatOpenPlatformLogin(user)
+                            .then(result => {
+                                __LOGGER__.debug(result);
+                                response(result);
+                            });
+                        break;
+                    case 'snsapi_userinfo':
+                        __WX_OPEN_SERVICE__
+                            .authorizerUserInfo(user)
+                            .then(__USER__.saveWechatUserInfo)
+                            .then(() => {
+                                return Q(user);
+                            })
+                            .then(__PLATFORM__.wechatOpenPlatformLogin)
+                            .then(result => {
+                                __LOGGER__.debug(result);
+                                response(result);
+                            });
+                        break;
+                    default:
+                        break;
+                }
 
-        })
-        .catch(error => {
-            __LOGGER__.error(error);
-            response(error);
-        });
+            })
+            .catch(error => {
+                __LOGGER__.error(error);
+                response(error);
+            });
+    } else {
+        response();
+    }
 }
 
 /**
@@ -152,6 +182,7 @@ function receiveAuthorizerCodeNotification(request, response) {
  */
 function receiveWechatLoginCodeNotification(request, response) {
     let user;
+    let s;
 
     __WX_WEBSITE_SERVICE__
         .requestAccessToken({           //  通过 code 获取 access token
@@ -162,18 +193,18 @@ function receiveWechatLoginCodeNotification(request, response) {
             user.expiresIn = __MOMENT__(new Date(Date.now() + (token.expires_in - 1800) * 1000)).format('YYYY-MM-DD HH:mm:ss');
             user.appid = __WX_WEBSITE_CONFIG__.__APP_ID_WEBSITE__;
             user.role = __USER_STATEMENT__.__USER_TYPE__.WEBSITE;
-            console.log(user);
             return Q(user);
         })
         .then(__PLATFORM__.wechatOpenPlatformLogin)     //  记录微信登录
-        .then(() => {
+        .then(session => {
+            s = session;
             return Q(user);
         })
         .then(__WX_WEBSITE_SERVICE__.requestUserInfo)   //  获取登录用户信息
         .then(__USER__.saveWechatUserInfo)              //  记录
         .then(result => {
             __LOGGER__.debug(result);
-            response(result);
+            response(s);                                //  返回session
         })
         .catch(error => {
             __LOGGER__.error(error);
@@ -238,6 +269,33 @@ function fetchAuthorizerAccessToken(request) {
     return deferred.promise;
 }
 
+function fetchComponentLoginPageUrl(request, response) {
+    __USER__
+        .checkIdentity(request.query)
+        .then(__WX_OPEN_SERVICE__.componentVerifyTicket)
+        .then(__WX_OPEN_SERVICE__.componentToken)
+        .then(__WX_OPEN_SERVICE__.createPreAuthCode)
+        .then(preAuthCode => {
+            preAuthCode.session = request.query.session;
+            return Q(preAuthCode);
+        })
+        .then(__WX_OPEN_SERVICE__.generateComponentLoginPageUrl)
+        .then(url => {
+            __LOGGER__.debug('COMPONENT LOGIN PAGE ==> ' + url);
+            response(url);
+        })
+        .catch(err => {
+            __LOGGER__.error(err);
+        });
+}
+
+// fetchComponentLoginPageUrl({
+//     query: {
+//         session: 'fwAHYLNYOE8mjB5REuWtpp5MyBW9Wph9'
+//     }
+// }, () => {
+// });
+
 /**
  * 自定义菜单
  *  --  代授权方处理菜单
@@ -264,7 +322,10 @@ module.exports = {
     receiveLicenseNotification: receiveLicenseNotification,
     receiveAuthorizerCodeNotification: receiveAuthorizerCodeNotification,
     receiveWechatLoginCodeNotification: receiveWechatLoginCodeNotification,
-    fetchAuthorizerAccessToken: fetchAuthorizerAccessToken
+    fetchAuthorizerAccessToken: fetchAuthorizerAccessToken,
+    fetchComponentLoginPageUrl: fetchComponentLoginPageUrl,
+    authorizerLogin: authorizerLogin,
+    authorizerLoginWrapper: authorizerLoginWrapper
 };
 
 // deleteMenu(

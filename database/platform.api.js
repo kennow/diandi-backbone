@@ -64,6 +64,41 @@ function addAuthorizer(request) {
     return deferred.promise;
 }
 
+
+function authorizerAndUser(request) {
+    const deferred = Q.defer();
+
+    __MYSQL__
+        .setUpConnection({
+            basicInsertSQL: __STATEMENT__.__ADD_REL_AUTHORIZER_USER__,
+            basicInsertParams: [
+                request.appid,
+                request.session
+            ]
+        })
+        .then(__MYSQL__.beginTransaction)
+        .then(__MYSQL__.basicInsert)
+        .then(__MYSQL__.commitTransaction)
+        .then(__MYSQL__.cleanup)
+        .then(() => {
+            deferred.resolve(request);      //  透传参数
+        })
+        .catch(function (request) {
+            __MYSQL__.onRejectWithRollback(request, function (err) {
+                deferred.reject(err);
+            });
+        });
+
+    return deferred.promise;
+}
+
+/**
+ * 通过开放平台登录
+ *  --  网站
+ *  --  第三方平台
+ * @param request
+ * @returns {*|promise|C}
+ */
 function wechatOpenPlatformLogin(request) {
     const deferred = Q.defer();
     const nonceStr = __HELPER__.getNonceStr(32);
@@ -123,6 +158,11 @@ function wechatOpenPlatformLogin(request) {
     return deferred.promise;
 }
 
+/**
+ * 获取授权方的 access token
+ * @param request
+ * @returns {*|promise|C}
+ */
 function fetchAuthorizerAccessToken(request) {
     const deferred = Q.defer();
 
@@ -152,6 +192,7 @@ function fetchAuthorizerAccessToken(request) {
 
 module.exports = {
     addAuthorizer: addAuthorizer,
+    authorizerAndUser: authorizerAndUser,
     wechatOpenPlatformLogin: wechatOpenPlatformLogin,
     fetchAuthorizerAccessToken: fetchAuthorizerAccessToken
 };

@@ -5,7 +5,7 @@ const __GET_COMPONENT_TOKEN__ = 'https://api.weixin.qq.com/cgi-bin/component/api
 const __CREATE_PRE_AUTH_CODE__ = 'https://api.weixin.qq.com/cgi-bin/component/api_create_preauthcode?component_access_token=%s';
 const __QUERY_AUTHORIZATION__ = 'https://api.weixin.qq.com/cgi-bin/component/api_query_auth?component_access_token=%s';
 const __REFRESH_AUTHORIZER_TOKEN__ = 'https://api.weixin.qq.com/cgi-bin/component/api_authorizer_token?component_access_token=%s';
-const __COMPONENT_LOGIN_PAGE__ = 'https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=%s&pre_auth_code=%s&redirect_uri=%s&auth_type=%s';
+const __BIND_COMPONENT_AUTHORITY_PAGE__ = 'https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=%s&pre_auth_code=%s&redirect_uri=%s&auth_type=%s';
 const __BIND_COMPONENT__ = 'https://mp.weixin.qq.com/safe/bindcomponent?action=bindcomponent&auth_type=%s&no_scan=1&component_appid=%s&pre_auth_code=%s&redirect_uri=%s&biz_appid=%s#wechat_redirect';
 const __GET_AUTHORIZER_INFO__ = 'https://api.weixin.qq.com/cgi-bin/component/api_get_authorizer_info?component_access_token=%s';
 const __GET_AUTHORIZER_OPTION__ = 'https://api.weixin.qq.com/cgi-bin/component/api_get_authorizer_option?component_access_token=%s';
@@ -34,7 +34,7 @@ module.exports = {
     __CREATE_PRE_AUTH_CODE__: __CREATE_PRE_AUTH_CODE__,
     __QUERY_AUTHORIZATION__: __QUERY_AUTHORIZATION__,
     __REFRESH_AUTHORIZER_TOKEN__: __REFRESH_AUTHORIZER_TOKEN__,
-    __COMPONENT_LOGIN_PAGE__: __COMPONENT_LOGIN_PAGE__,
+    __BIND_COMPONENT_AUTHORITY_PAGE__: __BIND_COMPONENT_AUTHORITY_PAGE__,
     __BIND_COMPONENT__: __BIND_COMPONENT__,
     __GET_AUTHORIZER_INFO__: __GET_AUTHORIZER_INFO__,
     __GET_AUTHORIZER_OPTION__: __GET_AUTHORIZER_OPTION__,
