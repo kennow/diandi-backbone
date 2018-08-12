@@ -9,6 +9,7 @@
     "ali-oss": "^5.2.0",
     "body-parser": "^1.18.2",
     "body-parser-xml": "^1.1.0",
+    "cheerio": "^1.0.0-rc.2",
     "co": "^4.6.0",
     "connect-multiparty": "^2.1.0",
     "cookie-parser": "~1.4.3",

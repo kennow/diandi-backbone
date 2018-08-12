@@ -171,7 +171,7 @@ function fetchAuthorizerAccessToken(request) {
             /**
              *  1. 根据 openid 查询用户是否存在
              */
-            basicQuerySQL: __STATEMENT__.__FETCH_AUTHORIZER__,
+            basicQuerySQL: __STATEMENT__.__FETCH_AUTHORIZER_ACCESS_TOKEN__,
             basicQueryParams: [
                 request.appid
             ]
@@ -190,11 +190,42 @@ function fetchAuthorizerAccessToken(request) {
     return deferred.promise;
 }
 
+/**
+ * 由公众号管理员的微信号查询其所绑定的公众号 appid
+ * @param request
+ * @returns {*}
+ */
+function fetchAuthroizerInfo(request) {
+    const deferred = Q.defer();
+
+    __MYSQL__
+        .setUpConnection({
+            basicQuerySQL: __STATEMENT__.__FETCH_AUTHORIZER_INFO__,
+            basicQueryParams: [
+                request.session
+            ]
+        })
+        .then(__MYSQL__.basicQuery)
+        .then(__MYSQL__.cleanup)
+        .then(result => {
+            deferred.resolve(result);
+        })
+        .catch(function (request) {
+            __MYSQL__.onReject(request, function (err) {
+                deferred.reject(err);
+            });
+        });
+
+    return deferred.promise;
+
+}
+
 module.exports = {
     addAuthorizer: addAuthorizer,
     authorizerAndUser: authorizerAndUser,
     wechatOpenPlatformLogin: wechatOpenPlatformLogin,
-    fetchAuthorizerAccessToken: fetchAuthorizerAccessToken
+    fetchAuthorizerAccessToken: fetchAuthorizerAccessToken,
+    fetchAuthroizerInfo: fetchAuthroizerInfo
 };
 
 // addAuthorizer({});

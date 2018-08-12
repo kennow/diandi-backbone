@@ -10,6 +10,7 @@ const shoppingRouter = require('./routes/shopping.route');
 const userRouter = require('./routes/user.route');
 const backboneRouter = require('./routes/backbone.route');
 const storeRouter = require('./routes/store.route');
+const financeRouter = require('./routes/finance.route');
 /**
  * The app object has methods for
  * Routing HTTP requests; see for example, app.METHOD and app.param.
@@ -139,6 +140,7 @@ app.use('/shopping', shoppingRouter);           //  电商
 app.use('/user', userRouter);                   //  用户
 app.use('/backbone', backboneRouter);           //  后台
 app.use('/oss', storeRouter);                   //  存储
+app.use('/finance', financeRouter);             //  经济
 //app.use('/', platformRouter);
 
 // catch 404 and forward to error handler

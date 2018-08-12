@@ -7,6 +7,46 @@ const __CONTROLLER_SHOPPING__ = require('../controller/shopping.controller');
 const __CONTROLLER_STORE__ = require('../controller/store.controller');
 const __CONTROLLER_USER__ = require('../controller/user.controller');
 const __CONTROLLER_SYSTEM__ = require('../controller/system.controller');
+const __CONTROLLER_PLATFORM__ = require('../controller/platform.controller');
+
+/**
+ *      接入微信小程序消息服务
+ */
+router.get('/', function (req, res, next) {
+    __LOGGER__.info('========================== 接入微信小程序消息服务 ==========================');
+    __LOGGER__.info(req.params);
+    __LOGGER__.info(req.body);
+    __LOGGER__.info(req.query);
+    __LOGGER__.info(req.query.echostr);
+    res.send(req.query.echostr);
+    __LOGGER__.info('========================== END ==========================');
+});
+
+/**
+ *      登录
+ */
+router.post('/login', function (req, res, next) {
+    __LOGGER__.info('========================== LOGIN ==========================');
+    __LOGGER__.info(req.body);
+    __CONTROLLER_USER__.backboneLogin(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      发送短信
+ */
+router.post('/sms', function (req, res, next) {
+    __LOGGER__.info('========================== SEND SMS ==========================');
+    __LOGGER__.info(req.body);
+    __CONTROLLER_SYSTEM__.sendSMS(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/*******************************      商品      ********************************/
 
 /**
  *   商品列表
@@ -110,6 +150,8 @@ router.post('/product/status', function (req, res, next) {
     });
 });
 
+/*******************************      订单      ********************************/
+
 /**
  *      订单列表
  */
@@ -130,30 +172,6 @@ router.get('/order/:out_trade_no', function (req, res, next) {
     __LOGGER__.debug(req.params);
     __LOGGER__.debug(req.query);
     __CONTROLLER_SHOPPING__.fetchAOrder(req, function (request) {
-        res.json(request);
-        __LOGGER__.info('========================== END ==========================');
-    });
-});
-
-/**
- *      获取用户资料
- */
-router.post('/user', function (req, res, next) {
-    __LOGGER__.info('========================== User Info ==========================');
-    __LOGGER__.debug(req.body);
-    __CONTROLLER_USER__.fetchUserInfo(req, function (request) {
-        res.json(request);
-        __LOGGER__.info('========================== END ==========================');
-    });
-});
-
-/**
- *      后台用户管理
- */
-router.post('/user/manager', function (req, res, next) {
-    __LOGGER__.info('========================== User MANAGER ==========================');
-    __LOGGER__.debug(req.body);
-    __CONTROLLER_USER__.fetchUserList(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });
@@ -183,17 +201,33 @@ router.post('/refund', function (req, res, next) {
     });
 });
 
+/*******************************      用户      ********************************/
+
 /**
- *      发送短信
+ *      获取用户资料
  */
-router.post('/sms', function (req, res, next) {
-    __LOGGER__.info('========================== SEND SMS ==========================');
-    __LOGGER__.info(req.body);
-    __CONTROLLER_SYSTEM__.sendSMS(req, function (request) {
+router.post('/user', function (req, res, next) {
+    __LOGGER__.info('========================== User Info ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_USER__.fetchUserInfo(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });
 });
+
+/**
+ *      用户列表
+ */
+router.post('/user/manager', function (req, res, next) {
+    __LOGGER__.info('========================== User MANAGER ==========================');
+    __LOGGER__.debug(req.body);
+    __CONTROLLER_USER__.fetchUserList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/*******************************      卡券      ********************************/
 
 /**
  *      卡券列表
@@ -246,31 +280,6 @@ router.post('/card/product', function (req, res, next) {
 });
 
 /**
- *      登录
- */
-router.post('/login', function (req, res, next) {
-    __LOGGER__.info('========================== LOGIN ==========================');
-    __LOGGER__.info(req.body);
-    __CONTROLLER_USER__.backboneLogin(req, function (request) {
-        res.json(request);
-        __LOGGER__.info('========================== END ==========================');
-    });
-});
-
-/**
- *      接入微信小程序消息服务
- */
-router.get('/', function (req, res, next) {
-    __LOGGER__.info('========================== 接入微信小程序消息服务 ==========================');
-    __LOGGER__.info(req.params);
-    __LOGGER__.info(req.body);
-    __LOGGER__.info(req.query);
-    __LOGGER__.info(req.query.echostr);
-    res.send(req.query.echostr);
-    __LOGGER__.info('========================== END ==========================');
-});
-
-/**
  *      接收来自微信卡券的消息通知
  */
 router.all('/notification', function (req, res, next) {
@@ -284,6 +293,8 @@ router.all('/notification', function (req, res, next) {
     });
     __LOGGER__.info('========================== END ==========================');
 });
+
+/*******************************      商户      ********************************/
 
 /**
  *      获取商户列表
@@ -377,6 +388,22 @@ router.post('/business/status', function (req, res, next) {
     __LOGGER__.info(req.body);
 
     __CONTROLLER_SHOPPING__.changeBusinessStatus(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/*******************************      第三方      ********************************/
+
+/**
+ *      微信公众号授权方的基本信息
+ */
+router.get('/wechat/official', function (req, res, next) {
+    __LOGGER__.info('========================== WECHAT OFFICIAL ACCOUNT ==========================');
+    __LOGGER__.info(req.params);
+    __LOGGER__.info(req.query);
+
+    __CONTROLLER_PLATFORM__.fetchAuthorizerInfo(req, function (request) {
         res.json(request);
         __LOGGER__.info('========================== END ==========================');
     });

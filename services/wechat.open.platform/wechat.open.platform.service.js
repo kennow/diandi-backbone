@@ -464,6 +464,7 @@ module.exports = {
     componentVerifyTicket: componentVerifyTicket,
     componentToken: componentToken,
     createPreAuthCode: createPreAuthCode,
+    getAuthorizerInfo: getAuthorizerInfo,
     generateComponentLoginPageUrl: generateComponentLoginPageUrl,
     requestAuthorizerToken: requestAuthorizerToken,
     refreshAuthorizerToken: refreshAuthorizerToken,

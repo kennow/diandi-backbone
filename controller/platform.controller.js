@@ -220,6 +220,8 @@ function receiveWechatLoginCodeNotification(request, response) {
 
 /**
  * 获取授权方的access_token
+ * 如果数据库上的token未过期，则直接返回
+ * 已过期，重新获取，同时将结果记录在数据库上
  * @param request
  */
 function fetchAuthorizerAccessToken(request) {
@@ -275,6 +277,51 @@ function fetchAuthorizerAccessToken(request) {
     return deferred.promise;
 }
 
+/**
+ * 获取授权方的基本信息
+ * @param request
+ * @param response
+ */
+function fetchAuthorizerInfo(request, response) {
+    let authorizer_appid;
+
+    __PLATFORM__
+        .fetchAuthroizerInfo(request.query)
+        .then(info => {
+            __LOGGER__.debug(info);
+            authorizer_appid = info.msg[0].appid;
+            return Q({});
+        })
+        .then(__WX_OPEN_SERVICE__.componentVerifyTicket)
+        .then(__WX_OPEN_SERVICE__.componentToken)
+        .then(token => {
+            token.authorizer_appid = authorizer_appid;
+            __LOGGER__.debug(token);
+            return Q(token);
+        })
+        .then(__WX_OPEN_SERVICE__.getAuthorizerInfo)
+        .then(result => {
+            response(result);
+        })
+        .catch(err => {
+            __LOGGER__.error(err);
+            response(err);
+        });
+}
+
+//fetchAuthorizerInfo({
+//    query: {
+//        session: '5LiyPDSsjROnkJ5uLD4DcvpP2Hw7vifU'
+//    }
+//}, () => {
+//});
+
+/**
+ * 第三方授权页面链接
+ *  --  微信公众号
+ * @param request
+ * @param response
+ */
 function fetchComponentLoginPageUrl(request, response) {
     __USER__
         .checkIdentity(request.query)
@@ -331,6 +378,7 @@ module.exports = {
     receiveWechatLoginCodeNotification: receiveWechatLoginCodeNotification,
     fetchAuthorizerAccessToken: fetchAuthorizerAccessToken,
     fetchComponentLoginPageUrl: fetchComponentLoginPageUrl,
+    fetchAuthorizerInfo: fetchAuthorizerInfo,
     authorizerLogin: authorizerLogin,
     authorizerLoginWrapper: authorizerLoginWrapper
 };
