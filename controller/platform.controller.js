@@ -309,12 +309,12 @@ function fetchAuthorizerInfo(request, response) {
         });
 }
 
-//fetchAuthorizerInfo({
+// fetchAuthorizerInfo({
 //    query: {
 //        session: '5LiyPDSsjROnkJ5uLD4DcvpP2Hw7vifU'
 //    }
-//}, () => {
-//});
+// }, () => {
+// });
 
 /**
  * 第三方授权页面链接

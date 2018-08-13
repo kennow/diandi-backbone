@@ -253,6 +253,7 @@ function getAuthorizerInfo(request) {
         postData,
         function (rawData) {
             __LOGGER__.debug(rawData);
+            deferred.resolve(JSON.parse(rawData));
         }, null);
 
     return deferred.promise;
