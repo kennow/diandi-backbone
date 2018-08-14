@@ -350,6 +350,34 @@ function fetchComponentLoginPageUrl(request, response) {
 // }, () => {
 // });
 
+function createMenu(request) {
+    fetchAuthorizerAccessToken(request)
+        .then(token => {
+            __LOGGER__.debug(token);
+            return Q({
+                access_token: token.accessToken,
+                menu: {
+                    'button': [
+                        {
+                            'type': 'miniprogram',
+                            'name': '经济指标',
+                            'url': 'http://mp.weixin.qq.com',
+                            'appid': 'wx0a72bd7d41e0b066',
+                            'pagepath': 'pages/index/index'
+                        }
+                    ]
+                }
+            });
+        })
+        .then(__WX_OFFICIAL_SERVICE__.createMenu)
+        .then(result => {
+            __LOGGER__.debug(result);
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+        });
+}
+
 /**
  * 自定义菜单
  *  --  代授权方处理菜单
@@ -382,6 +410,12 @@ module.exports = {
     authorizerLogin: authorizerLogin,
     authorizerLoginWrapper: authorizerLoginWrapper
 };
+
+createMenu(
+    {
+        appid: 'wx7770629fee66dd93'
+    }
+);
 
 // deleteMenu(
 //     {
