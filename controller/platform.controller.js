@@ -350,31 +350,29 @@ function fetchComponentLoginPageUrl(request, response) {
 // }, () => {
 // });
 
-function createMenu(request) {
+/**
+ * 创建菜单
+ * @param request
+ * @param response
+ */
+function createMenu(request, response) {
     fetchAuthorizerAccessToken(request)
         .then(token => {
             __LOGGER__.debug(token);
             return Q({
                 access_token: token.accessToken,
-                menu: {
-                    'button': [
-                        {
-                            'type': 'miniprogram',
-                            'name': '经济指标',
-                            'url': 'http://mp.weixin.qq.com',
-                            'appid': 'wx0a72bd7d41e0b066',
-                            'pagepath': 'pages/index/index'
-                        }
-                    ]
-                }
+                menu: request.menu
             });
         })
+        .then(__WX_OFFICIAL_SERVICE__.deleteMenu)
         .then(__WX_OFFICIAL_SERVICE__.createMenu)
         .then(result => {
             __LOGGER__.debug(result);
+            response(result);
         })
         .catch(error => {
             __LOGGER__.error(error);
+            response(error);
         });
 }
 
@@ -408,14 +406,26 @@ module.exports = {
     fetchComponentLoginPageUrl: fetchComponentLoginPageUrl,
     fetchAuthorizerInfo: fetchAuthorizerInfo,
     authorizerLogin: authorizerLogin,
-    authorizerLoginWrapper: authorizerLoginWrapper
+    authorizerLoginWrapper: authorizerLoginWrapper,
+    createMenu: createMenu
 };
 
-createMenu(
-    {
-        appid: 'wx7770629fee66dd93'
-    }
-);
+//createMenu(
+//    {
+//        appid: 'wx7770629fee66dd93',
+//        menu: {
+//            'button': [
+//                {
+//                    'type': 'miniprogram',
+//                    'name': '经济指标',
+//                    'url': 'http://mp.weixin.qq.com',
+//                    'appid': 'wx0a72bd7d41e0b066',
+//                    'pagepath': 'pages/index/index'
+//                }
+//            ]
+//        }
+//    }
+//);
 
 // deleteMenu(
 //     {

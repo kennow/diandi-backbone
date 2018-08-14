@@ -169,13 +169,21 @@ function fetchAuthorizerAccessToken(request) {
     __MYSQL__
         .setUpConnection({
             /**
-             *  1. 根据 openid 查询用户是否存在
+             *  1. 检测登录态
+             */
+            checkSessionSQL: __USER_STATEMENT__.__CHECK_SESSION__,
+            checkSessionParams: [
+                request.session
+            ],
+            /**
+             *  2. 根据 openid 查询用户是否存在
              */
             basicQuerySQL: __STATEMENT__.__FETCH_AUTHORIZER_ACCESS_TOKEN__,
             basicQueryParams: [
                 request.appid
             ]
         })
+        .then(__MYSQL__.checkSession)
         .then(__MYSQL__.basicQuery)
         .then(__MYSQL__.cleanup)
         .then(result => {

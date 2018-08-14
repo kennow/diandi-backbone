@@ -409,4 +409,23 @@ router.get('/wechat/official', function (req, res, next) {
     });
 });
 
+/**
+ *      创建菜单
+ */
+router.post('/wechat/official/menu', function (req, res, next) {
+    __LOGGER__.info('========================== CREATE MENU ==========================');
+    __LOGGER__.info(req.body);
+    __LOGGER__.info(req.query);
+
+    __CONTROLLER_PLATFORM__.createMenu({
+        session: req.query.session,
+        appid: req.body.appid,
+        menu: JSON.parse(decodeURIComponent(req.body.menu))
+
+    }, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
 module.exports = router;

@@ -37,7 +37,7 @@ function deleteMenu(request) {
         __UTIL__.format(__OFFICIAL_ACCOUNT_API__.__DELETE_MENU__, request.access_token),
         {},
         function (rawData) {
-            deferred.resolve(JSON.parse(rawData));
+            deferred.resolve(request);      //  透传参数
         },
         null
     );
