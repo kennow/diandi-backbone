@@ -10,6 +10,7 @@ const __BIND_COMPONENT__ = 'https://mp.weixin.qq.com/safe/bindcomponent?action=b
 const __GET_AUTHORIZER_INFO__ = 'https://api.weixin.qq.com/cgi-bin/component/api_get_authorizer_info?component_access_token=%s';
 const __GET_AUTHORIZER_OPTION__ = 'https://api.weixin.qq.com/cgi-bin/component/api_get_authorizer_option?component_access_token=%s';
 const __SET_AUTHORIZER_OPTION__ = 'https://api.weixin.qq.com/cgi-bin/component/api_set_authorizer_option?component_access_token=%s';
+const __FAST_REGISTER_MINI_PROGRAM_PAGE__ = 'https://mp.weixin.qq.com/cgi-bin/fastregisterauth?appid=%s&component_appid=%s&copy_wx_verify=1&redirect_uri=%s';
 
 /**
  * 代公众号调用接口
@@ -44,5 +45,6 @@ module.exports = {
     __ACCESS_TOKEN__: __ACCESS_TOKEN__,
     __REFRESH_TOKEN__: __REFRESH_TOKEN__,
     __USER_INFO__: __USER_INFO__,
-    __GET_AUTHORIZER_LIST__: __GET_AUTHORIZER_LIST__
+    __GET_AUTHORIZER_LIST__: __GET_AUTHORIZER_LIST__,
+    __FAST_REGISTER_MINI_PROGRAM_PAGE__: __FAST_REGISTER_MINI_PROGRAM_PAGE__
 };

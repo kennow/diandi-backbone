@@ -410,22 +410,43 @@ module.exports = {
     createMenu: createMenu
 };
 
-//createMenu(
-//    {
-//        appid: 'wx7770629fee66dd93',
-//        menu: {
-//            'button': [
-//                {
-//                    'type': 'miniprogram',
-//                    'name': '经济指标',
-//                    'url': 'http://mp.weixin.qq.com',
-//                    'appid': 'wx0a72bd7d41e0b066',
-//                    'pagepath': 'pages/index/index'
-//                }
-//            ]
-//        }
-//    }
-//);
+// req = {
+//     appid: 'wx90440dd971f71468',
+//     menu: '%7B%22button%22%3A%5B%7B%22type%22%3A%22miniprogram%22%2C%22name%22%3A%22LINJINDI%22%2C%22url%22%3A%22http%3A%2F%2Fmp.weixin.qq.com%22%2C%22appid%22%3A%22wx0a72bd7d41e0b066%22%2C%22pagepath%22%3A%22pages%2Findex%2Findex%22%7D%5D%7D',
+//     session: 'WKRZsT4nWNmjS2VGCO0Oy4GHnxZ7F0Dn'
+// };
+//
+// console.log(JSON.parse(decodeURIComponent(req.menu)));
+//
+// createMenu({
+//     session: req.session,
+//     appid: req.appid,
+//     menu: JSON.parse(decodeURIComponent(req.menu))
+//
+// }, function (request) {
+//     __LOGGER__.info(request);
+//     __LOGGER__.info('========================== END ==========================');
+// });
+
+// createMenu(
+//     {
+//         appid: 'wx7770629fee66dd93',
+//         menu: {
+//             'button': [
+//                 {
+//                     'type': 'miniprogram',
+//                     'name': '经济指标',
+//                     'url': 'http://mp.weixin.qq.com',
+//                     'appid': 'wx0a72bd7d41e0b066',
+//                     'pagepath': 'pages/index/index'
+//                 }
+//             ]
+//         },
+//         session: 'I6fe4XqMIJFFwrbh14hg3VT5eiBIcmw7'
+//     },
+//     () => {
+//     }
+// );
 
 // deleteMenu(
 //     {

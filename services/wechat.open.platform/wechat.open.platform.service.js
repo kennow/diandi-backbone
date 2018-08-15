@@ -460,6 +460,16 @@ function getAuthorizerList(request) {
     return deferred.promise;
 }
 
+function generateFastRegisterAuth(request) {
+    return Q(__UTIL__.format(
+        __WX_OPEN_API__.__FAST_REGISTER_MINI_PROGRAM_PAGE__,
+        request.appid,
+        __WX_OPEN_CONFIG__.__APP_ID__,
+        encodeURIComponent('https://www.pusudo.cn/platform/wechat/authorizer'),
+    ));
+
+}
+
 module.exports = {
     recordComponentVerifyTicket: recordComponentVerifyTicket,
     componentVerifyTicket: componentVerifyTicket,
@@ -473,6 +483,13 @@ module.exports = {
     refreshAuthorizerToUserAccessToken: refreshAuthorizerToUserAccessToken,
     authorizerUserInfo: authorizerUserInfo
 };
+
+generateFastRegisterAuth({
+    appid: 'wx7770629fee66dd93'
+}).then(res => {
+    'use strict';
+    console.log(res);
+});
 
 //componentVerifyTicket()
 //    .then(componentToken)
