@@ -103,7 +103,7 @@ router.get('/authority/wechat', function (req, res, next) {
 });
 
 /**
- *  管理员扫描二维码进行授权后主动通知后端
+ *  管理员扫描二维码进行授权后，回调URI主动通知后端
  */
 router.get('/wechat/authorizer/:session', function (req, res, next) {
     __LOGGER__.info('========================== WECHAT AUTHORIZER LOGIN ==========================');
@@ -117,5 +117,34 @@ router.get('/wechat/authorizer/:session', function (req, res, next) {
     }
 });
 
+/**
+ *  快速注册小程序
+ */
+router.get('/register/miniprogram', function (req, res, next) {
+    __LOGGER__.info('========================== FAST REGISTER MINI PROGRAM ==========================');
+    __LOGGER__.debug(req.params);
+    __LOGGER__.debug(req.query);
+    __PLATFORM__.fetchRegisterMiniProgramUrl(req, function (request) {
+        // render the register page
+        res.locals.message = '为帮助已有公众号用户快速接入小程序服务';
+        res.locals.registerPage = request;
+        res.render('register');
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *  管理员扫描二维码进行快速注册小程序后，回调URI主动通知后端
+ */
+router.get('/miniprogram/authorizer', function (req, res, next) {
+    __LOGGER__.info('========================== MINI PROGRAM AUTH COMPLETED ==========================');
+    __LOGGER__.debug(req.params);
+    __LOGGER__.debug(req.query);
+    __PLATFORM__.fastRegisterMiniProgram(req, function (request) {
+        res.redirect('https://backbone.pusudo.cn/entry/wechat/miniprogram');
+        // res.status(200).end('success');
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
 
 module.exports = router;

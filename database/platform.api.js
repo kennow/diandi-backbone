@@ -33,7 +33,8 @@ function addAuthorizer(request) {
                 accessToken: request.accessToken,
                 expiresIn: request.expiresIn,
                 refreshToken: request.refreshToken,
-                funcInfo: request.funcInfo
+                funcInfo: request.funcInfo,
+                type: request.type
             }],
             basicUpdateSQL: __STATEMENT__.__REFRESH_AUTHORIZER__,
             basicUpdateParams: [
@@ -41,6 +42,7 @@ function addAuthorizer(request) {
                 request.expiresIn,
                 request.refreshToken,
                 request.funcInfo,
+                request.type,
                 request.appid
             ]
         })
@@ -217,7 +219,8 @@ function fetchAuthroizerInfo(request) {
             ],
             basicQuerySQL: __STATEMENT__.__FETCH_AUTHORIZER_INFO__,
             basicQueryParams: [
-                request.session
+                request.session,
+                request.type
             ]
         })
         .then(__MYSQL__.checkSession)

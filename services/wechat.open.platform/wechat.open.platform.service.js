@@ -455,19 +455,84 @@ function getAuthorizerList(request) {
         postData,
         function (rawData) {
             __LOGGER__.debug(rawData);
+            deferred.resolve(JSON.parse(rawData));
         }, null);
 
     return deferred.promise;
 }
 
-function generateFastRegisterAuth(request) {
+/**
+ * 生成快速注册小程序的链接
+ * @param request
+ * @returns {*}
+ */
+function generateFastRegisterAuthUrl(request) {
     return Q(__UTIL__.format(
         __WX_OPEN_API__.__FAST_REGISTER_MINI_PROGRAM_PAGE__,
         request.appid,
         __WX_OPEN_CONFIG__.__APP_ID__,
-        encodeURIComponent('https://www.pusudo.cn/platform/wechat/authorizer'),
+        encodeURIComponent(__UTIL__.format('https://www.pusudo.cn/platform/miniprogram/authorizer?session=%s&appid=%s',
+            request.session,
+            request.appid))
     ));
+}
 
+/**
+ * 快速注册小程序
+ * @param request
+ * @returns {*|promise|C}
+ */
+function fastRegisterMiniProgram(request) {
+    const deferred = Q.defer();
+
+    // 生成POST Data
+    const postData = __WX_OPEN_STRUCTURE__.constructFastRegisterMiniProgram(request);
+    __LOGGER__.debug(postData);
+
+    __HTTP_CLIENT__.doHttpsPost(
+        __UTIL__.format(__WX_OPEN_API__.__FAST_REGISTER_MINI_PROGRAM__, request.access_token),
+        postData,
+        function (rawData) {
+            let authorization = JSON.parse(rawData);
+            if (authorization.hasOwnProperty('errcode') && authorization.errcode === 0) {
+                deferred.resolve(authorization);
+            } else {
+                deferred.reject(authorization);
+            }
+        }, null);
+    // {
+    //     "errcode": 0,
+    //     "errmsg":"ok",
+    //     "appid":"wxdca47cfe34b88cad",
+    //     "authorization_code":"queryauthcode@@@eS1xfkqkzTh-1jnLsA8eT8YatOaGrAQFjZgF3x0YuRmphQZ-WE253Bm19UXDgsnxn2zCpFvfcNawk3ZVgVGGrg",
+    //     "is_wx_verify_succ":true,
+    //     "is_link_succ":true
+    // }
+
+    return deferred.promise;
+}
+
+/**
+ *  获取帐号基本信息
+ * @param request
+ * @returns {*|C|promise}
+ */
+function fetchAccountBasicInfo(request) {
+    const deferred = Q.defer();
+
+    __HTTP_CLIENT__.doHttpsGet(
+        __UTIL__.format(__WX_OPEN_API__.__GET_ACCOUNT_BASIC_INFO__,
+            request.accessToken),
+        function (rawData) {
+            let accountInfo = JSON.parse(rawData);
+            if (accountInfo.hasOwnProperty('errcode') && accountInfo.errcode === 0) {
+                deferred.resolve(accountInfo);
+            } else {
+                deferred.reject(accountInfo.errmsg);
+            }
+        });
+
+    return deferred.promise;
 }
 
 module.exports = {
@@ -481,15 +546,11 @@ module.exports = {
     refreshAuthorizerToken: refreshAuthorizerToken,
     authorizerToUserAccessToken: authorizerToUserAccessToken,
     refreshAuthorizerToUserAccessToken: refreshAuthorizerToUserAccessToken,
-    authorizerUserInfo: authorizerUserInfo
+    authorizerUserInfo: authorizerUserInfo,
+    generateFastRegisterAuthUrl: generateFastRegisterAuthUrl,
+    fastRegisterMiniProgram: fastRegisterMiniProgram,
+    fetchAccountBasicInfo: fetchAccountBasicInfo
 };
-
-generateFastRegisterAuth({
-    appid: 'wx7770629fee66dd93'
-}).then(res => {
-    'use strict';
-    console.log(res);
-});
 
 //componentVerifyTicket()
 //    .then(componentToken)

@@ -428,4 +428,32 @@ router.post('/wechat/official/menu', function (req, res, next) {
     });
 });
 
+/**
+ *      获取复用公众号主体注册的小程序列表
+ */
+router.get('/wechat/miniprogram/list', function (req, res, next) {
+    __LOGGER__.info('========================== WECHAT MINI PROGRAM LIST ==========================');
+    __LOGGER__.info(req.params);
+    __LOGGER__.info(req.query);
+
+    __CONTROLLER_PLATFORM__.fetchMiniProgramList(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
+/**
+ *      获取小程序基本信息
+ */
+router.get('/wechat/miniprogram/info', function (req, res, next) {
+    __LOGGER__.info('========================== WECHAT MINI PROGRAM INFO ==========================');
+    __LOGGER__.info(req.params);
+    __LOGGER__.info(req.query);
+
+    __CONTROLLER_PLATFORM__.fetchAccountBasicInfo(req, function (request) {
+        res.json(request);
+        __LOGGER__.info('========================== END ==========================');
+    });
+});
+
 module.exports = router;

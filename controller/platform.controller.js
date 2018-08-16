@@ -41,7 +41,8 @@ function authorizerLogin(request) {
                 accessToken: authorizerToken.authorization_info.authorizer_access_token,
                 expiresIn: __MOMENT__(new Date(Date.now() + (authorizerToken.authorization_info.expires_in - 1800) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
                 refreshToken: authorizerToken.authorization_info.authorizer_refresh_token,
-                funcInfo: funcInfo
+                funcInfo: funcInfo,
+                type: request.type
             });
         })
         .then(__PLATFORM__.addAuthorizer);
@@ -55,7 +56,8 @@ function authorizerLogin(request) {
  */
 function authorizerLoginWrapper(request, response) {
     authorizerLogin({
-        authorizationCode: request.query.auth_code
+        authorizationCode: request.query.auth_code,
+        type: 0         //  公众号
     })
         .then(authorizer => {
             authorizer.session = request.params.session;
@@ -98,6 +100,7 @@ function receiveLicenseNotification(request, response) {
                 (message.infoType === 'updateauthorized' || message.infoType === 'authorized')) {
                 //  当公众号对第三方平台进行授权、取消授权、更新授权后，微信服务器会向第三方平台方的授权事件接收URL
                 // （创建第三方平台时填写）推送相关通知
+                message.type = 0;               //  授权者类型： 公众号
                 return authorizerLogin(message);
             }
         })
@@ -251,7 +254,8 @@ function fetchAuthorizerAccessToken(request) {
                                 accessToken: authorizerToken.authorizer_access_token,
                                 expiresIn: __MOMENT__(new Date(Date.now() + (authorizerToken.expires_in - 600) * 1000)).format('YYYY-MM-DD HH:mm:ss'),
                                 refreshToken: authorizerToken.authorizer_refresh_token,
-                                funcInfo: result.msg[0].funcInfo
+                                funcInfo: result.msg[0].funcInfo,
+                                type: result.msg[0].type
                             });
                         })
                         .then(__PLATFORM__.addAuthorizer)   //  记录或者更新授权
@@ -398,6 +402,107 @@ function deleteMenu(request) {
         });
 }
 
+/**
+ *  获取快速注册小程序的链接
+ * @param request
+ * @param response
+ */
+function fetchRegisterMiniProgramUrl(request, response) {
+    __USER__
+        .checkIdentity(request.query)
+        .then(() => {
+            return Q(request.query);
+        })
+        .then(__WX_OPEN_SERVICE__.generateFastRegisterAuthUrl)
+        .then(result => {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+            response(error);
+        });
+}
+
+/**
+ * 快速注册小程序
+ * @param request
+ * @param response
+ */
+function fastRegisterMiniProgram(request, response) {
+    fetchAuthorizerAccessToken(request.query)               //  获取授权公众号的access token
+        .then(token => {
+            return Q({
+                ticket: request.query.ticket,               //  带上公众号扫码授权的凭证 ticket (公众平台扫码页面回跳到第三方平台时携带)
+                access_token: token.accessToken
+            });
+        })
+        .then(__WX_OPEN_SERVICE__.fastRegisterMiniProgram)  //  快速注册小程序
+        .then(register => {
+            return Q({
+                authorizationCode: register.authorization_code,
+                type: 1                                     //  类型： 小程序
+            });
+        })
+        .then(authorizerLogin)                              //  使用appid及authorization_code换取authorizer_refresh_token
+        .then(authorizer => {
+            authorizer.session = request.query.session;
+            return Q(authorizer);
+        })
+        .then(__PLATFORM__.authorizerAndUser)               //  将授权公众号的管理员与新注册的小程序相绑定
+        .then(result => {
+            __LOGGER__.debug(result);
+            response('成功注册小程序');
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+            response(error);
+        });
+}
+
+/**
+ * 获取复用公众号关联的小程序列表
+ *
+ * @param request
+ * @param response
+ */
+function fetchMiniProgramList(request, response) {
+    __PLATFORM__
+        .fetchAuthroizerInfo(request.query)
+        .then(info => {
+            __LOGGER__.debug(info);
+            let result = info.msg.map(item => {
+                return {
+                    appid: item.appid,
+                    funcInfo: item.funcInfo
+                };
+            });
+            response(result);
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+            response(error);
+        });
+}
+
+/**
+ * 获取帐号基本信息
+ * @param request
+ * @param response
+ */
+function fetchAccountBasicInfo(request, response) {
+    fetchAuthorizerAccessToken(request.query)               //  利用appid获取小程序的access token
+        .then(__WX_OPEN_SERVICE__.fetchAccountBasicInfo)    //  获取帐号基本信息
+        .then(result => {
+            __LOGGER__.debug(result);
+            response(result);
+        })
+        .catch(error => {
+            __LOGGER__.error(error);
+            response(error);
+        });
+}
+
 module.exports = {
     receiveLicenseNotification: receiveLicenseNotification,
     receiveAuthorizerCodeNotification: receiveAuthorizerCodeNotification,
@@ -407,8 +512,39 @@ module.exports = {
     fetchAuthorizerInfo: fetchAuthorizerInfo,
     authorizerLogin: authorizerLogin,
     authorizerLoginWrapper: authorizerLoginWrapper,
-    createMenu: createMenu
+    createMenu: createMenu,
+    fetchRegisterMiniProgramUrl: fetchRegisterMiniProgramUrl,
+    fastRegisterMiniProgram: fastRegisterMiniProgram,
+    fetchMiniProgramList: fetchMiniProgramList,
+    fetchAccountBasicInfo: fetchAccountBasicInfo
 };
+
+// fetchAccountBasicInfo({
+//     query: {
+//         session: 'm3tejtflVeiWPElwgV8lotDIEcuF3hRe',
+//         appid: 'wx42f5a0bb746d078f'
+//     }
+// }, () => {
+// });
+
+// fastRegisterMiniProgram({
+//     query: {
+//         session: 'I6fe4XqMIJFFwrbh14hg3VT5eiBIcmw7',
+//         appid: 'wx7770629fee66dd93',
+//         ticket: '70abd24118083c4e113cf937c382e7da'
+//     }
+// }, () => {
+// });
+
+// fetchRegisterMiniProgramUrl({
+//     query: {
+//         session: 'I6fe4XqMIJFFwrbh14hg3VT5eiBIcmw7',
+//         appid: 'wx7770629fee66dd93'
+//     }
+// }, res => {
+//     'use strict';
+//     // console.log(res);
+// });
 
 // req = {
 //     appid: 'wx90440dd971f71468',

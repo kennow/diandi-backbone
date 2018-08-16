@@ -181,6 +181,17 @@ function constructGetAuthorizerListParams(request) {
     };
 }
 
+/**
+ * 快速注册小程序 API
+ * @param request
+ * @returns {{ticket: *}}
+ */
+function constructFastRegisterMiniProgram(request) {
+    return {
+        ticket: request.ticket
+    };
+}
+
 module.exports = {
     parseLicenseMessage: parseLicenseMessage,
     constructComponentTokenParams: constructComponentTokenParams,
@@ -192,5 +203,6 @@ module.exports = {
     constructSetAuthorizerOptionParams: constructSetAuthorizerOptionParams,
     constructClearComponentQuotaParams: constructClearComponentQuotaParams,
     constructAuthorizerAccessTokenParams: constructAuthorizerAccessTokenParams,
-    constructGetAuthorizerListParams: constructGetAuthorizerListParams
+    constructGetAuthorizerListParams: constructGetAuthorizerListParams,
+    constructFastRegisterMiniProgram: constructFastRegisterMiniProgram
 };
