@@ -158,7 +158,7 @@ function generateComponentLoginPageUrl(request) {
         __WX_OPEN_CONFIG__.__APP_ID__,
         request.pre_authorization_code,
         encodeURIComponent('https://www.pusudo.cn/platform/wechat/authorizer/' + request.session),
-        1
+        request.auth_type
         // 'wx1133464776a7a161'
         // 'wx7770629fee66dd93'
     ));

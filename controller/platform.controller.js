@@ -334,6 +334,7 @@ function fetchComponentLoginPageUrl(request, response) {
         .then(__WX_OPEN_SERVICE__.createPreAuthCode)
         .then(preAuthCode => {
             preAuthCode.session = request.query.session;
+            preAuthCode.auth_type = request.query.auth_type
             return Q(preAuthCode);
         })
         .then(__WX_OPEN_SERVICE__.generateComponentLoginPageUrl)

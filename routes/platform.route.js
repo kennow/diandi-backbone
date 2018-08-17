@@ -111,7 +111,7 @@ router.get('/wechat/authorizer/:session', function (req, res, next) {
     __LOGGER__.debug(req.query);
     if (req.query.hasOwnProperty('auth_code')) {
         __PLATFORM__.authorizerLoginWrapper(req, function (request) {
-            res.redirect('https://backbone.pusudo.cn/entry/wechat/official');
+            res.redirect('https://backbone.pusudo.cn/list/entry');
             __LOGGER__.info('========================== END ==========================');
         });
     }
